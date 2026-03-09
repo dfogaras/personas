@@ -48,6 +48,9 @@ class MessageResponse(MessageBase):
     role: str
     created_at: datetime
     liked: Optional[bool] = None
+    prompt_tokens: Optional[int] = None
+    completion_tokens: Optional[int] = None
+    total_tokens: Optional[int] = None
 
     class Config:
         from_attributes = True

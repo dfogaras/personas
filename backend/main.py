@@ -164,7 +164,14 @@ async def send_message(
     response = await ai_service.generate_response(system_prompt, messages)
     logger.info(f"AI response: prompt_tokens={response.prompt_tokens}, completion_tokens={response.completion_tokens}, total_tokens={response.total_tokens}")
 
-    assistant_message = Message(session_id=session_id, role="assistant", content=response.content)
+    assistant_message = Message(
+        session_id=session_id,
+        role="assistant",
+        content=response.content,
+        prompt_tokens=response.prompt_tokens,
+        completion_tokens=response.completion_tokens,
+        total_tokens=response.total_tokens,
+    )
     db.add(assistant_message)
     db.commit()
     db.refresh(assistant_message)

@@ -48,5 +48,8 @@ class Message(Base):
     content = Column(Text)
     created_at = Column(DateTime, default=datetime.utcnow)
     liked = Column(Boolean, nullable=True)  # None = no feedback, True = liked, False = disliked
+    prompt_tokens = Column(Integer, nullable=True)
+    completion_tokens = Column(Integer, nullable=True)
+    total_tokens = Column(Integer, nullable=True)
     
     session = relationship("Session", back_populates="messages")
