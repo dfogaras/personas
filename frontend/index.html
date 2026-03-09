@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Personas - Interactive Chat</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h1>AI Personas</h1>
+                <p class="subtitle">Interactive Learning</p>
+            </div>
+
+            <div class="user-section">
+                <input 
+                    type="text" 
+                    id="userName" 
+                    placeholder="Enter your name"
+                    class="name-input"
+                />
+                <button id="newSessionBtn" class="new-session-btn" disabled>
+                    New Session
+                </button>
+            </div>
+
+            <div class="personas-section">
+                <h3>Available Personas</h3>
+                <div id="personasList" class="personas-list">
+                    <p class="loading">Loading personas...</p>
+                </div>
+            </div>
+
+            <div class="sessions-section">
+                <h3>Recent Sessions</h3>
+                <div id="sessionsList" class="sessions-list">
+                    <p class="empty">No sessions yet</p>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Chat Area -->
+        <main class="chat-container">
+            <div id="noSessionMessage" class="no-session-message">
+                <div class="empty-state">
+                    <h2>Welcome to AI Personas</h2>
+                    <p>Enter your name and select a persona to start chatting.</p>
+                    <p class="hint">Each persona has their own unique personality and expertise.</p>
+                </div>
+            </div>
+
+            <div id="chatArea" class="chat-area" style="display: none;">
+                <!-- Chat header -->
+                <header class="chat-header">
+                    <div>
+                        <h2 id="personaName"></h2>
+                        <p id="personaSpecialty" class="specialty"></p>
+                    </div>
+                    <p id="userName2" class="user-name-display"></p>
+                </header>
+
+                <!-- Persona description -->
+                <div id="personaDescription" class="persona-description"></div>
+
+                <!-- Messages -->
+                <div id="messagesList" class="messages-list"></div>
+
+                <!-- Chat input -->
+                <div class="chat-input-area">
+                    <form id="messageForm" class="message-form">
+                        <input 
+                            type="text" 
+                            id="messageInput" 
+                            placeholder="Type your message..."
+                            autocomplete="off"
+                        />
+                        <button type="submit" class="send-btn">Send</button>
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    <div id="personaModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="modal-close">&times;</span>
+            <h2 id="modalPersonaName"></h2>
+            <p id="modalPersonaDescription" class="modal-description"></p>
+            <p id="modalPersonaSpecialty" class="modal-specialty"><strong>Specialty:</strong> <span></span></p>
+            <button id="selectPersonaBtn" class="btn-primary">Select This Persona</button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
