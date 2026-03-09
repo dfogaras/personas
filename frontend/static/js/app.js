@@ -241,17 +241,17 @@ function addMessageToUI(role, content, messageId = null) {
 
         const likeBtn = document.createElement('button');
         likeBtn.className = 'feedback-btn like-btn';
-        likeBtn.textContent = '👍 Like';
+        likeBtn.textContent = '👍';
         likeBtn.addEventListener('click', () => submitFeedback(messageId, true));
 
         const dislikeBtn = document.createElement('button');
         dislikeBtn.className = 'feedback-btn dislike-btn';
-        dislikeBtn.textContent = '👎 Dislike';
+        dislikeBtn.textContent = '👎';
         dislikeBtn.addEventListener('click', () => submitFeedback(messageId, false));
 
         actionsDiv.appendChild(likeBtn);
         actionsDiv.appendChild(dislikeBtn);
-        message.appendChild(actionsDiv);
+        contentDiv.appendChild(actionsDiv);
     }
 
     elements.messagesList.appendChild(message);

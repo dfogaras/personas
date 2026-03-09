@@ -287,41 +287,35 @@ button, input, select, textarea {
     background-color: white;
     color: var(--gray-900);
     border: 1px solid var(--gray-200);
+    display: flex;
+    flex-direction: column;
 }
 
 .message-actions {
     display: flex;
-    gap: 8px;
+    gap: 2px;
     margin-top: 8px;
+    align-self: flex-end;
 }
 
 .feedback-btn {
-    padding: 6px 12px;
-    border: 1px solid var(--gray-300);
-    background-color: white;
-    border-radius: 4px;
-    font-size: 12px;
+    padding: 2px 6px;
+    border: none;
+    background: none;
+    font-size: 14px;
     cursor: pointer;
-    transition: var(--transition);
-    display: flex;
-    align-items: center;
-    gap: 4px;
+    opacity: 0.4;
+    transition: opacity 0.15s;
+    line-height: 1;
 }
 
 .feedback-btn:hover {
-    background-color: var(--gray-100);
+    opacity: 0.8;
 }
 
-.feedback-btn.liked {
-    background-color: var(--secondary-color);
-    color: white;
-    border-color: var(--secondary-color);
-}
-
+.feedback-btn.liked,
 .feedback-btn.disliked {
-    background-color: var(--danger-color);
-    color: white;
-    border-color: var(--danger-color);
+    opacity: 1;
 }
 
 .no-session-message {
