@@ -1,6 +1,5 @@
 """AI service for interacting with OpenRouter."""
 
-import asyncio
 import aiohttp
 from dataclasses import dataclass
 from config import Settings
@@ -44,26 +43,21 @@ class AIService:
             "max_tokens": self.max_tokens,
         }
 
-        try:
-            async with aiohttp.ClientSession() as session:
-                async with session.post(
-                    f"{self.base_url}/chat/completions",
-                    json=payload,
-                    headers=headers,
-                    timeout=aiohttp.ClientTimeout(total=self.timeout)
-                ) as resp:
-                    if resp.status != 200:
-                        error_text = await resp.text()
-                        raise Exception(f"OpenRouter API error: {error_text}")
-                    data = await resp.json()
-                    usage = data.get("usage", {})
-                    return AIResponse(
-                        content=data["choices"][0]["message"]["content"],
-                        prompt_tokens=usage.get("prompt_tokens", 0),
-                        completion_tokens=usage.get("completion_tokens", 0),
-                        total_tokens=usage.get("total_tokens", 0),
-                    )
-        except asyncio.TimeoutError:
-            raise Exception("AI request timed out")
-        except Exception as e:
-            raise Exception(f"Error communicating with AI service: {str(e)}")
+        async with aiohttp.ClientSession() as session:
+            async with session.post(
+                f"{self.base_url}/chat/completions",
+                json=payload,
+                headers=headers,
+                timeout=aiohttp.ClientTimeout(total=self.timeout)
+            ) as resp:
+                if resp.status != 200:
+                    error_text = await resp.text()
+                    raise Exception(f"OpenRouter API error: {error_text}")
+                data = await resp.json()
+                usage = data.get("usage", {})
+                return AIResponse(
+                    content=data["choices"][0]["message"]["content"],
+                    prompt_tokens=usage.get("prompt_tokens", 0),
+                    completion_tokens=usage.get("completion_tokens", 0),
+                    total_tokens=usage.get("total_tokens", 0),
+                )
