@@ -41,16 +41,21 @@
                     <h1 id="detailPersonaName"></h1>
                     <p id="detailPersonaSpecialty" class="specialty"></p>
                 </div>
-                <div class="persona-detail-actions">
-                    <button id="detailChatBtn" class="persona-card-btn" title="Chat">💬</button>
-                    <button id="detailEditBtn" class="persona-card-btn" title="Edit">✏️</button>
-                    <button id="detailRemixBtn" class="persona-card-btn" title="Remix">⧉</button>
-                </div>
+                <div class="persona-detail-actions"></div>
             </div>
             <p id="detailPersonaDescription" class="detail-description"></p>
-            <div id="startSessionForm" class="start-session-form" style="display:none">
-                <input type="text" id="sessionUserName" placeholder="Your name" class="form-input" />
-                <button id="startSessionBtn" class="btn-primary" disabled>Start Session</button>
+        </div>
+    </div>
+
+    <!-- Chat start page -->
+    <div id="page-chat" class="page">
+        <div class="page-content">
+            <a id="chatBackToPersona" href="#page=personas" class="back-link">← Back</a>
+            <h1 id="chatPersonaName"></h1>
+            <p id="chatPersonaSpecialty" class="specialty"></p>
+            <div class="start-session-form">
+                <input type="text" id="chatUserName" placeholder="Your name" class="form-input" />
+                <button id="chatStartBtn" class="btn-primary" disabled>Start Chat</button>
             </div>
         </div>
     </div>

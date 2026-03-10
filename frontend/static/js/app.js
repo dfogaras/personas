@@ -58,6 +58,8 @@ async function route() {
         await showRemixPersonaPage(parseInt(params.id));
     } else if (page === 'persona' && params.id) {
         await showPersonaPage(parseInt(params.id));
+    } else if (page === 'chat' && params.id) {
+        await showChatPage(parseInt(params.id));
     } else if (page === 'session' && params.id) {
         await showSessionPage(parseInt(params.id));
     } else {
@@ -165,27 +167,45 @@ async function showRemixPersonaPage(id) {
     });
 }
 
+function createPersonaActions(id) {
+    const actions = [
+        { title: 'Chat',  icon: '💬', page: 'chat' },
+        { title: 'Edit',  icon: '✏️', page: 'persona-edit' },
+        { title: 'Remix', icon: '⧉', page: 'persona-remix' },
+    ];
+    const div = document.createElement('div');
+    div.className = 'persona-card-actions';
+    actions.forEach(({ title, icon, page }) => {
+        const btn = document.createElement('button');
+        btn.className = 'persona-card-btn';
+        btn.title = title;
+        btn.textContent = icon;
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            navigate({ page, id });
+        });
+        div.appendChild(btn);
+    });
+    return div;
+}
+
 function renderPersonasList(personas) {
     const list = document.getElementById('personasList');
     list.innerHTML = '';
     personas.forEach(persona => {
         const card = document.createElement('div');
         card.className = 'persona-card';
-        card.innerHTML = `
-            <div class="persona-card-body">
-                <div class="persona-name">${persona.name}</div>
-                <div class="persona-specialty">${persona.specialty || 'General'}</div>
-            </div>
-            <div class="persona-card-actions">
-                <button class="persona-card-btn" title="Chat">💬</button>
-                <button class="persona-card-btn" title="Edit">✏️</button>
-                <button class="persona-card-btn" title="Remix">⧉</button>
-            </div>
+
+        const body = document.createElement('div');
+        body.className = 'persona-card-body';
+        body.innerHTML = `
+            <div class="persona-name">${persona.name}</div>
+            <div class="persona-specialty">${persona.specialty || 'General'}</div>
         `;
-        card.querySelector('.persona-card-body').addEventListener('click', () => navigate({ page: 'persona', id: persona.id }));
-        card.querySelector('[title="Chat"]').addEventListener('click', () => navigate({ page: 'persona', id: persona.id }));
-        card.querySelector('[title="Edit"]').addEventListener('click', () => navigate({ page: 'persona-edit', id: persona.id }));
-        card.querySelector('[title="Remix"]').addEventListener('click', () => navigate({ page: 'persona-remix', id: persona.id }));
+        body.addEventListener('click', () => navigate({ page: 'persona', id: persona.id }));
+
+        card.appendChild(body);
+        card.appendChild(createPersonaActions(persona.id));
         list.appendChild(card);
     });
 
@@ -202,28 +222,35 @@ function renderPersonasList(personas) {
 
 async function showPersonaPage(id) {
     document.getElementById('page-persona').style.display = 'block';
-    document.getElementById('startSessionForm').style.display = 'none';
 
     const persona = await apiCall('GET', `/personas/${id}`);
     document.getElementById('detailPersonaName').textContent = persona.name;
     document.getElementById('detailPersonaSpecialty').textContent = persona.specialty || 'General';
     document.getElementById('detailPersonaDescription').textContent = persona.description;
 
-    document.getElementById('detailEditBtn').onclick = () => navigate({ page: 'persona-edit', id });
-    document.getElementById('detailRemixBtn').onclick = () => navigate({ page: 'persona-remix', id });
-    document.getElementById('detailChatBtn').onclick = () => {
-        const form = document.getElementById('startSessionForm');
-        form.style.display = form.style.display === 'none' ? 'block' : 'none';
-        if (form.style.display === 'block') document.getElementById('sessionUserName').focus();
-    };
+    const actionsContainer = document.querySelector('.persona-detail-actions');
+    actionsContainer.replaceChildren(createPersonaActions(id));
+}
 
-    const oldUserNameInput = document.getElementById('sessionUserName');
-    const userNameInput = oldUserNameInput.cloneNode(true);
-    oldUserNameInput.parentNode.replaceChild(userNameInput, oldUserNameInput);
+// ============================================================================
+// Chat start page
+// ============================================================================
 
-    const oldStartBtn = document.getElementById('startSessionBtn');
-    const startBtn = oldStartBtn.cloneNode(true);
-    oldStartBtn.parentNode.replaceChild(startBtn, oldStartBtn);
+async function showChatPage(id) {
+    document.getElementById('page-chat').style.display = 'block';
+
+    const persona = await apiCall('GET', `/personas/${id}`);
+    document.getElementById('chatPersonaName').textContent = persona.name;
+    document.getElementById('chatPersonaSpecialty').textContent = persona.specialty || 'General';
+    document.getElementById('chatBackToPersona').href = `#page=persona&id=${id}`;
+
+    const oldInput = document.getElementById('chatUserName');
+    const userNameInput = oldInput.cloneNode(true);
+    oldInput.parentNode.replaceChild(userNameInput, oldInput);
+
+    const oldBtn = document.getElementById('chatStartBtn');
+    const startBtn = oldBtn.cloneNode(true);
+    oldBtn.parentNode.replaceChild(startBtn, oldBtn);
 
     userNameInput.addEventListener('input', () => {
         startBtn.disabled = !userNameInput.value.trim();
@@ -242,6 +269,8 @@ async function showPersonaPage(id) {
             alert(e.message);
         }
     });
+
+    userNameInput.focus();
 }
 
 // ============================================================================
