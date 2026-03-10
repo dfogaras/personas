@@ -50,6 +50,8 @@ async function route() {
 
     if (page === 'personas') {
         await showPersonasPage();
+    } else if (page === 'persona-new') {
+        showCreatePersonaPage();
     } else if (page === 'persona' && params.id) {
         await showPersonaPage(parseInt(params.id));
     } else if (page === 'session' && params.id) {
@@ -65,10 +67,19 @@ async function route() {
 
 async function showPersonasPage() {
     document.getElementById('page-personas').style.display = 'block';
-    showPersonasGrid();
+    document.getElementById('personasPageTitle').textContent = 'Personas';
+    document.getElementById('personasList').style.display = 'grid';
+    document.getElementById('createPersonaForm').style.display = 'none';
 
     const personas = await apiCall('GET', '/personas');
     renderPersonasList(personas);
+}
+
+function showCreatePersonaPage() {
+    document.getElementById('page-personas').style.display = 'block';
+    document.getElementById('personasPageTitle').textContent = 'New Persona';
+    document.getElementById('personasList').style.display = 'none';
+    document.getElementById('createPersonaForm').style.display = 'block';
 
     const nameInput = document.getElementById('newPersonaName');
     const descInput = document.getElementById('newPersonaDescription');
@@ -98,25 +109,9 @@ async function showPersonasPage() {
         }
     });
 
-    cancelBtn.addEventListener('click', () => {
-        nameInput.value = '';
-        descInput.value = '';
-        specInput.value = '';
-        showPersonasGrid();
-    });
-}
+    cancelBtn.addEventListener('click', () => navigate({ page: 'personas' }));
 
-function showPersonasGrid() {
-    document.getElementById('personasList').style.display = 'grid';
-    document.getElementById('createPersonaForm').style.display = 'none';
-    document.getElementById('personasPageTitle').textContent = 'Personas';
-}
-
-function showCreateForm() {
-    document.getElementById('personasList').style.display = 'none';
-    document.getElementById('createPersonaForm').style.display = 'block';
-    document.getElementById('personasPageTitle').textContent = 'New Persona';
-    document.getElementById('newPersonaName').focus();
+    nameInput.focus();
 }
 
 function renderPersonasList(personas) {
@@ -136,7 +131,7 @@ function renderPersonasList(personas) {
     const addCard = document.createElement('div');
     addCard.className = 'persona-card persona-card-add';
     addCard.textContent = '+';
-    addCard.addEventListener('click', showCreateForm);
+    addCard.addEventListener('click', () => navigate({ page: 'persona-new' }));
     list.appendChild(addCard);
 }
 
