@@ -623,14 +623,43 @@ button, input, select, textarea {
     background: white;
     border: 1px solid var(--gray-200);
     border-radius: var(--border-radius);
-    padding: 20px;
-    cursor: pointer;
     transition: var(--transition);
+    display: flex;
+    flex-direction: column;
 }
 
 .persona-card:hover {
     border-color: var(--primary-color);
     box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
+}
+
+.persona-card-body {
+    padding: 20px 20px 12px;
+    flex: 1;
+    cursor: pointer;
+}
+
+.persona-card-actions {
+    padding: 6px 12px;
+    border-top: 1px solid var(--gray-100);
+    display: flex;
+    gap: 2px;
+}
+
+.persona-card-btn {
+    border: none;
+    background: none;
+    font-size: 14px;
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 4px;
+    opacity: 0.35;
+    transition: opacity 0.15s;
+}
+
+.persona-card-btn:hover {
+    opacity: 1;
+    background: var(--gray-100);
 }
 
 .persona-card-add {
@@ -642,6 +671,8 @@ button, input, select, textarea {
     color: var(--gray-400);
     border-style: dashed;
     min-height: 80px;
+    padding: 20px;
+    cursor: pointer;
 }
 
 .persona-card-add:hover {
@@ -673,14 +704,28 @@ button, input, select, textarea {
    Persona Detail
    ============================================================================ */
 
-.persona-detail {
-    margin-bottom: 32px;
+.persona-detail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 8px;
 }
 
-.persona-detail h1 {
+.persona-detail-header h1 {
     font-size: 28px;
     font-weight: 700;
-    margin-bottom: 8px;
+    margin-bottom: 4px;
+}
+
+.persona-detail-actions {
+    display: flex;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.persona-detail-actions .persona-card-btn {
+    font-size: 18px;
+    opacity: 0.5;
 }
 
 .detail-description {

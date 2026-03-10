@@ -52,6 +52,10 @@ async function route() {
         await showPersonasPage();
     } else if (page === 'persona-new') {
         showCreatePersonaPage();
+    } else if (page === 'persona-edit' && params.id) {
+        await showEditPersonaPage(parseInt(params.id));
+    } else if (page === 'persona-remix' && params.id) {
+        await showRemixPersonaPage(parseInt(params.id));
     } else if (page === 'persona' && params.id) {
         await showPersonaPage(parseInt(params.id));
     } else if (page === 'session' && params.id) {
@@ -75,9 +79,9 @@ async function showPersonasPage() {
     renderPersonasList(personas);
 }
 
-function showCreatePersonaPage() {
+function showPersonaForm({ title, prefill = {}, submitLabel, onSubmit, onCancel }) {
     document.getElementById('page-personas').style.display = 'block';
-    document.getElementById('personasPageTitle').textContent = 'New Persona';
+    document.getElementById('personasPageTitle').textContent = title;
     document.getElementById('personasList').style.display = 'none';
     document.getElementById('createPersonaForm').style.display = 'block';
 
@@ -85,8 +89,13 @@ function showCreatePersonaPage() {
     const descInput = document.getElementById('newPersonaDescription');
     const specInput = document.getElementById('newPersonaSpecialty');
 
+    nameInput.value = prefill.name || '';
+    descInput.value = prefill.description || '';
+    specInput.value = prefill.specialty || '';
+
     const oldBtn = document.getElementById('createPersonaBtn');
     const btn = oldBtn.cloneNode(true);
+    btn.textContent = submitLabel;
     oldBtn.parentNode.replaceChild(btn, oldBtn);
 
     const oldCancelBtn = document.getElementById('cancelCreateBtn');
@@ -97,21 +106,63 @@ function showCreatePersonaPage() {
         const name = nameInput.value.trim();
         const description = descInput.value.trim();
         if (!name || !description) return;
-        try {
-            const persona = await apiCall('POST', '/personas', {
-                name,
-                description,
-                specialty: specInput.value.trim() || null,
-            });
-            navigate({ page: 'persona', id: persona.id });
-        } catch (e) {
-            alert(e.message);
-        }
+        await onSubmit({ name, description, specialty: specInput.value.trim() || null });
     });
 
-    cancelBtn.addEventListener('click', () => navigate({ page: 'personas' }));
-
+    cancelBtn.addEventListener('click', onCancel);
     nameInput.focus();
+}
+
+function showCreatePersonaPage() {
+    showPersonaForm({
+        title: 'New Persona',
+        submitLabel: 'Create',
+        onSubmit: async (data) => {
+            try {
+                const persona = await apiCall('POST', '/personas', data);
+                navigate({ page: 'persona', id: persona.id });
+            } catch (e) {
+                alert(e.message);
+            }
+        },
+        onCancel: () => navigate({ page: 'personas' }),
+    });
+}
+
+async function showEditPersonaPage(id) {
+    const persona = await apiCall('GET', `/personas/${id}`);
+    showPersonaForm({
+        title: 'Edit Persona',
+        prefill: persona,
+        submitLabel: 'Save',
+        onSubmit: async (data) => {
+            try {
+                await apiCall('POST', `/personas/${id}`, data);
+                navigate({ page: 'persona', id });
+            } catch (e) {
+                alert(e.message);
+            }
+        },
+        onCancel: () => navigate({ page: 'persona', id }),
+    });
+}
+
+async function showRemixPersonaPage(id) {
+    const persona = await apiCall('GET', `/personas/${id}`);
+    showPersonaForm({
+        title: 'Remix Persona',
+        prefill: { ...persona, name: `${persona.name} #2` },
+        submitLabel: 'Create',
+        onSubmit: async (data) => {
+            try {
+                const newPersona = await apiCall('POST', '/personas', data);
+                navigate({ page: 'persona', id: newPersona.id });
+            } catch (e) {
+                alert(e.message);
+            }
+        },
+        onCancel: () => navigate({ page: 'persona', id }),
+    });
 }
 
 function renderPersonasList(personas) {
@@ -121,10 +172,20 @@ function renderPersonasList(personas) {
         const card = document.createElement('div');
         card.className = 'persona-card';
         card.innerHTML = `
-            <div class="persona-name">${persona.name}</div>
-            <div class="persona-specialty">${persona.specialty || 'General'}</div>
+            <div class="persona-card-body">
+                <div class="persona-name">${persona.name}</div>
+                <div class="persona-specialty">${persona.specialty || 'General'}</div>
+            </div>
+            <div class="persona-card-actions">
+                <button class="persona-card-btn" title="Chat">💬</button>
+                <button class="persona-card-btn" title="Edit">✏️</button>
+                <button class="persona-card-btn" title="Remix">⧉</button>
+            </div>
         `;
-        card.addEventListener('click', () => navigate({ page: 'persona', id: persona.id }));
+        card.querySelector('.persona-card-body').addEventListener('click', () => navigate({ page: 'persona', id: persona.id }));
+        card.querySelector('[title="Chat"]').addEventListener('click', () => navigate({ page: 'persona', id: persona.id }));
+        card.querySelector('[title="Edit"]').addEventListener('click', () => navigate({ page: 'persona-edit', id: persona.id }));
+        card.querySelector('[title="Remix"]').addEventListener('click', () => navigate({ page: 'persona-remix', id: persona.id }));
         list.appendChild(card);
     });
 
@@ -141,11 +202,20 @@ function renderPersonasList(personas) {
 
 async function showPersonaPage(id) {
     document.getElementById('page-persona').style.display = 'block';
+    document.getElementById('startSessionForm').style.display = 'none';
 
     const persona = await apiCall('GET', `/personas/${id}`);
     document.getElementById('detailPersonaName').textContent = persona.name;
     document.getElementById('detailPersonaSpecialty').textContent = persona.specialty || 'General';
     document.getElementById('detailPersonaDescription').textContent = persona.description;
+
+    document.getElementById('detailEditBtn').onclick = () => navigate({ page: 'persona-edit', id });
+    document.getElementById('detailRemixBtn').onclick = () => navigate({ page: 'persona-remix', id });
+    document.getElementById('detailChatBtn').onclick = () => {
+        const form = document.getElementById('startSessionForm');
+        form.style.display = form.style.display === 'none' ? 'block' : 'none';
+        if (form.style.display === 'block') document.getElementById('sessionUserName').focus();
+    };
 
     const oldUserNameInput = document.getElementById('sessionUserName');
     const userNameInput = oldUserNameInput.cloneNode(true);

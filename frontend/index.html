@@ -36,13 +36,19 @@
     <div id="page-persona" class="page">
         <div class="page-content">
             <a href="#page=personas" class="back-link">← Back to Personas</a>
-            <div class="persona-detail">
-                <h1 id="detailPersonaName"></h1>
-                <p id="detailPersonaSpecialty" class="specialty"></p>
-                <p id="detailPersonaDescription" class="detail-description"></p>
+            <div class="persona-detail-header">
+                <div>
+                    <h1 id="detailPersonaName"></h1>
+                    <p id="detailPersonaSpecialty" class="specialty"></p>
+                </div>
+                <div class="persona-detail-actions">
+                    <button id="detailChatBtn" class="persona-card-btn" title="Chat">💬</button>
+                    <button id="detailEditBtn" class="persona-card-btn" title="Edit">✏️</button>
+                    <button id="detailRemixBtn" class="persona-card-btn" title="Remix">⧉</button>
+                </div>
             </div>
-            <div class="start-session-form">
-                <h2>Start a Session</h2>
+            <p id="detailPersonaDescription" class="detail-description"></p>
+            <div id="startSessionForm" class="start-session-form" style="display:none">
                 <input type="text" id="sessionUserName" placeholder="Your name" class="form-input" />
                 <button id="startSessionBtn" class="btn-primary" disabled>Start Session</button>
             </div>
