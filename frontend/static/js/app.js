@@ -5,223 +5,215 @@
 const API_BASE = '/api';
 
 // ============================================================================
-// State Management
-// ============================================================================
-
-const state = {
-    userName: '',
-    currentPersona: null,
-    currentSession: null,
-    personas: [],
-    sessions: [],
-    selectedPersonaForModal: null,
-};
-
-// ============================================================================
-// DOM Elements
-// ============================================================================
-
-const elements = {
-    // Sidebar
-    userName: document.getElementById('userName'),
-    newSessionBtn: document.getElementById('newSessionBtn'),
-    personasList: document.getElementById('personasList'),
-    sessionsList: document.getElementById('sessionsList'),
-
-    // Main chat area
-    noSessionMessage: document.getElementById('noSessionMessage'),
-    chatArea: document.getElementById('chatArea'),
-    personaName: document.getElementById('personaName'),
-    personaSpecialty: document.getElementById('personaSpecialty'),
-    personaDescription: document.getElementById('personaDescription'),
-    userName2: document.getElementById('userName2'),
-    messagesList: document.getElementById('messagesList'),
-    messageForm: document.getElementById('messageForm'),
-    messageInput: document.getElementById('messageInput'),
-    sendBtn: document.querySelector('.send-btn'),
-
-    // Modal
-    modal: document.getElementById('personaModal'),
-    modalClose: document.querySelector('.modal-close'),
-    modalPersonaName: document.getElementById('modalPersonaName'),
-    modalPersonaDescription: document.getElementById('modalPersonaDescription'),
-    modalPersonaSpecialty: document.getElementById('modalPersonaSpecialty'),
-    selectPersonaBtn: document.getElementById('selectPersonaBtn'),
-};
-
-// ============================================================================
-// API Calls
+// API
 // ============================================================================
 
 async function apiCall(method, endpoint, data = null) {
-    try {
-        const options = {
-            method,
-            headers: {
-                'Content-Type': 'application/json',
-            },
-        };
-
-        if (data) {
-            options.body = JSON.stringify(data);
-        }
-
-        const response = await fetch(`${API_BASE}${endpoint}`, options);
-
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.detail || 'API error');
-        }
-
-        return await response.json();
-    } catch (error) {
-        console.error(`API Error (${method} ${endpoint}):`, error);
-        throw error;
+    const options = {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+    };
+    if (data) options.body = JSON.stringify(data);
+    const response = await fetch(`${API_BASE}${endpoint}`, options);
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || 'API error');
     }
+    return response.json();
 }
 
-async function initDemo() {
-    try {
-        await apiCall('POST', '/init-demo');
-    } catch (error) {
-        console.warn('Demo initialization skipped or already done');
-    }
+// ============================================================================
+// Routing
+// ============================================================================
+
+function parseHash() {
+    const hash = window.location.hash.slice(1);
+    const params = {};
+    hash.split('&').forEach(part => {
+        const [key, val] = part.split('=');
+        if (key) params[key] = val;
+    });
+    return params;
 }
 
-async function loadPersonas() {
-    try {
-        state.personas = await apiCall('GET', '/personas');
-        renderPersonasList();
-    } catch (error) {
-        showError('Failed to load personas');
-    }
+function navigate(params) {
+    window.location.hash = Object.entries(params)
+        .map(([k, v]) => `${k}=${v}`)
+        .join('&');
 }
 
-async function createSession(personaId) {
-    try {
-        const session = await apiCall('POST', '/sessions', {
-            user_name: state.userName,
-            persona_id: personaId,
-        });
-        state.currentSession = session;
-        state.currentPersona = state.personas.find(p => p.id === personaId);
-        displayChatInterface();
-        closeModal();
-    } catch (error) {
-        showError('Failed to create session');
-    }
-}
+async function route() {
+    const params = parseHash();
+    const page = params.page || 'personas';
 
-async function sendMessage(content) {
-    if (!state.currentSession) return;
+    document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
 
-    try {
-        // Optimistically add user message to UI
-        addMessageToUI('user', content);
-
-        // Clear input
-        elements.messageInput.value = '';
-        elements.sendBtn.disabled = true;
-
-        // Add loading indicator
-        const loadingId = addMessageToUI('assistant', '⏳ Thinking...');
-
-        // Send message to API
-        const response = await apiCall('POST', `/sessions/${state.currentSession.id}/messages`, {
-            message: content,
-        });
-
-        // Remove loading message and add real response
-        const loadingElement = document.querySelector(`[data-message-id="${loadingId}"]`);
-        if (loadingElement) {
-            loadingElement.remove();
-        }
-
-        // Add assistant response
-        addMessageToUI('assistant', response.content, response.id);
-        elements.sendBtn.disabled = false;
-    } catch (error) {
-        showError('Failed to send message');
-        elements.sendBtn.disabled = false;
-    }
-}
-
-async function submitFeedback(messageId, liked) {
-    try {
-        await apiCall('POST', `/messages/${messageId}/feedback`, {
-            liked,
-        });
-
-        // Update button state
-        const buttons = document.querySelectorAll(`[data-message-id="${messageId}"] .feedback-btn`);
-        buttons.forEach(btn => {
-            if ((liked && btn.classList.contains('like-btn')) ||
-                (!liked && btn.classList.contains('dislike-btn'))) {
-                btn.classList.add(liked ? 'liked' : 'disliked');
-            } else {
-                btn.classList.remove('liked', 'disliked');
-            }
-        });
-    } catch (error) {
-        showError('Failed to submit feedback');
+    if (page === 'personas') {
+        await showPersonasPage();
+    } else if (page === 'persona' && params.id) {
+        await showPersonaPage(parseInt(params.id));
+    } else if (page === 'session' && params.id) {
+        await showSessionPage(parseInt(params.id));
+    } else {
+        navigate({ page: 'personas' });
     }
 }
 
 // ============================================================================
-// UI Rendering
+// Personas page
 // ============================================================================
 
-function renderPersonasList() {
-    elements.personasList.innerHTML = '';
+async function showPersonasPage() {
+    document.getElementById('page-personas').style.display = 'block';
 
-    if (state.personas.length === 0) {
-        elements.personasList.innerHTML = '<p class="loading">No personas available</p>';
-        return;
-    }
+    const personas = await apiCall('GET', '/personas');
+    renderPersonasList(personas);
 
-    state.personas.forEach(persona => {
-        const item = document.createElement('div');
-        item.className = 'persona-item';
-        item.innerHTML = `
-            <div class="persona-name">${persona.name}</div>
-            <div class="persona-specialty">${persona.specialty || 'General'}</div>
-        `;
-        item.addEventListener('click', () => showPersonaModal(persona));
-        elements.personasList.appendChild(item);
+    const nameInput = document.getElementById('newPersonaName');
+    const descInput = document.getElementById('newPersonaDescription');
+    const specInput = document.getElementById('newPersonaSpecialty');
+
+    const oldBtn = document.getElementById('createPersonaBtn');
+    const btn = oldBtn.cloneNode(true);
+    oldBtn.parentNode.replaceChild(btn, oldBtn);
+
+    btn.addEventListener('click', async () => {
+        const name = nameInput.value.trim();
+        const description = descInput.value.trim();
+        if (!name || !description) return;
+        try {
+            const persona = await apiCall('POST', '/personas', {
+                name,
+                description,
+                specialty: specInput.value.trim() || null,
+            });
+            nameInput.value = '';
+            descInput.value = '';
+            specInput.value = '';
+            navigate({ page: 'persona', id: persona.id });
+        } catch (e) {
+            alert(e.message);
+        }
     });
 }
 
-function showPersonaModal(persona) {
-    state.selectedPersonaForModal = persona;
-    elements.modalPersonaName.textContent = persona.name;
-    elements.modalPersonaDescription.textContent = persona.description;
-    elements.modalPersonaSpecialty.innerHTML = `<strong>Specialty:</strong> <span>${persona.specialty || 'General'}</span>`;
-    elements.modal.style.display = 'flex';
+function renderPersonasList(personas) {
+    const list = document.getElementById('personasList');
+    if (!personas.length) {
+        list.innerHTML = '<p class="empty">No personas yet. Create one above.</p>';
+        return;
+    }
+    list.innerHTML = '';
+    personas.forEach(persona => {
+        const card = document.createElement('div');
+        card.className = 'persona-card';
+        card.innerHTML = `
+            <div class="persona-name">${persona.name}</div>
+            <div class="persona-specialty">${persona.specialty || 'General'}</div>
+        `;
+        card.addEventListener('click', () => navigate({ page: 'persona', id: persona.id }));
+        list.appendChild(card);
+    });
 }
 
-function closeModal() {
-    elements.modal.style.display = 'none';
-    state.selectedPersonaForModal = null;
+// ============================================================================
+// Persona detail page
+// ============================================================================
+
+async function showPersonaPage(id) {
+    document.getElementById('page-persona').style.display = 'block';
+
+    const persona = await apiCall('GET', `/personas/${id}`);
+    document.getElementById('detailPersonaName').textContent = persona.name;
+    document.getElementById('detailPersonaSpecialty').textContent = persona.specialty || 'General';
+    document.getElementById('detailPersonaDescription').textContent = persona.description;
+
+    const oldUserNameInput = document.getElementById('sessionUserName');
+    const userNameInput = oldUserNameInput.cloneNode(true);
+    oldUserNameInput.parentNode.replaceChild(userNameInput, oldUserNameInput);
+
+    const oldStartBtn = document.getElementById('startSessionBtn');
+    const startBtn = oldStartBtn.cloneNode(true);
+    oldStartBtn.parentNode.replaceChild(startBtn, oldStartBtn);
+
+    userNameInput.addEventListener('input', () => {
+        startBtn.disabled = !userNameInput.value.trim();
+    });
+
+    startBtn.addEventListener('click', async () => {
+        const userName = userNameInput.value.trim();
+        if (!userName) return;
+        try {
+            const session = await apiCall('POST', '/sessions', {
+                user_name: userName,
+                persona_id: id,
+            });
+            navigate({ page: 'session', id: session.id });
+        } catch (e) {
+            alert(e.message);
+        }
+    });
 }
 
-function displayChatInterface() {
-    elements.noSessionMessage.style.display = 'none';
-    elements.chatArea.style.display = 'flex';
+// ============================================================================
+// Session page
+// ============================================================================
 
-    // Update header
-    elements.personaName.textContent = state.currentPersona.name;
-    elements.personaSpecialty.textContent = state.currentPersona.specialty || 'General';
-    elements.personaDescription.textContent = state.currentPersona.description;
-    elements.userName2.textContent = `Chatting as: ${state.userName}`;
+async function showSessionPage(id) {
+    document.getElementById('page-session').style.display = 'flex';
 
-    // Clear messages
-    elements.messagesList.innerHTML = '';
+    const session = await apiCall('GET', `/sessions/${id}`);
+    const persona = session.persona;
 
-    // Focus input
-    elements.messageInput.focus();
+    document.getElementById('sessionPersonaName').textContent = persona.name;
+    document.getElementById('sessionPersonaSpecialty').textContent = persona.specialty || 'General';
+    document.getElementById('sessionPersonaDescription').textContent = persona.description;
+    document.getElementById('sessionUserName2').textContent = `Chatting as: ${session.user_name}`;
+    document.getElementById('backToPersona').href = `#page=persona&id=${persona.id}`;
+
+    const messagesList = document.getElementById('messagesList');
+    messagesList.innerHTML = '';
+    session.messages.forEach(m => addMessageToUI(m.role, m.content, m.role === 'assistant' ? m.id : null));
+
+    const oldForm = document.getElementById('messageForm');
+    const form = oldForm.cloneNode(true);
+    oldForm.parentNode.replaceChild(form, oldForm);
+
+    const msgInput = form.querySelector('#messageInput');
+    const sendBtn = form.querySelector('.send-btn');
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const content = msgInput.value.trim();
+        if (!content || sendBtn.disabled) return;
+
+        addMessageToUI('user', content);
+        msgInput.value = '';
+        sendBtn.disabled = true;
+
+        const loadingId = addMessageToUI('assistant', '⏳ Thinking...');
+        try {
+            const response = await apiCall('POST', `/sessions/${id}/messages`, { message: content });
+            document.querySelector(`[data-message-id="${loadingId}"]`)?.remove();
+            addMessageToUI('assistant', response.content, response.id);
+        } catch (e) {
+            document.querySelector(`[data-message-id="${loadingId}"]`)?.remove();
+            alert(e.message);
+        } finally {
+            sendBtn.disabled = false;
+            msgInput.focus();
+        }
+    });
+
+    msgInput.focus();
 }
+
+// ============================================================================
+// Messages
+// ============================================================================
 
 function addMessageToUI(role, content, messageId = null) {
+    const messagesList = document.getElementById('messagesList');
     const message = document.createElement('div');
     message.className = `message ${role}`;
 
@@ -234,7 +226,6 @@ function addMessageToUI(role, content, messageId = null) {
 
     message.appendChild(contentDiv);
 
-    // Add feedback buttons for assistant messages
     if (role === 'assistant' && messageId) {
         const actionsDiv = document.createElement('div');
         actionsDiv.className = 'message-actions';
@@ -254,60 +245,27 @@ function addMessageToUI(role, content, messageId = null) {
         contentDiv.appendChild(actionsDiv);
     }
 
-    elements.messagesList.appendChild(message);
-
-    // Auto-scroll to bottom
-    elements.messagesList.scrollTop = elements.messagesList.scrollHeight;
-
+    messagesList.appendChild(message);
+    messagesList.scrollTop = messagesList.scrollHeight;
     return id;
 }
 
-function showError(message) {
-    alert(message); // Simple error display, can be enhanced
+async function submitFeedback(messageId, liked) {
+    try {
+        await apiCall('POST', `/messages/${messageId}/feedback`, { liked });
+        const buttons = document.querySelectorAll(`[data-message-id="${messageId}"] .feedback-btn`);
+        buttons.forEach(btn => {
+            if ((liked && btn.classList.contains('like-btn')) ||
+                (!liked && btn.classList.contains('dislike-btn'))) {
+                btn.classList.add(liked ? 'liked' : 'disliked');
+            } else {
+                btn.classList.remove('liked', 'disliked');
+            }
+        });
+    } catch (e) {
+        alert(e.message);
+    }
 }
-
-// ============================================================================
-// Event Listeners
-// ============================================================================
-
-// User name input
-elements.userName.addEventListener('input', (e) => {
-    state.userName = e.target.value.trim();
-    elements.newSessionBtn.disabled = !state.userName;
-});
-
-// New session button
-elements.newSessionBtn.addEventListener('click', () => {
-    if (state.selectedPersonaForModal) {
-        createSession(state.selectedPersonaForModal.id);
-    }
-});
-
-// Message form
-elements.messageForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const content = elements.messageInput.value.trim();
-    if (content && !elements.sendBtn.disabled) {
-        sendMessage(content);
-    }
-});
-
-// Modal close button
-elements.modalClose.addEventListener('click', closeModal);
-
-// Select persona button in modal
-elements.selectPersonaBtn.addEventListener('click', () => {
-    if (state.selectedPersonaForModal) {
-        createSession(state.selectedPersonaForModal.id);
-    }
-});
-
-// Close modal on outside click
-elements.modal.addEventListener('click', (e) => {
-    if (e.target === elements.modal) {
-        closeModal();
-    }
-});
 
 // ============================================================================
 // Initialization
@@ -315,24 +273,20 @@ elements.modal.addEventListener('click', (e) => {
 
 async function init() {
     try {
-        // Initialize demo personas if needed
-        await initDemo();
+        await apiCall('POST', '/init-demo');
+    } catch (e) {
+        // already initialized, ignore
+    }
 
-        // Load personas
-        await loadPersonas();
+    window.addEventListener('hashchange', route);
 
-        // Set up initial UI state
-        elements.noSessionMessage.style.display = 'flex';
-        elements.chatArea.style.display = 'none';
-
-        console.log('✓ Application initialized');
-    } catch (error) {
-        showError('Failed to initialize application');
-        console.error('Initialization error:', error);
+    if (!window.location.hash) {
+        navigate({ page: 'personas' });
+    } else {
+        await route();
     }
 }
 
-// Start the application when DOM is ready
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
 } else {
