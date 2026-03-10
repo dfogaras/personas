@@ -44,23 +44,11 @@
                 <div class="persona-detail-actions"></div>
             </div>
             <p id="detailPersonaDescription" class="detail-description"></p>
+            <div id="personaSessionsList" class="persona-sessions-list"></div>
         </div>
     </div>
 
-    <!-- Chat start page -->
-    <div id="page-chat" class="page">
-        <div class="page-content">
-            <a id="chatBackToPersona" href="#page=personas" class="back-link">← Back</a>
-            <h1 id="chatPersonaName"></h1>
-            <p id="chatPersonaSpecialty" class="specialty"></p>
-            <div class="start-session-form">
-                <input type="text" id="chatUserName" placeholder="Your name" class="form-input" />
-                <button id="chatStartBtn" class="btn-primary" disabled>Start Chat</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Session page -->
+""    <!-- Session page (handles both new and existing sessions) -->
     <div id="page-session" class="page session-page">
         <div class="chat-area">
             <header class="chat-header">
@@ -74,8 +62,17 @@
                 <p id="sessionUserName2" class="user-name-display"></p>
             </header>
             <div id="sessionPersonaDescription" class="persona-description"></div>
-            <div id="messagesList" class="messages-list"></div>
-            <div class="chat-input-area">
+            <!-- Name prompt: shown when starting a new session -->
+            <div id="sessionNamePrompt" class="session-name-prompt" style="display:none">
+                <div class="name-prompt-card">
+                    <p class="name-prompt-label">What's your name?</p>
+                    <input type="text" id="chatUserName" placeholder="Your name" class="form-input" />
+                    <button id="chatStartBtn" class="btn-primary" disabled>Start Chat</button>
+                </div>
+            </div>
+            <!-- Chat UI: shown for existing sessions -->
+            <div id="messagesList" class="messages-list" style="display:none"></div>
+            <div id="chatInputArea" class="chat-input-area" style="display:none">
                 <form id="messageForm" class="message-form">
                     <input type="text" id="messageInput" placeholder="Type your message..." autocomplete="off" />
                     <button type="submit" class="send-btn">Send</button>

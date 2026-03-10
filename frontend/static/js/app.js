@@ -47,6 +47,7 @@ async function route() {
     const page = params.page || 'personas';
 
     document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
+    document.body.dataset.theme = (page === 'session') ? 'chat' : 'persona';
 
     if (page === 'personas') {
         await showPersonasPage();
@@ -58,10 +59,8 @@ async function route() {
         await showRemixPersonaPage(parseInt(params.id));
     } else if (page === 'persona' && params.id) {
         await showPersonaPage(parseInt(params.id));
-    } else if (page === 'chat' && params.id) {
-        await showChatPage(parseInt(params.id));
-    } else if (page === 'session' && params.id) {
-        await showSessionPage(parseInt(params.id));
+    } else if (page === 'session' && (params.id || params.persona)) {
+        await showSessionPage(params);
     } else {
         navigate({ page: 'personas' });
     }
@@ -169,20 +168,20 @@ async function showRemixPersonaPage(id) {
 
 function createPersonaActions(id) {
     const actions = [
-        { title: 'Chat',  icon: '💬', page: 'chat' },
-        { title: 'Edit',  icon: '✏️', page: 'persona-edit' },
-        { title: 'Remix', icon: '⧉', page: 'persona-remix' },
+        { title: 'Chat',  icon: '💬', nav: { page: 'session', persona: id } },
+        { title: 'Edit',  icon: '✏️', nav: { page: 'persona-edit', id } },
+        { title: 'Remix', icon: '⧉', nav: { page: 'persona-remix', id } },
     ];
     const div = document.createElement('div');
     div.className = 'persona-card-actions';
-    actions.forEach(({ title, icon, page }) => {
+    actions.forEach(({ title, icon, nav }) => {
         const btn = document.createElement('button');
         btn.className = 'persona-card-btn';
         btn.title = title;
         btn.textContent = icon;
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
-            navigate({ page, id });
+            navigate(nav);
         });
         div.appendChild(btn);
     });
@@ -223,107 +222,144 @@ function renderPersonasList(personas) {
 async function showPersonaPage(id) {
     document.getElementById('page-persona').style.display = 'block';
 
-    const persona = await apiCall('GET', `/personas/${id}`);
+    const [persona, sessions] = await Promise.all([
+        apiCall('GET', `/personas/${id}`),
+        apiCall('GET', `/personas/${id}/sessions`),
+    ]);
+
     document.getElementById('detailPersonaName').textContent = persona.name;
     document.getElementById('detailPersonaSpecialty').textContent = persona.specialty || 'General';
     document.getElementById('detailPersonaDescription').textContent = persona.description;
 
     const actionsContainer = document.querySelector('.persona-detail-actions');
     actionsContainer.replaceChildren(createPersonaActions(id));
+
+    const list = document.getElementById('personaSessionsList');
+    list.innerHTML = '';
+    if (sessions.length === 0) return;
+
+    const heading = document.createElement('h2');
+    heading.className = 'sessions-heading';
+    heading.textContent = 'Previous chats';
+    list.appendChild(heading);
+
+    sessions.forEach(session => {
+        const item = document.createElement('div');
+        item.className = 'session-item';
+        item.innerHTML = `
+            <span class="session-user">${session.user_name}</span>
+            <span class="session-date">${new Date(session.updated_at).toLocaleDateString()}</span>
+        `;
+        item.addEventListener('click', () => navigate({ page: 'session', id: session.id }));
+        list.appendChild(item);
+    });
 }
 
 // ============================================================================
-// Chat start page
+// Session page  (handles both new sessions and existing ones)
 // ============================================================================
 
-async function showChatPage(id) {
-    document.getElementById('page-chat').style.display = 'block';
-
-    const persona = await apiCall('GET', `/personas/${id}`);
-    document.getElementById('chatPersonaName').textContent = persona.name;
-    document.getElementById('chatPersonaSpecialty').textContent = persona.specialty || 'General';
-    document.getElementById('chatBackToPersona').href = `#page=persona&id=${id}`;
-
-    const oldInput = document.getElementById('chatUserName');
-    const userNameInput = oldInput.cloneNode(true);
-    oldInput.parentNode.replaceChild(userNameInput, oldInput);
-
-    const oldBtn = document.getElementById('chatStartBtn');
-    const startBtn = oldBtn.cloneNode(true);
-    oldBtn.parentNode.replaceChild(startBtn, oldBtn);
-
-    userNameInput.addEventListener('input', () => {
-        startBtn.disabled = !userNameInput.value.trim();
-    });
-
-    startBtn.addEventListener('click', async () => {
-        const userName = userNameInput.value.trim();
-        if (!userName) return;
-        try {
-            const session = await apiCall('POST', '/sessions', {
-                user_name: userName,
-                persona_id: id,
-            });
-            navigate({ page: 'session', id: session.id });
-        } catch (e) {
-            alert(e.message);
-        }
-    });
-
-    userNameInput.focus();
-}
-
-// ============================================================================
-// Session page
-// ============================================================================
-
-async function showSessionPage(id) {
+async function showSessionPage(params) {
     document.getElementById('page-session').style.display = 'flex';
 
-    const session = await apiCall('GET', `/sessions/${id}`);
-    const persona = session.persona;
-
-    document.getElementById('sessionPersonaName').textContent = persona.name;
-    document.getElementById('sessionPersonaSpecialty').textContent = persona.specialty || 'General';
-    document.getElementById('sessionPersonaDescription').textContent = persona.description;
-    document.getElementById('sessionUserName2').textContent = `Chatting as: ${session.user_name}`;
-    document.getElementById('backToPersona').href = `#page=persona&id=${persona.id}`;
-
+    const namePrompt   = document.getElementById('sessionNamePrompt');
     const messagesList = document.getElementById('messagesList');
-    messagesList.innerHTML = '';
-    session.messages.forEach(m => addMessageToUI(m.role, m.content, m.role === 'assistant' ? m.id : null));
+    const chatInputArea = document.getElementById('chatInputArea');
 
-    const oldForm = document.getElementById('messageForm');
-    const form = oldForm.cloneNode(true);
-    oldForm.parentNode.replaceChild(form, oldForm);
+    if (params.persona) {
+        // --- New session: show name prompt ---
+        const personaId = parseInt(params.persona);
+        const persona = await apiCall('GET', `/personas/${personaId}`);
 
-    const msgInput = form.querySelector('#messageInput');
-    const sendBtn = form.querySelector('.send-btn');
+        document.getElementById('sessionPersonaName').textContent = persona.name;
+        document.getElementById('sessionPersonaSpecialty').textContent = persona.specialty || 'General';
+        document.getElementById('sessionPersonaDescription').textContent = persona.description;
+        document.getElementById('sessionUserName2').textContent = '';
+        document.getElementById('backToPersona').href = `#page=persona&id=${personaId}`;
 
-    form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const content = msgInput.value.trim();
-        if (!content || sendBtn.disabled) return;
+        namePrompt.style.display = 'flex';
+        messagesList.style.display = 'none';
+        chatInputArea.style.display = 'none';
 
-        addMessageToUI('user', content);
-        msgInput.value = '';
-        sendBtn.disabled = true;
+        const oldInput = document.getElementById('chatUserName');
+        const userNameInput = oldInput.cloneNode(true);
+        oldInput.parentNode.replaceChild(userNameInput, oldInput);
 
-        const loadingId = addMessageToUI('assistant', '⏳ Thinking...');
-        try {
-            const response = await apiCall('POST', `/sessions/${id}/messages`, { message: content });
-            document.querySelector(`[data-message-id="${loadingId}"]`)?.remove();
-            addMessageToUI('assistant', response.content, response.id);
-        } catch (e) {
-            document.querySelector(`[data-message-id="${loadingId}"]`)?.remove();
-            alert(e.message);
-        } finally {
-            sendBtn.disabled = false;
-            msgInput.focus();
-        }
-    });
+        const oldBtn = document.getElementById('chatStartBtn');
+        const startBtn = oldBtn.cloneNode(true);
+        oldBtn.parentNode.replaceChild(startBtn, oldBtn);
 
-    msgInput.focus();
+        userNameInput.addEventListener('input', () => {
+            startBtn.disabled = !userNameInput.value.trim();
+        });
+
+        startBtn.addEventListener('click', async () => {
+            const userName = userNameInput.value.trim();
+            if (!userName) return;
+            try {
+                const session = await apiCall('POST', '/sessions', {
+                    user_name: userName,
+                    persona_id: personaId,
+                });
+                navigate({ page: 'session', id: session.id });
+            } catch (e) {
+                alert(e.message);
+            }
+        });
+
+        userNameInput.focus();
+
+    } else {
+        // --- Existing session: show chat ---
+        const sessionId = parseInt(params.id);
+        const session = await apiCall('GET', `/sessions/${sessionId}`);
+        const persona = session.persona;
+
+        document.getElementById('sessionPersonaName').textContent = persona.name;
+        document.getElementById('sessionPersonaSpecialty').textContent = persona.specialty || 'General';
+        document.getElementById('sessionPersonaDescription').textContent = persona.description;
+        document.getElementById('sessionUserName2').textContent = `Chatting as: ${session.user_name}`;
+        document.getElementById('backToPersona').href = `#page=persona&id=${persona.id}`;
+
+        namePrompt.style.display = 'none';
+        messagesList.style.display = 'flex';
+        chatInputArea.style.display = 'block';
+
+        messagesList.innerHTML = '';
+        session.messages.forEach(m => addMessageToUI(m.role, m.content, m.role === 'assistant' ? m.id : null));
+
+        const oldForm = document.getElementById('messageForm');
+        const form = oldForm.cloneNode(true);
+        oldForm.parentNode.replaceChild(form, oldForm);
+
+        const msgInput = form.querySelector('#messageInput');
+        const sendBtn  = form.querySelector('.send-btn');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const content = msgInput.value.trim();
+            if (!content || sendBtn.disabled) return;
+
+            addMessageToUI('user', content);
+            msgInput.value = '';
+            sendBtn.disabled = true;
+
+            const loadingId = addMessageToUI('assistant', '⏳ Thinking...');
+            try {
+                const response = await apiCall('POST', `/sessions/${sessionId}/messages`, { message: content });
+                document.querySelector(`[data-message-id="${loadingId}"]`)?.remove();
+                addMessageToUI('assistant', response.content, response.id);
+            } catch (e) {
+                document.querySelector(`[data-message-id="${loadingId}"]`)?.remove();
+                alert(e.message);
+            } finally {
+                sendBtn.disabled = false;
+                msgInput.focus();
+            }
+        });
+
+        msgInput.focus();
+    }
 }
 
 // ============================================================================

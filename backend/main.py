@@ -3,6 +3,7 @@
 import argparse
 import logging
 import os
+from typing import List
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Depends, HTTPException, Request
@@ -128,6 +129,12 @@ async def overwrite_persona(persona_id: int, persona: PersonaCreate, db: Session
 
 
 # Sessions API
+@app.get("/api/personas/{persona_id}/sessions", response_model=List[SessionResponse])
+async def get_persona_sessions(persona_id: int, db: Session = Depends(get_db)):
+    """Get all sessions for a persona."""
+    return db.query(DBSession).filter(DBSession.persona_id == persona_id).order_by(DBSession.updated_at.desc()).all()
+
+
 @app.post("/api/sessions", response_model=SessionResponse)
 async def create_session(session: SessionCreate, db: Session = Depends(get_db)):
     """Create a new chat session."""
