@@ -65,6 +65,7 @@ async function route() {
 
 async function showPersonasPage() {
     document.getElementById('page-personas').style.display = 'block';
+    showPersonasGrid();
 
     const personas = await apiCall('GET', '/personas');
     renderPersonasList(personas);
@@ -77,6 +78,10 @@ async function showPersonasPage() {
     const btn = oldBtn.cloneNode(true);
     oldBtn.parentNode.replaceChild(btn, oldBtn);
 
+    const oldCancelBtn = document.getElementById('cancelCreateBtn');
+    const cancelBtn = oldCancelBtn.cloneNode(true);
+    oldCancelBtn.parentNode.replaceChild(cancelBtn, oldCancelBtn);
+
     btn.addEventListener('click', async () => {
         const name = nameInput.value.trim();
         const description = descInput.value.trim();
@@ -87,22 +92,35 @@ async function showPersonasPage() {
                 description,
                 specialty: specInput.value.trim() || null,
             });
-            nameInput.value = '';
-            descInput.value = '';
-            specInput.value = '';
             navigate({ page: 'persona', id: persona.id });
         } catch (e) {
             alert(e.message);
         }
     });
+
+    cancelBtn.addEventListener('click', () => {
+        nameInput.value = '';
+        descInput.value = '';
+        specInput.value = '';
+        showPersonasGrid();
+    });
+}
+
+function showPersonasGrid() {
+    document.getElementById('personasList').style.display = 'grid';
+    document.getElementById('createPersonaForm').style.display = 'none';
+    document.getElementById('personasPageTitle').textContent = 'Personas';
+}
+
+function showCreateForm() {
+    document.getElementById('personasList').style.display = 'none';
+    document.getElementById('createPersonaForm').style.display = 'block';
+    document.getElementById('personasPageTitle').textContent = 'New Persona';
+    document.getElementById('newPersonaName').focus();
 }
 
 function renderPersonasList(personas) {
     const list = document.getElementById('personasList');
-    if (!personas.length) {
-        list.innerHTML = '<p class="empty">No personas yet. Create one above.</p>';
-        return;
-    }
     list.innerHTML = '';
     personas.forEach(persona => {
         const card = document.createElement('div');
@@ -114,6 +132,12 @@ function renderPersonasList(personas) {
         card.addEventListener('click', () => navigate({ page: 'persona', id: persona.id }));
         list.appendChild(card);
     });
+
+    const addCard = document.createElement('div');
+    addCard.className = 'persona-card persona-card-add';
+    addCard.textContent = '+';
+    addCard.addEventListener('click', showCreateForm);
+    list.appendChild(addCard);
 }
 
 // ============================================================================

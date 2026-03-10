@@ -15,17 +15,19 @@
     <div id="page-personas" class="page">
         <div class="page-content">
             <div class="page-header">
-                <h1>Personas</h1>
-            </div>
-            <div class="create-form">
-                <h2>Create Persona</h2>
-                <input type="text" id="newPersonaName" placeholder="Name" class="form-input" />
-                <textarea id="newPersonaDescription" placeholder="Description" class="form-input" rows="3"></textarea>
-                <input type="text" id="newPersonaSpecialty" placeholder="Specialty (optional)" class="form-input" />
-                <button id="createPersonaBtn" class="btn-primary">Create</button>
+                <h1 id="personasPageTitle">Personas</h1>
             </div>
             <div id="personasList" class="personas-grid">
                 <p class="loading">Loading...</p>
+            </div>
+            <div id="createPersonaForm" class="create-form" style="display:none">
+                <input type="text" id="newPersonaName" placeholder="Name" class="form-input" />
+                <textarea id="newPersonaDescription" placeholder="Description" class="form-input" rows="3"></textarea>
+                <input type="text" id="newPersonaSpecialty" placeholder="Specialty (optional)" class="form-input" />
+                <div class="form-actions">
+                    <button id="createPersonaBtn" class="btn-primary">Create</button>
+                    <button id="cancelCreateBtn" class="btn-secondary">Cancel</button>
+                </div>
             </div>
         </div>
     </div>
