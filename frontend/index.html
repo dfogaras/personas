@@ -9,6 +9,10 @@
 <body>
     <nav class="top-nav">
         <a href="#page=personas" class="nav-brand">AI Personas</a>
+        <div class="nav-user" id="navUser" style="display:none">
+            <span class="nav-user-name" id="navUserName"></span>
+            <button class="nav-logout-btn" id="navLogoutBtn">Sign out</button>
+        </div>
     </nav>
 
     <!-- Personas list page -->
@@ -77,6 +81,33 @@
                     <input type="text" id="messageInput" placeholder="Type your message..." autocomplete="off" />
                     <button type="submit" class="send-btn">Send</button>
                 </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login page -->
+    <div id="page-login" class="page">
+        <div class="page-content page-content-narrow">
+            <div class="auth-card">
+                <h1 class="auth-title">Sign in</h1>
+                <p class="auth-subtitle">Enter your email to receive a login code.</p>
+                <input type="email" id="loginEmail" placeholder="you@example.com" class="form-input" />
+                <div class="auth-error" id="loginError" style="display:none"></div>
+                <button id="loginBtn" class="btn-primary">Send code</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Verify page -->
+    <div id="page-verify" class="page">
+        <div class="page-content page-content-narrow">
+            <div class="auth-card">
+                <h1 class="auth-title">Enter code</h1>
+                <p class="auth-subtitle" id="verifySubtitle">Check the server log for your 6-digit code.</p>
+                <input type="text" id="verifyCode" placeholder="123456" class="form-input" maxlength="6" />
+                <div class="auth-error" id="verifyError" style="display:none"></div>
+                <button id="verifyBtn" class="btn-primary">Verify</button>
+                <a href="#page=login" class="auth-back-link">← Use a different email</a>
             </div>
         </div>
     </div>

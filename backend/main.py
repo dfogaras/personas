@@ -14,13 +14,15 @@ from sqlalchemy.orm import Session
 
 from config import load_settings
 from database import init_db, get_db
-from models import Persona, Session as DBSession, Message
+from models import Persona, Session as DBSession, Message, User
 from schemas import (
     PersonaCreate, PersonaResponse,
     SessionCreate, SessionResponse, SessionDetailResponse,
-    ChatRequest, FeedbackRequest, MessageResponse
+    ChatRequest, FeedbackRequest, MessageResponse,
+    AuthRequestCode, AuthVerify, TokenResponse, UserResponse,
 )
 from ai_service import AIService
+from auth import request_code, verify_code_and_create_token, get_current_user
 
 
 def _parse_args():
@@ -84,6 +86,28 @@ async def root():
         return f.read()
 
 
+# Auth API
+@app.post("/api/auth/request", status_code=200)
+async def auth_request(body: AuthRequestCode, db: Session = Depends(get_db)):
+    """Request a login OTP. Always returns 200 to avoid email enumeration."""
+    if db.query(User).filter(User.email == body.email).first():
+        request_code(body.email, settings.auth.code_expire_minutes, db)
+    return {"detail": "If that email exists, a code has been sent"}
+
+
+@app.post("/api/auth/verify", response_model=TokenResponse)
+async def auth_verify(body: AuthVerify, db: Session = Depends(get_db)):
+    """Verify OTP and return a bearer token."""
+    token = verify_code_and_create_token(body.email, body.code, settings.auth.token_expire_hours, db)
+    return TokenResponse(token=token.token, user=UserResponse.model_validate(token.user))
+
+
+@app.get("/api/auth/me", response_model=UserResponse)
+async def auth_me(current_user: User = Depends(get_current_user)):
+    """Return the currently authenticated user."""
+    return current_user
+
+
 # Personas API
 @app.get("/api/personas", response_model=list[PersonaResponse])
 async def list_personas(db: Session = Depends(get_db)):
@@ -92,11 +116,15 @@ async def list_personas(db: Session = Depends(get_db)):
 
 
 @app.post("/api/personas", response_model=PersonaResponse)
-async def create_persona(persona: PersonaCreate, db: Session = Depends(get_db)):
+async def create_persona(
+    persona: PersonaCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
     """Create a new persona."""
     if db.query(Persona).filter(Persona.name == persona.name).first():
         raise HTTPException(status_code=400, detail="Persona already exists")
-    db_persona = Persona(**persona.model_dump())
+    db_persona = Persona(**persona.model_dump(), user_id=current_user.id)
     db.add(db_persona)
     db.commit()
     db.refresh(db_persona)
@@ -113,11 +141,18 @@ async def get_persona(persona_id: int, db: Session = Depends(get_db)):
 
 
 @app.post("/api/personas/{persona_id}", response_model=PersonaResponse)
-async def overwrite_persona(persona_id: int, persona: PersonaCreate, db: Session = Depends(get_db)):
+async def overwrite_persona(
+    persona_id: int,
+    persona: PersonaCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
     """Overwrite an existing persona."""
     db_persona = db.query(Persona).filter(Persona.id == persona_id).first()
     if not db_persona:
         raise HTTPException(status_code=404, detail="Persona not found")
+    if db_persona.user_id is not None and db_persona.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not your persona")
     conflict = db.query(Persona).filter(Persona.name == persona.name, Persona.id != persona_id).first()
     if conflict:
         raise HTTPException(status_code=400, detail="Persona name already exists")
@@ -136,11 +171,15 @@ async def get_persona_sessions(persona_id: int, db: Session = Depends(get_db)):
 
 
 @app.post("/api/sessions", response_model=SessionResponse)
-async def create_session(session: SessionCreate, db: Session = Depends(get_db)):
+async def create_session(
+    session: SessionCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
     """Create a new chat session."""
     if not db.query(Persona).filter(Persona.id == session.persona_id).first():
         raise HTTPException(status_code=404, detail="Persona not found")
-    db_session = DBSession(**session.model_dump())
+    db_session = DBSession(**session.model_dump(), user_id=current_user.id)
     db.add(db_session)
     db.commit()
     db.refresh(db_session)

@@ -5,6 +5,33 @@
 const API_BASE = '/api';
 
 // ============================================================================
+// Auth state
+// ============================================================================
+
+function getToken() { return localStorage.getItem('auth_token'); }
+function getUser()  { const u = localStorage.getItem('auth_user'); return u ? JSON.parse(u) : null; }
+function setAuth(token, user) {
+    localStorage.setItem('auth_token', token);
+    localStorage.setItem('auth_user', JSON.stringify(user));
+}
+function clearAuth() {
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('auth_user');
+}
+
+function updateNav() {
+    const user = getUser();
+    const navUser = document.getElementById('navUser');
+    const navUserName = document.getElementById('navUserName');
+    if (user) {
+        navUserName.textContent = user.name || user.email;
+        navUser.style.display = 'flex';
+    } else {
+        navUser.style.display = 'none';
+    }
+}
+
+// ============================================================================
 // API
 // ============================================================================
 
@@ -13,8 +40,15 @@ async function apiCall(method, endpoint, data = null) {
         method,
         headers: { 'Content-Type': 'application/json' },
     };
+    const token = getToken();
+    if (token) options.headers['Authorization'] = `Bearer ${token}`;
     if (data) options.body = JSON.stringify(data);
     const response = await fetch(`${API_BASE}${endpoint}`, options);
+    if (response.status === 401) {
+        clearAuth();
+        navigate({ page: 'login' });
+        throw new Error('Session expired — please sign in again');
+    }
     if (!response.ok) {
         const error = await response.json();
         throw new Error(error.detail || 'API error');
@@ -46,10 +80,21 @@ async function route() {
     const params = parseHash();
     const page = params.page || 'personas';
 
+    const publicPages = new Set(['login', 'verify']);
+    if (!getToken() && !publicPages.has(page)) {
+        navigate({ page: 'login' });
+        return;
+    }
+
     document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
     document.body.dataset.theme = (page === 'session') ? 'chat' : 'persona';
+    updateNav();
 
-    if (page === 'personas') {
+    if (page === 'login') {
+        showLoginPage();
+    } else if (page === 'verify') {
+        showVerifyPage();
+    } else if (page === 'personas') {
         await showPersonasPage();
     } else if (page === 'persona-new') {
         showCreatePersonaPage();
@@ -64,6 +109,73 @@ async function route() {
     } else {
         navigate({ page: 'personas' });
     }
+}
+
+// ============================================================================
+// Login / Verify pages
+// ============================================================================
+
+function showLoginPage() {
+    document.getElementById('page-login').style.display = 'block';
+    const emailInput = document.getElementById('loginEmail');
+    const errorDiv   = document.getElementById('loginError');
+    const btn        = document.getElementById('loginBtn');
+
+    const fresh = btn.cloneNode(true);
+    btn.parentNode.replaceChild(fresh, btn);
+    errorDiv.style.display = 'none';
+
+    fresh.addEventListener('click', async () => {
+        const email = emailInput.value.trim();
+        if (!email) return;
+        fresh.disabled = true;
+        errorDiv.style.display = 'none';
+        try {
+            await apiCall('POST', '/auth/request', { email });
+            sessionStorage.setItem('pending_email', email);
+            navigate({ page: 'verify' });
+        } catch (e) {
+            errorDiv.textContent = e.message;
+            errorDiv.style.display = 'block';
+            fresh.disabled = false;
+        }
+    });
+    emailInput.focus();
+}
+
+function showVerifyPage() {
+    document.getElementById('page-verify').style.display = 'block';
+    const email     = sessionStorage.getItem('pending_email') || '';
+    const subtitle  = document.getElementById('verifySubtitle');
+    subtitle.textContent = email
+        ? `Code sent to ${email}. Check the server log.`
+        : 'Check the server log for your 6-digit code.';
+
+    const codeInput = document.getElementById('verifyCode');
+    const errorDiv  = document.getElementById('verifyError');
+    const btn       = document.getElementById('verifyBtn');
+
+    const fresh = btn.cloneNode(true);
+    btn.parentNode.replaceChild(fresh, btn);
+    errorDiv.style.display = 'none';
+
+    fresh.addEventListener('click', async () => {
+        const code = codeInput.value.trim();
+        if (!code || !email) return;
+        fresh.disabled = true;
+        errorDiv.style.display = 'none';
+        try {
+            const data = await apiCall('POST', '/auth/verify', { email, code });
+            setAuth(data.token, data.user);
+            sessionStorage.removeItem('pending_email');
+            navigate({ page: 'personas' });
+        } catch (e) {
+            errorDiv.textContent = e.message;
+            errorDiv.style.display = 'block';
+            fresh.disabled = false;
+        }
+    });
+    codeInput.focus();
 }
 
 // ============================================================================
@@ -426,16 +538,19 @@ async function submitFeedback(messageId, liked) {
 // ============================================================================
 
 async function init() {
-    try {
-        await apiCall('POST', '/init-demo');
-    } catch (e) {
-        // already initialized, ignore
-    }
+    document.getElementById('navLogoutBtn').addEventListener('click', () => {
+        clearAuth();
+        navigate({ page: 'login' });
+    });
 
     window.addEventListener('hashchange', route);
 
     if (!window.location.hash) {
-        navigate({ page: 'personas' });
+        if (getToken()) {
+            navigate({ page: 'personas' });
+        } else {
+            navigate({ page: 'login' });
+        }
     } else {
         await route();
     }

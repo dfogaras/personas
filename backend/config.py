@@ -32,12 +32,18 @@ class _CORSSettings(BaseModel):
     origins: list[str]
 
 
+class _AuthSettings(BaseModel):
+    code_expire_minutes: int = 10
+    token_expire_hours: int = 1
+
+
 class Settings(BaseModel):
     openrouter: _OpenRouterSettings
     app: _AppSettings
     database: _DatabaseSettings
     ai: _AISettings
     cors: _CORSSettings
+    auth: _AuthSettings = _AuthSettings()
 
 
 def load_settings(path: Path | str) -> Settings:

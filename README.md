@@ -16,12 +16,13 @@ A web-based application for creating and interacting with AI-powered personas. P
 ```
 personas/
 ├── backend/               # FastAPI backend
-│   ├── main.py           # Application entry point
+│   ├── main.py           # Application entry point and routes
 │   ├── config.py         # Configuration settings
-│   ├── models.py         # Database models
+│   ├── models.py         # Database models (SQLAlchemy)
 │   ├── schemas.py        # Pydantic schemas
+│   ├── auth.py           # OTP + bearer token authentication
 │   ├── ai_service.py     # OpenRouter integration
-│   ├── database.py       # Database operations
+│   ├── database.py       # DB engine and session
 │   ├── config.example.json # Config template
 │   └── requirements.txt  # Python dependencies
 ├── frontend/             # Web frontend
@@ -84,14 +85,58 @@ personas/
 
 ## API Endpoints
 
-- `GET /` - Serves the main HTML interface
-- `POST /api/sessions` - Create a new chat session
-- `GET /api/sessions/{session_id}` - Get session details
-- `POST /api/sessions/{session_id}/messages` - Send a message to the persona
-- `POST /api/messages/{message_id}/feedback` - Submit feedback (like/dislike)
-- `GET /api/personas` - List available personas
+**Auth** (open)
+- `POST /api/auth/request` — send a 6-digit OTP to the given email (code logged to console)
+- `POST /api/auth/verify` — verify OTP, returns `{ token, user }`
+- `GET /api/auth/me` — return current user (requires `Authorization: Bearer <token>`)
+
+**Personas** (reads open, writes require auth)
+- `GET /api/personas` — list all personas
+- `POST /api/personas` — create a persona (auth required)
+- `GET /api/personas/{id}` — get a persona
+- `POST /api/personas/{id}` — edit a persona (auth + ownership required)
+- `GET /api/personas/{id}/sessions` — list sessions for a persona
+
+**Sessions & messages** (reads open, create requires auth)
+- `POST /api/sessions` — start a new session (auth required)
+- `GET /api/sessions/{id}` — get session with messages
+- `POST /api/sessions/{id}/messages` — send a message, get AI reply
+- `POST /api/messages/{id}/feedback` — like/dislike a message
 
 ## Database Schema
+
+### users
+| column | type | notes |
+|---|---|---|
+| id | integer | primary key |
+| email | string | unique, indexed |
+| name | string | |
+| role | string | `"admin"` or `"user"` |
+| group | string | nullable — arbitrary group/class label |
+| created_at | datetime | |
+
+Users are created directly in the database (no self-registration). Insert a row to grant access:
+```sql
+INSERT INTO users (email, name, role) VALUES ('alice@example.com', 'Alice', 'user');
+```
+
+### auth_codes
+| column | type | notes |
+|---|---|---|
+| id | integer | primary key |
+| email | string | indexed |
+| code_hash | string | SHA-256 of the 6-digit OTP |
+| expires_at | datetime | default 10 minutes after issue |
+| used | boolean | marked true after successful verify |
+
+### auth_tokens
+| column | type | notes |
+|---|---|---|
+| id | integer | primary key |
+| user_id | integer | FK → users.id |
+| token | string | UUID, unique, indexed |
+| expires_at | datetime | default 1 hour after issue |
+| created_at | datetime | |
 
 ### personas
 | column | type | notes |
@@ -101,15 +146,17 @@ personas/
 | description | text | |
 | specialty | string | nullable |
 | created_at | datetime | |
+| user_id | integer | FK → users.id, nullable (null = editable by anyone) |
 
 ### sessions
 | column | type | notes |
 |---|---|---|
 | id | integer | primary key |
-| user_name | string | |
+| user_name | string | display name entered at chat start |
 | persona_id | integer | FK → personas.id |
 | created_at | datetime | |
 | updated_at | datetime | |
+| user_id | integer | FK → users.id, nullable |
 
 ### messages
 | column | type | notes |
@@ -119,6 +166,9 @@ personas/
 | role | string | `"user"` or `"assistant"` |
 | content | text | |
 | liked | boolean | nullable — null = no feedback |
+| prompt_tokens | integer | nullable |
+| completion_tokens | integer | nullable |
+| total_tokens | integer | nullable |
 | created_at | datetime | |
 
 ## Extending the Application

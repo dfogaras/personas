@@ -2,7 +2,40 @@
 
 from datetime import datetime
 from typing import Optional, List
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
+
+
+class UserResponse(BaseModel):
+    """Schema for user response."""
+
+    id: int
+    email: str
+    name: str
+    group: Optional[str] = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class TokenResponse(BaseModel):
+    """Schema for auth token response."""
+
+    token: str
+    user: UserResponse
+
+
+class AuthRequestCode(BaseModel):
+    """Schema for requesting an OTP code."""
+
+    email: str
+
+
+class AuthVerify(BaseModel):
+    """Schema for verifying an OTP code."""
+
+    email: str
+    code: str
 
 
 class PersonaBase(BaseModel):
@@ -24,6 +57,7 @@ class PersonaResponse(PersonaBase):
 
     id: int
     created_at: datetime
+    user_id: Optional[int] = None
 
     class Config:
         from_attributes = True
@@ -76,6 +110,7 @@ class SessionResponse(SessionBase):
     created_at: datetime
     updated_at: datetime
     messages: List[MessageResponse] = []
+    user_id: Optional[int] = None
 
     class Config:
         from_attributes = True
