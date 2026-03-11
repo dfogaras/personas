@@ -6,7 +6,7 @@ import os
 from typing import List
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Depends, HTTPException, Request
+from fastapi import FastAPI, Depends, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -163,6 +163,25 @@ async def overwrite_persona(
     return db_persona
 
 
+@app.delete("/api/personas/{persona_id}", status_code=204)
+async def delete_persona(
+    persona_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Delete a persona and all its sessions/messages."""
+    db_persona = db.query(Persona).filter(Persona.id == persona_id).first()
+    if not db_persona:
+        raise HTTPException(status_code=404, detail="Persona not found")
+    if db_persona.user_id is not None and db_persona.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not your persona")
+    for session in db_persona.sessions:
+        db.delete(session)
+    db.delete(db_persona)
+    db.commit()
+    return Response(status_code=204)
+
+
 # Sessions API
 @app.get("/api/personas/{persona_id}/sessions", response_model=List[SessionResponse])
 async def get_persona_sessions(persona_id: int, db: Session = Depends(get_db)):
@@ -184,6 +203,23 @@ async def create_session(
     db.commit()
     db.refresh(db_session)
     return db_session
+
+
+@app.delete("/api/sessions/{session_id}", status_code=204)
+async def delete_session(
+    session_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Delete a session and all its messages."""
+    session = db.query(DBSession).filter(DBSession.id == session_id).first()
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+    if session.user_id is not None and session.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not your session")
+    db.delete(session)
+    db.commit()
+    return Response(status_code=204)
 
 
 @app.get("/api/sessions/{session_id}", response_model=SessionDetailResponse)

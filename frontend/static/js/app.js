@@ -53,6 +53,7 @@ async function apiCall(method, endpoint, data = null) {
         const error = await response.json();
         throw new Error(error.detail || 'API error');
     }
+    if (response.status === 204) return null;
     return response.json();
 }
 
@@ -279,7 +280,8 @@ async function showRemixPersonaPage(id) {
     });
 }
 
-function createPersonaActions(id) {
+function createPersonaActions(persona) {
+    const id = persona.id;
     const actions = [
         { title: 'Chat',  icon: '💬', nav: { page: 'session', persona: id } },
         { title: 'Edit',  icon: '✏️', nav: { page: 'persona-edit', id } },
@@ -298,6 +300,28 @@ function createPersonaActions(id) {
         });
         div.appendChild(btn);
     });
+
+    const delBtn = document.createElement('button');
+    delBtn.className = 'persona-card-btn btn-danger';
+    delBtn.title = 'Delete';
+    delBtn.textContent = '🗑';
+    delBtn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        if (!confirm(`Delete persona "${persona.name}"? This will also delete all its chats.`)) return;
+        try {
+            await apiCall('DELETE', `/personas/${id}`);
+            const card = delBtn.closest('.persona-card');
+            if (card) {
+                card.remove();
+            } else {
+                navigate({ page: 'personas' });
+            }
+        } catch (err) {
+            alert(err.message);
+        }
+    });
+    div.appendChild(delBtn);
+
     return div;
 }
 
@@ -317,7 +341,7 @@ function renderPersonasList(personas) {
         body.addEventListener('click', () => navigate({ page: 'persona', id: persona.id }));
 
         card.appendChild(body);
-        card.appendChild(createPersonaActions(persona.id));
+        card.appendChild(createPersonaActions(persona));
         list.appendChild(card);
     });
 
@@ -345,7 +369,7 @@ async function showPersonaPage(id) {
     document.getElementById('detailPersonaDescription').textContent = persona.description;
 
     const actionsContainer = document.querySelector('.persona-detail-actions');
-    actionsContainer.replaceChildren(createPersonaActions(id));
+    actionsContainer.replaceChildren(createPersonaActions(persona));
 
     const list = document.getElementById('personaSessionsList');
     list.innerHTML = '';
@@ -359,11 +383,35 @@ async function showPersonaPage(id) {
     sessions.forEach(session => {
         const item = document.createElement('div');
         item.className = 'session-item';
-        item.innerHTML = `
+
+        const info = document.createElement('div');
+        info.className = 'session-item-info';
+        info.innerHTML = `
             <span class="session-user">${session.user_name}</span>
             <span class="session-date">${new Date(session.updated_at).toLocaleDateString()}</span>
         `;
-        item.addEventListener('click', () => navigate({ page: 'session', id: session.id }));
+        info.addEventListener('click', () => navigate({ page: 'session', id: session.id }));
+
+        const delBtn = document.createElement('button');
+        delBtn.className = 'session-delete-btn btn-danger';
+        delBtn.title = 'Delete chat';
+        delBtn.textContent = '🗑';
+        delBtn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            if (!confirm(`Delete this chat with ${session.user_name}?`)) return;
+            try {
+                await apiCall('DELETE', `/sessions/${session.id}`);
+                item.remove();
+                if (list.querySelectorAll('.session-item').length === 0) {
+                    list.innerHTML = '';
+                }
+            } catch (err) {
+                alert(err.message);
+            }
+        });
+
+        item.appendChild(info);
+        item.appendChild(delBtn);
         list.appendChild(item);
     });
 }

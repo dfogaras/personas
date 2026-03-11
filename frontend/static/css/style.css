@@ -227,6 +227,11 @@ button, input, select, textarea {
     background: var(--persona-light);
 }
 
+.btn-danger:hover {
+    background: #fee2e2 !important;
+    color: #dc2626;
+}
+
 .persona-card-add {
     display: flex;
     align-items: center;
@@ -407,8 +412,32 @@ button, input, select, textarea {
     border-radius: var(--radius-sm);
     box-shadow: 2px 4px 10px rgba(124, 58, 237, 0.08);
     margin-bottom: 8px;
-    cursor: pointer;
     transition: var(--transition);
+}
+
+.session-item-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex: 1;
+    cursor: pointer;
+}
+
+.session-delete-btn {
+    border: none;
+    background: none;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: var(--radius-sm);
+    opacity: 0.3;
+    transition: opacity 0.15s, background 0.15s;
+    margin-left: 8px;
+    flex-shrink: 0;
+}
+
+.session-delete-btn:hover {
+    opacity: 1;
 }
 
 .session-item:hover {
