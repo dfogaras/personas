@@ -122,6 +122,7 @@ function showLoginPage() {
     const btn        = document.getElementById('loginBtn');
 
     const fresh = btn.cloneNode(true);
+    fresh.disabled = false;
     btn.parentNode.replaceChild(fresh, btn);
     errorDiv.style.display = 'none';
 
