@@ -35,6 +35,7 @@ def cmd_migrate(engine):
     ]
     drop_columns = [
         ("users", "role"),
+        ("sessions", "user_name"),
     ]
     with engine.connect() as conn:
         for table, column, col_def in add_columns:

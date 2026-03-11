@@ -90,27 +90,22 @@ class MessageResponse(MessageBase):
         from_attributes = True
 
 
-class SessionBase(BaseModel):
-    """Base session schema."""
+class SessionCreate(BaseModel):
+    """Schema for creating a session."""
 
-    user_name: str
     persona_id: int
 
 
-class SessionCreate(SessionBase):
-    """Schema for creating a session."""
-
-    pass
-
-
-class SessionResponse(SessionBase):
+class SessionResponse(BaseModel):
     """Schema for session response."""
 
     id: int
+    persona_id: int
+    user_id: Optional[int] = None
+    user: Optional[UserResponse] = None
     created_at: datetime
     updated_at: datetime
     messages: List[MessageResponse] = []
-    user_id: Optional[int] = None
 
     class Config:
         from_attributes = True

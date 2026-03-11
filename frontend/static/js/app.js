@@ -387,7 +387,7 @@ async function showPersonaPage(id) {
         const info = document.createElement('div');
         info.className = 'session-item-info';
         info.innerHTML = `
-            <span class="session-user">${session.user_name}</span>
+            <span class="session-user">${session.user ? session.user.name : ''}</span>
             <span class="session-date">${new Date(session.updated_at).toLocaleDateString()}</span>
         `;
         info.addEventListener('click', () => navigate({ page: 'session', id: session.id }));
@@ -398,7 +398,7 @@ async function showPersonaPage(id) {
         delBtn.textContent = '🗑';
         delBtn.addEventListener('click', async (e) => {
             e.stopPropagation();
-            if (!confirm(`Delete this chat with ${session.user_name}?`)) return;
+            if (!confirm(`Delete this chat with ${session.user ? session.user.name : 'this user'}?`)) return;
             try {
                 await apiCall('DELETE', `/sessions/${session.id}`);
                 item.remove();
@@ -428,47 +428,16 @@ async function showSessionPage(params) {
     const chatInputArea = document.getElementById('chatInputArea');
 
     if (params.persona) {
-        // --- New session: show name prompt ---
+        // --- New session: create immediately using the logged-in user's name ---
         const personaId = parseInt(params.persona);
-        const persona = await apiCall('GET', `/personas/${personaId}`);
-
-        document.getElementById('sessionPersonaName').textContent = persona.name;
-        document.getElementById('sessionPersonaSpecialty').textContent = persona.specialty || 'General';
-        document.getElementById('sessionPersonaDescription').textContent = persona.description;
-        document.getElementById('sessionUserName2').textContent = '';
-        document.getElementById('backToPersona').href = `#page=persona&id=${personaId}`;
-
-        namePrompt.style.display = 'flex';
-        messagesList.style.display = 'none';
-        chatInputArea.style.display = 'none';
-
-        const oldInput = document.getElementById('chatUserName');
-        const userNameInput = oldInput.cloneNode(true);
-        oldInput.parentNode.replaceChild(userNameInput, oldInput);
-
-        const oldBtn = document.getElementById('chatStartBtn');
-        const startBtn = oldBtn.cloneNode(true);
-        oldBtn.parentNode.replaceChild(startBtn, oldBtn);
-
-        userNameInput.addEventListener('input', () => {
-            startBtn.disabled = !userNameInput.value.trim();
-        });
-
-        startBtn.addEventListener('click', async () => {
-            const userName = userNameInput.value.trim();
-            if (!userName) return;
-            try {
-                const session = await apiCall('POST', '/sessions', {
-                    user_name: userName,
-                    persona_id: personaId,
-                });
-                navigate({ page: 'session', id: session.id });
-            } catch (e) {
-                alert(e.message);
-            }
-        });
-
-        userNameInput.focus();
+        try {
+            const session = await apiCall('POST', '/sessions', {
+                persona_id: personaId,
+            });
+            navigate({ page: 'session', id: session.id });
+        } catch (e) {
+            alert(e.message);
+        }
 
     } else {
         // --- Existing session: show chat ---
@@ -479,7 +448,7 @@ async function showSessionPage(params) {
         document.getElementById('sessionPersonaName').textContent = persona.name;
         document.getElementById('sessionPersonaSpecialty').textContent = persona.specialty || 'General';
         document.getElementById('sessionPersonaDescription').textContent = persona.description;
-        document.getElementById('sessionUserName2').textContent = `Chatting as: ${session.user_name}`;
+        document.getElementById('sessionUserName2').textContent = session.user ? `Chatting as: ${session.user.name}` : '';
         document.getElementById('backToPersona').href = `#page=persona&id=${persona.id}`;
 
         namePrompt.style.display = 'none';

@@ -69,13 +69,13 @@ class Session(Base):
     __tablename__ = "sessions"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_name = Column(String)
     persona_id = Column(Integer, ForeignKey("personas.id"))
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
 
     persona = relationship("Persona", back_populates="sessions")
+    user = relationship("User")
     messages = relationship("Message", back_populates="session", cascade="all, delete-orphan")
 
 
