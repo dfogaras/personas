@@ -447,7 +447,6 @@ async function showSessionPage(params) {
 
         document.getElementById('sessionPersonaName').textContent = persona.name;
         document.getElementById('sessionPersonaSpecialty').textContent = persona.specialty || 'General';
-        document.getElementById('sessionPersonaDescription').textContent = persona.description;
         document.getElementById('sessionUserName2').textContent = session.user ? `Chatting as: ${session.user.name}` : '';
         document.getElementById('backToPersona').href = `#page=persona&id=${persona.id}`;
 
