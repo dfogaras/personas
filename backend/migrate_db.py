@@ -84,7 +84,7 @@ def cmd_list_users(engine):
 
 def main():
     parser = argparse.ArgumentParser(description="DB migrations and user management")
-    parser.add_argument("--config", required=True, help="Path to config.json")
+    parser.add_argument("--config", default=None, help="Path to config.json (omit to use env vars)")
     sub = parser.add_subparsers(dest="command")
 
     sub.add_parser("migrate", help="Create tables and run column migrations")

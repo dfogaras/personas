@@ -27,7 +27,7 @@ from auth import request_code, verify_code_and_create_token, get_current_user
 
 def _parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--config", required=True, help="Path to config.json")
+    parser.add_argument("--config", default=None, help="Path to config.json (omit to use env vars)")
     return parser.parse_args()
 
 
@@ -251,7 +251,15 @@ async def send_message(
     logger.info(f"DB write: user message id={user_message.id}")
 
     persona = session.persona
-    system_prompt = f"You are {persona.name}. {persona.description}"
+    system_prompt = (
+        f"""A neved {persona.name}. Az alábbit írták a személyiségedről:
+        -------
+        {persona.description}
+        -------
+        Általában röviden válaszolj: néhány mondat elegendő.
+        Csak akkor írj hosszabban, ha a kérdés valóban részletes magyarázatot igényel.
+        """
+    )
 
     messages = [
         {"role": m.role, "content": m.content}
