@@ -28,7 +28,8 @@ from auth import request_code, verify_code_and_create_token, get_current_user
 def _parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--config", default=None, help="Path to config.json (omit to use env vars)")
-    return parser.parse_args()
+    # parse_known_args ignores uvicorn's own CLI args when imported as main:app
+    return parser.parse_known_args()[0]
 
 
 logging.basicConfig(level=logging.DEBUG, format="%(asctime)s %(levelname)s %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
