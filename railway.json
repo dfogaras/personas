@@ -4,7 +4,7 @@
     "builder": "NIXPACKS"
   },
   "deploy": {
-    "startCommand": "cd backend && uvicorn main:app --host 0.0.0.0 --port $PORT",
+    "startCommand": "cd backend && python migrate_db.py migrate && python migrate_db.py add-user --email fogaras.daniel@kincskereso-iskola.hu --name Dani && uvicorn main:app --host 0.0.0.0 --port $PORT",
     "restartPolicyType": "ON_FAILURE"
   }
 }

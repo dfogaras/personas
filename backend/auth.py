@@ -45,6 +45,7 @@ def verify_code_and_create_token(email: str, code: str, expire_hours: int, db: S
     """Validate OTP, mark used, create and return a bearer token."""
     user = db.query(User).filter(User.email == email).first()
     if not user:
+        logger.warning(f"Login attempt for unknown email: {email}")
         raise HTTPException(status_code=401, detail="Unknown email")
 
     auth_code = (
