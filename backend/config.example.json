@@ -2,7 +2,7 @@
   "openrouter": {
     "api_key": "",
     "base_url": "https://openrouter.ai/api/v1",
-    "model": "auto"
+    "model": "google/gemini-2.5-flash-lite"
   },
   "app": {
     "name": "AI Personas",
@@ -20,5 +20,15 @@
   },
   "cors": {
     "origins": ["*"]
+  },
+  "auth": {
+    "code_expire_minutes": 10,
+    "token_expire_hours": 1
+  },
+  "email": {
+    "smtp_host": "smtp.gmail.com",
+    "smtp_port": 587,
+    "username": "you@gmail.com",
+    "password": "your-app-password"
   }
 }

@@ -33,6 +33,13 @@ class _CORSSettings(BaseModel):
     origins: list[str]
 
 
+class _EmailSettings(BaseModel):
+    smtp_host: str = "smtp.gmail.com"
+    smtp_port: int = 587
+    username: str
+    password: str
+
+
 class _AuthSettings(BaseModel):
     code_expire_minutes: int = 10
     token_expire_hours: int = 1
@@ -45,6 +52,7 @@ class Settings(BaseModel):
     ai: _AISettings
     cors: _CORSSettings
     auth: _AuthSettings = _AuthSettings()
+    email: _EmailSettings | None = None
 
 
 def load_settings(path: Path | str | None = None) -> Settings:
@@ -79,4 +87,8 @@ def load_settings(path: Path | str | None = None) -> Settings:
         cors=_CORSSettings(
             origins=os.environ.get("CORS_ORIGINS", "*").split(","),
         ),
+        email=_EmailSettings(
+            username=os.environ["EMAIL_USERNAME"],
+            password=os.environ["EMAIL_PASSWORD"],
+        ) if os.environ.get("EMAIL_USERNAME") else None,
     )

@@ -92,7 +92,9 @@ async def root():
 async def auth_request(body: AuthRequestCode, db: Session = Depends(get_db)):
     """Request a login OTP. Always returns 200 to avoid email enumeration."""
     if db.query(User).filter(User.email == body.email).first():
-        request_code(body.email, settings.auth.code_expire_minutes, db)
+        request_code(body.email, settings.auth.code_expire_minutes, db, settings.email)
+    else:
+        logger.info(f"Auth request for unknown email: {body.email}")
     return {"detail": "If that email exists, a code has been sent"}
 
 

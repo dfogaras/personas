@@ -5,7 +5,8 @@ import logging
 import secrets
 import uuid
 from datetime import datetime, timedelta
-
+import smtplib
+from email.mime.text import MIMEText
 from fastapi import Depends, HTTPException
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
@@ -25,8 +26,19 @@ def _hash_code(code: str) -> str:
     return hashlib.sha256(code.encode()).hexdigest()
 
 
-def request_code(email: str, expire_minutes: int, db: Session) -> None:
-    """Invalidate old codes for email, generate a new one, log it."""
+def _send_code_email(email: str, code: str, expire_minutes: int, email_settings) -> None:
+    msg = MIMEText(f"Your login code: {code}\n\nThis code expires in {expire_minutes} minutes.")
+    msg["Subject"] = "Your login code"
+    msg["From"] = email_settings.username
+    msg["To"] = email
+    with smtplib.SMTP(email_settings.smtp_host, email_settings.smtp_port) as smtp:
+        smtp.starttls()
+        smtp.login(email_settings.username, email_settings.password)
+        smtp.send_message(msg)
+
+
+def request_code(email: str, expire_minutes: int, db: Session, email_settings=None) -> None:
+    """Invalidate old codes for email, generate a new one, and send it."""
     db.query(AuthCode).filter(AuthCode.email == email, AuthCode.used == False).delete()
     db.commit()
 
@@ -38,7 +50,12 @@ def request_code(email: str, expire_minutes: int, db: Session) -> None:
         used=False,
     ))
     db.commit()
-    logger.info(f"LOGIN CODE for {email}: {code}")
+
+    if email_settings:
+        _send_code_email(email, code, expire_minutes, email_settings)
+        logger.info(f"Login code sent via email to {email}")
+    else:
+        logger.info(f"LOGIN CODE for {email}: {code}")
 
 
 def verify_code_and_create_token(email: str, code: str, expire_hours: int, db: Session) -> AuthToken:
