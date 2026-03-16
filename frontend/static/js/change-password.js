@@ -9,9 +9,9 @@ function showError(msg) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    const token = localStorage.getItem('auth_token');
+    const token = getToken();
     if (!token) {
-        window.location.href = `/login?return=${encodeURIComponent(window.location.href)}`;
+        redirectToLogin();
         return;
     }
 
@@ -45,8 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 throw new Error(err.detail || 'Failed to change password');
             }
             // Tokens invalidated server-side — clear local auth and return to login
-            localStorage.removeItem('auth_token');
-            localStorage.removeItem('auth_user');
+            clearAuth();
             window.location.href = `/login?return=${encodeURIComponent(returnUrl())}`;
         } catch (e) {
             showError(e.message);

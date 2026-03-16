@@ -8,17 +8,6 @@ const API_BASE = '/api';
 // Auth state
 // ============================================================================
 
-function getToken() { return localStorage.getItem('auth_token'); }
-function getUser()  { const u = localStorage.getItem('auth_user'); return u ? JSON.parse(u) : null; }
-function setAuth(token, user) {
-    localStorage.setItem('auth_token', token);
-    localStorage.setItem('auth_user', JSON.stringify(user));
-}
-function clearAuth() {
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('auth_user');
-}
-
 function updateNav() {
     const user = getUser();
     const navUser = document.getElementById('navUser');
@@ -45,8 +34,7 @@ async function apiCall(method, endpoint, data = null) {
     if (data) options.body = JSON.stringify(data);
     const response = await fetch(`${API_BASE}${endpoint}`, options);
     if (response.status === 401) {
-        clearAuth();
-        window.location.href = `/login?return=${encodeURIComponent(window.location.href)}`;
+        redirectToLogin();
         throw new Error('Session expired — please sign in again');
     }
     if (!response.ok) {
@@ -82,7 +70,7 @@ async function route() {
     const page = params.page || 'personas';
 
     if (!getToken()) {
-        window.location.href = `/login?return=${encodeURIComponent(window.location.href)}`;
+        redirectToLogin();
         return;
     }
 
@@ -490,7 +478,7 @@ async function init() {
     window.addEventListener('hashchange', route);
 
     if (!getToken()) {
-        window.location.href = `/login?return=${encodeURIComponent(window.location.href)}`;
+        redirectToLogin();
         return;
     }
     if (!window.location.hash) {

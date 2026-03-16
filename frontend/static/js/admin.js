@@ -3,16 +3,13 @@ const API_BASE = '/api';
 let _currentUsers = [];
 let _currentGroups = [];
 
-function getToken() { return localStorage.getItem('auth_token'); }
-function getUser()  { const u = localStorage.getItem('auth_user'); return u ? JSON.parse(u) : null; }
-
 async function apiCall(method, endpoint, data = null) {
     const options = { method, headers: { 'Content-Type': 'application/json' } };
     const token = getToken();
     if (token) options.headers['Authorization'] = `Bearer ${token}`;
     if (data) options.body = JSON.stringify(data);
     const response = await fetch(`${API_BASE}${endpoint}`, options);
-    if (response.status === 401) { window.location.href = `/login?return=${encodeURIComponent(window.location.href)}`; throw new Error('Session expired'); }
+    if (response.status === 401) { redirectToLogin(); throw new Error('Session expired'); }
     if (!response.ok) { const e = await response.json(); throw new Error(e.detail || 'API error'); }
     if (response.status === 204) return null;
     return response.json();
@@ -250,13 +247,12 @@ function renderUsers(users, groups) {
 
 async function init() {
     const user = getUser();
-    if (!user) { window.location.href = `/login?return=${encodeURIComponent(window.location.href)}`; return; }
+    if (!user) { redirectToLogin(); return; }
 
     document.getElementById('navUserName').textContent = user.name || user.email;
     document.getElementById('navUser').style.display = 'flex';
     document.getElementById('navLogoutBtn').addEventListener('click', () => {
-        localStorage.removeItem('auth_token');
-        localStorage.removeItem('auth_user');
+        clearAuth();
         window.location.href = '/login';
     });
 

@@ -19,8 +19,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             window.location.href = returnUrl();
             return;
         }
-        localStorage.removeItem('auth_token');
-        localStorage.removeItem('auth_user');
+        clearAuth();
     }
 
     const emailInput = document.getElementById('loginEmail');
