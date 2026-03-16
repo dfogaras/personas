@@ -34,6 +34,10 @@ function showError(msg) {
 // Name → email conversion
 // ============================================================================
 
+function isValidDomain(domain) {
+    return /^[a-zA-Z0-9][a-zA-Z0-9.-]*\.[a-zA-Z]{2,}$/.test(domain);
+}
+
 function nameToEmail(name, domain) {
     const local = name
         .normalize('NFD')
@@ -63,21 +67,48 @@ function openBulkModal(group) {
     const errorEl   = document.getElementById('bulkError');
 
     function updatePreview() {
+        const domain   = domainEl.value.trim();
+        const password = document.getElementById('bulkPassword').value.trim();
         const existingEmails = new Set(_currentUsers.map(u => u.email));
         const entries = parseBulkEntries();
 
+        errorEl.style.display = 'none';
+        if (!isValidDomain(domain)) {
+            errorEl.textContent = 'Invalid email domain';
+            errorEl.style.display = 'block';
+            previewEl.innerHTML = '';
+            return;
+        }
+        if (!password) {
+            errorEl.textContent = 'Initial password is required';
+            errorEl.style.display = 'block';
+            previewEl.innerHTML = '';
+            return;
+        }
+
         if (entries.length === 0) { previewEl.innerHTML = ''; return; }
 
+        const seen = new Set();
+        const duplicateInBatch = new Set();
+        for (const e of entries) {
+            if (seen.has(e.email)) duplicateInBatch.add(e.email);
+            seen.add(e.email);
+        }
+
         previewEl.innerHTML = entries.map(e => {
-            const conflict = existingEmails.has(e.email);
+            const conflict = e.invalid || existingEmails.has(e.email) || duplicateInBatch.has(e.email);
+            const reason   = e.invalid ? ' ⚠ looks like an email, not a name'
+                           : existingEmails.has(e.email) ? ' ⚠ already exists'
+                           : duplicateInBatch.has(e.email) ? ' ⚠ duplicate' : '';
             return `<div class="bulk-preview-item${conflict ? ' conflict' : ''}">
-                ${escapeHtml(e.name)} → ${escapeHtml(e.email)}${conflict ? ' ⚠ already exists' : ''}
+                ${escapeHtml(e.name)} → ${escapeHtml(e.email)}${reason}
             </div>`;
         }).join('');
     }
 
-    namesEl.oninput  = updatePreview;
-    domainEl.oninput = updatePreview;
+    namesEl.oninput    = updatePreview;
+    domainEl.oninput   = updatePreview;
+    document.getElementById('bulkPassword').oninput = updatePreview;
 
     document.getElementById('bulkCancelBtn').onclick = closeBulkModal;
     document.getElementById('bulkModal').onclick = e => {
@@ -85,10 +116,42 @@ function openBulkModal(group) {
     };
 
     document.getElementById('bulkAddBtn').onclick = async () => {
+        const domain   = domainEl.value.trim();
+        const password = document.getElementById('bulkPassword').value.trim();
+
+        if (!isValidDomain(domain)) {
+            errorEl.textContent = 'Please enter a valid email domain (e.g. kincskereso-iskola.hu)';
+            errorEl.style.display = 'block';
+            return;
+        }
+        if (!password) {
+            errorEl.textContent = 'Initial password is required';
+            errorEl.style.display = 'block';
+            return;
+        }
+
         const entries = parseBulkEntries();
         if (entries.length === 0) return;
 
+        const invalid = entries.filter(e => e.invalid);
+        if (invalid.length > 0) {
+            errorEl.textContent = `Some lines look like email addresses, not names: ${invalid.map(e => e.name).join(', ')}`;
+            errorEl.style.display = 'block';
+            return;
+        }
+
         const existingEmails = new Set(_currentUsers.map(u => u.email));
+        const seen = new Set();
+        const batchDupes = [];
+        for (const e of entries) {
+            if (seen.has(e.email)) batchDupes.push(e.email);
+            seen.add(e.email);
+        }
+        if (batchDupes.length > 0) {
+            errorEl.textContent = `Duplicate emails in list: ${[...new Set(batchDupes)].join(', ')}`;
+            errorEl.style.display = 'block';
+            return;
+        }
         const conflicts = entries.filter(e => existingEmails.has(e.email));
         if (conflicts.length > 0) {
             errorEl.textContent = `Already exists: ${conflicts.map(c => c.email).join(', ')}`;
@@ -126,7 +189,7 @@ function parseBulkEntries() {
         .split('\n')
         .map(line => line.replace(/\s+$/, ''))  // strip trailing whitespace
         .filter(line => line.trim() !== '')
-        .map(name => ({ name: name.trim(), email: nameToEmail(name.trim(), domain), initial_password: password }));
+        .map(name => ({ name: name.trim(), email: nameToEmail(name.trim(), domain), initial_password: password, invalid: name.includes('@') }));
 }
 
 // ============================================================================
@@ -228,12 +291,19 @@ function renderUsers(users, groups) {
 
     for (const group of groups) {
         const section = document.createElement('div');
-        section.className = 'admin-group';
-        section.innerHTML = `<h3 class="admin-group-title">${escapeHtml(group)}</h3>
-            <table class="admin-table">
-                <thead><tr><th>Email</th><th>Name</th><th>Initial password</th><th>Actions</th></tr></thead>
-                <tbody></tbody>
-            </table>`;
+        section.className = 'admin-group collapsed';
+        section.innerHTML = `<h3 class="admin-group-title">
+                <span class="admin-group-toggle">▶</span> ${escapeHtml(group)}
+            </h3>
+            <div class="admin-group-body">
+                <table class="admin-table">
+                    <thead><tr><th>Email</th><th>Name</th><th>Initial password</th><th>Actions</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>`;
+        section.querySelector('.admin-group-title').addEventListener('click', () => {
+            section.classList.toggle('collapsed');
+        });
         const tbody = section.querySelector('tbody');
         for (const user of byGroup[group]) tbody.appendChild(renderUserRow(user));
         renderAddRow(tbody, group);

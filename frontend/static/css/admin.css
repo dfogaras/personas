@@ -11,7 +11,11 @@
 }
 
 .admin-group {
-    margin-bottom: 36px;
+    margin-bottom: 4px;
+}
+
+.admin-group:not(.collapsed) {
+    margin-bottom: 28px;
 }
 
 .admin-group-title {
@@ -21,6 +25,37 @@
     text-transform: uppercase;
     letter-spacing: 0.6px;
     margin-bottom: 10px;
+    cursor: pointer;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.admin-group-title:hover {
+    color: var(--gray-700);
+}
+
+.admin-group-toggle {
+    font-size: 11px;
+    transition: transform 0.2s;
+    display: inline-block;
+}
+
+.admin-group-body {
+    display: block;
+}
+
+.admin-group.collapsed .admin-group-body {
+    display: none;
+}
+
+.admin-group.collapsed .admin-group-toggle {
+    transform: rotate(0deg);
+}
+
+.admin-group:not(.collapsed) .admin-group-toggle {
+    transform: rotate(90deg);
 }
 
 .admin-table {
