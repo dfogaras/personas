@@ -7,6 +7,7 @@ from fastapi.responses import HTMLResponse, Response
 from sqlalchemy.orm import Session
 
 from auth import get_current_user
+from groups import GROUPS
 from context import get_frontend_path
 from database import get_db
 from models import User
@@ -27,6 +28,11 @@ async def admin_page():
         return f.read()
 
 
+@router.get("/api/admin/groups", response_model=list[str])
+async def admin_list_groups(_: User = Depends(require_admin)):
+    return GROUPS
+
+
 @router.get("/api/admin/users", response_model=list[UserAdminResponse])
 async def admin_list_users(db: Session = Depends(get_db), admin: User = Depends(require_admin)):
     users = db.query(User).order_by(User.group, User.name).all()
@@ -39,6 +45,8 @@ async def admin_create_user(
     db: Session = Depends(get_db),
     admin: User = Depends(require_admin),
 ):
+    if body.group not in GROUPS:
+        raise HTTPException(status_code=400, detail=f"Invalid group. Must be one of: {', '.join(GROUPS)}")
     if db.query(User).filter(User.email == body.email).first():
         raise HTTPException(status_code=400, detail="Email already exists")
     u = User(

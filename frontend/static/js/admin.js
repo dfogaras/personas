@@ -79,7 +79,7 @@ async function deleteUser(tr, user) {
     } catch (e) { showError(e.message); }
 }
 
-function renderAddRow(tbody, group) {
+function renderAddRow(tbody, group, groups) {
     const tr = document.createElement('tr');
     tr.className = 'add-row';
     tr.innerHTML = `
@@ -100,29 +100,22 @@ function renderAddRow(tbody, group) {
         try {
             await apiCall('POST', '/admin/users', { email, name, group, initial_password });
             const users = await apiCall('GET', '/admin/users');
-            renderUsers(users);
+            renderUsers(users, groups);
         } catch (e) { showError(e.message); }
     });
 }
 
-function renderUsers(users) {
-    const groups = {};
+function renderUsers(users, groups) {
+    const byGroup = {};
+    for (const g of groups) byGroup[g] = [];
     for (const u of users) {
-        const g = u.group || '(no group)';
-        if (!groups[g]) groups[g] = [];
-        groups[g].push(u);
+        if (byGroup[u.group] !== undefined) byGroup[u.group].push(u);
     }
-
-    const sortedGroups = Object.keys(groups).sort((a, b) => {
-        if (a === 'admin') return -1;
-        if (b === 'admin') return 1;
-        return a.localeCompare(b);
-    });
 
     const container = document.getElementById('usersTables');
     container.innerHTML = '';
 
-    for (const group of sortedGroups) {
+    for (const group of groups) {
         const section = document.createElement('div');
         section.className = 'admin-group';
         section.innerHTML = `<h3 class="admin-group-title">${escapeHtml(group)}</h3>
@@ -131,8 +124,8 @@ function renderUsers(users) {
                 <tbody></tbody>
             </table>`;
         const tbody = section.querySelector('tbody');
-        for (const user of groups[group]) tbody.appendChild(renderUserRow(user));
-        renderAddRow(tbody, group);
+        for (const user of byGroup[group]) tbody.appendChild(renderUserRow(user));
+        renderAddRow(tbody, group, groups);
         container.appendChild(section);
     }
 }
@@ -151,8 +144,11 @@ async function init() {
 
 
     try {
-        const users = await apiCall('GET', '/admin/users');
-        renderUsers(users);
+        const [groups, users] = await Promise.all([
+            apiCall('GET', '/admin/groups'),
+            apiCall('GET', '/admin/users'),
+        ]);
+        renderUsers(users, groups);
     } catch (e) {
         document.getElementById('usersTables').innerHTML = '';
         showError(e.message);
