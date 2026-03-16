@@ -159,4 +159,5 @@ class UserAdminUpdate(BaseModel):
 
     email: Optional[str] = None
     name: Optional[str] = None
+    group: Optional[str] = None
     initial_password: Optional[str] = None

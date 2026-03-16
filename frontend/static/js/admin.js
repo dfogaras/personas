@@ -199,10 +199,14 @@ function parseBulkEntries() {
 function renderUserRow(user) {
     const tr = document.createElement('tr');
     const pwdText = user.initial_password ?? '—';
+    const groupOptions = _currentGroups.map(g =>
+        `<option value="${escapeHtml(g)}"${g === user.group ? ' selected' : ''}>${escapeHtml(g)}</option>`
+    ).join('');
 
     tr.innerHTML = `
         <td class="cell-email">${escapeHtml(user.email)}</td>
         <td class="cell-name">${escapeHtml(user.name)}</td>
+        <td class="cell-group"><select class="group-select" disabled>${groupOptions}</select></td>
         <td class="cell-pwd">${escapeHtml(pwdText)}</td>
         <td class="cell-actions">
             <button class="admin-btn edit-btn">Edit</button>
@@ -217,6 +221,7 @@ function renderUserRow(user) {
 function startEdit(tr, user) {
     tr.querySelector('.cell-email').innerHTML = `<input class="admin-input" value="${escapeHtml(user.email)}">`;
     tr.querySelector('.cell-name').innerHTML  = `<input class="admin-input" value="${escapeHtml(user.name)}">`;
+    tr.querySelector('.cell-group').querySelector('select').disabled = false;
     tr.querySelector('.cell-pwd').innerHTML   = `<input class="admin-input" placeholder="leave blank to keep" value="${escapeHtml(user.initial_password ?? '')}">`;
     tr.querySelector('.cell-actions').innerHTML = `
         <button class="admin-btn save-btn">Save</button>
@@ -226,13 +231,16 @@ function startEdit(tr, user) {
     tr.querySelector('.cancel-btn').addEventListener('click', () => tr.parentNode.replaceChild(renderUserRow(user), tr));
 }
 
+
+
 async function saveEdit(tr, user) {
     const email            = normalizeEmail(tr.querySelector('.cell-email input').value);
     const name             = tr.querySelector('.cell-name input').value.trim() || null;
+    const group            = tr.querySelector('.cell-group select').value;
     const initial_password = tr.querySelector('.cell-pwd input').value.trim() || null;
     if (tr.querySelector('.cell-email input').value.trim() && !email) { showError('Invalid email address'); return; }
     try {
-        const updated = await apiCall('PUT', `/admin/users/${user.id}`, { email, name, initial_password });
+        const updated = await apiCall('PUT', `/admin/users/${user.id}`, { email, name, group, initial_password });
         tr.parentNode.replaceChild(renderUserRow(updated), tr);
     } catch (e) { showError(e.message); }
 }
@@ -251,14 +259,15 @@ function renderAddRow(tbody, group) {
     tr.innerHTML = `
         <td><input class="admin-input" placeholder="Email"></td>
         <td><input class="admin-input" placeholder="Name"></td>
-        <td><input class="admin-input" placeholder="Initial password"></td>
+        <td></td>
+        <td><input class="admin-input" placeholder="Init pwd"></td>
         <td class="cell-actions">
             <button class="admin-btn save-btn">Add</button>
             <button class="admin-btn bulk-btn">Bulk add…</button>
         </td>`;
     tbody.appendChild(tr);
 
-    const [emailIn, nameIn, pwdIn] = tr.querySelectorAll('input');
+    const [emailIn, nameIn, pwdIn] = [...tr.querySelectorAll('input')];
 
     tr.querySelector('.save-btn').addEventListener('click', async () => {
         const email            = normalizeEmail(emailIn.value);
@@ -297,7 +306,7 @@ function renderUsers(users, groups) {
             </h3>
             <div class="admin-group-body">
                 <table class="admin-table">
-                    <thead><tr><th>Email</th><th>Name</th><th>Initial password</th><th>Actions</th></tr></thead>
+                    <thead><tr><th>Email</th><th>Name</th><th>Group</th><th>Init pwd</th><th>Actions</th></tr></thead>
                     <tbody></tbody>
                 </table>
             </div>`;

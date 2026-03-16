@@ -72,6 +72,10 @@ async def admin_update_user(
     u = db.query(User).filter(User.id == user_id).first()
     if not u:
         raise HTTPException(status_code=404, detail="User not found")
+    if body.group is not None:
+        if body.group not in GROUPS:
+            raise HTTPException(status_code=400, detail=f"Invalid group. Must be one of: {', '.join(GROUPS)}")
+        u.group = body.group
     if body.email is not None:
         if db.query(User).filter(User.email == body.email, User.id != user_id).first():
             raise HTTPException(status_code=400, detail="Email already exists")
