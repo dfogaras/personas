@@ -146,6 +146,6 @@ class UserAdminResponse(BaseModel):
 class UserAdminUpdate(BaseModel):
     """Schema for updating a user in admin context."""
 
-    email: str
-    name: str
+    email: Optional[str] = None
+    name: Optional[str] = None
     initial_password: Optional[str] = None

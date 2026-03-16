@@ -336,8 +336,10 @@ async def admin_update_user(
     u = db.query(User).filter(User.id == user_id).first()
     if not u:
         raise HTTPException(status_code=404, detail="User not found")
-    u.email = body.email
-    u.name = body.name
+    if body.email is not None:
+        u.email = body.email
+    if body.name is not None:
+        u.name = body.name
     if body.initial_password is not None:
         from datetime import datetime, timezone
         u.initial_password = body.initial_password or None
