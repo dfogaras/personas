@@ -74,6 +74,31 @@ async function deleteUser(tr, user) {
     } catch (e) { showError(e.message); }
 }
 
+function renderAddRow(tbody, group) {
+    const tr = document.createElement('tr');
+    tr.className = 'add-row';
+    tr.innerHTML = `
+        <td><input class="admin-input" placeholder="Email"></td>
+        <td><input class="admin-input" placeholder="Name"></td>
+        <td><input class="admin-input" placeholder="Initial password"></td>
+        <td class="cell-actions"><button class="admin-btn save-btn">Add</button></td>`;
+    tbody.appendChild(tr);
+
+    const [emailIn, nameIn, pwdIn] = tr.querySelectorAll('input');
+
+    tr.querySelector('.save-btn').addEventListener('click', async () => {
+        const email            = emailIn.value.trim();
+        const name             = nameIn.value.trim();
+        const initial_password = pwdIn.value.trim() || null;
+        if (!email || !name) return;
+        try {
+            await apiCall('POST', '/admin/users', { email, name, group, initial_password });
+            const users = await apiCall('GET', '/admin/users');
+            renderUsers(users);
+        } catch (e) { showError(e.message); }
+    });
+}
+
 function renderUsers(users) {
     const groups = {};
     for (const u of users) {
@@ -101,6 +126,7 @@ function renderUsers(users) {
             </table>`;
         const tbody = section.querySelector('tbody');
         for (const user of groups[group]) tbody.appendChild(renderUserRow(user));
+        renderAddRow(tbody, group);
         container.appendChild(section);
     }
 }
@@ -117,32 +143,6 @@ async function init() {
         window.location.href = '/';
     });
 
-    document.getElementById('addUserBtn').addEventListener('click', () => {
-        document.getElementById('addUserForm').style.display = 'block';
-        document.getElementById('addUserBtn').style.display = 'none';
-        document.getElementById('newEmail').focus();
-    });
-
-    document.getElementById('cancelUserBtn').addEventListener('click', () => {
-        document.getElementById('addUserForm').style.display = 'none';
-        document.getElementById('addUserBtn').style.display = '';
-    });
-
-    document.getElementById('createUserBtn').addEventListener('click', async () => {
-        const email            = document.getElementById('newEmail').value.trim();
-        const name             = document.getElementById('newName').value.trim();
-        const group            = document.getElementById('newGroup').value.trim();
-        const initial_password = document.getElementById('newInitialPassword').value.trim();
-        if (!email || !name || !group) return;
-        try {
-            const user = await apiCall('POST', '/admin/users', { email, name, group, initial_password: initial_password || null });
-            document.getElementById('addUserForm').style.display = 'none';
-            document.getElementById('addUserBtn').style.display = '';
-            ['newEmail', 'newName', 'newGroup', 'newInitialPassword'].forEach(id => document.getElementById(id).value = '');
-            const users = await apiCall('GET', '/admin/users');
-            renderUsers(users);
-        } catch (e) { showError(e.message); }
-    });
 
     try {
         const users = await apiCall('GET', '/admin/users');
