@@ -2,7 +2,7 @@
 
 from datetime import datetime
 from typing import Optional, List
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel
 
 
 class UserResponse(BaseModel):
@@ -127,3 +127,25 @@ class FeedbackRequest(BaseModel):
     """Schema for feedback on a message."""
 
     liked: bool
+
+
+class UserAdminResponse(BaseModel):
+    """Schema for user response in admin context (includes sensitive fields)."""
+
+    id: int
+    email: str
+    name: str
+    group: str
+    initial_password: Optional[str] = None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class UserAdminUpdate(BaseModel):
+    """Schema for updating a user in admin context."""
+
+    email: str
+    name: str
+    initial_password: Optional[str] = None

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin — AI Personas</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/admin.css">
+</head>
+<body>
+    <nav class="top-nav">
+        <a href="/" class="nav-brand">AI Personas</a>
+        <div class="nav-user" id="navUser" style="display:none">
+            <span class="nav-user-name" id="navUserName"></span>
+            <button class="nav-logout-btn" id="navLogoutBtn">Sign out</button>
+        </div>
+    </nav>
+
+    <div class="page-content admin-content">
+        <div class="page-header">
+            <h1>Admin</h1>
+        </div>
+        <div class="auth-error" id="adminError" style="display:none"></div>
+        <section>
+            <h2 class="admin-section-title">Users</h2>
+            <div id="usersTables"><p class="loading">Loading...</p></div>
+        </section>
+    </div>
+
+    <script src="/static/js/admin.js"></script>
+</body>
+</html>

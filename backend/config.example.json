@@ -24,11 +24,5 @@
   "auth": {
     "code_expire_minutes": 10,
     "token_expire_hours": 1
-  },
-  "email": {
-    "smtp_host": "smtp.gmail.com",
-    "smtp_port": 587,
-    "username": "you@gmail.com",
-    "password": "your-app-password"
   }
 }

@@ -20,6 +20,7 @@ from schemas import (
     SessionCreate, SessionResponse, SessionDetailResponse,
     ChatRequest, FeedbackRequest, MessageResponse,
     AuthRequestCode, AuthVerify, TokenResponse, UserResponse,
+    UserAdminResponse, UserAdminUpdate,
 )
 from ai_service import AIService
 from auth import request_code, verify_code_and_create_token, get_current_user
@@ -91,7 +92,7 @@ async def root():
 async def auth_request(body: AuthRequestCode, db: Session = Depends(get_db)):
     """Request a login OTP. Always returns 200 to avoid email enumeration."""
     if db.query(User).filter(User.email == body.email).first():
-        request_code(body.email, settings.auth.code_expire_minutes, db, settings.email)
+        request_code(body.email, settings.auth.code_expire_minutes, db)
     else:
         logger.info(f"Auth request for unknown email: {body.email}")
     return {"detail": "If that email exists, a code has been sent"}
@@ -301,6 +302,63 @@ async def submit_feedback(
     db.commit()
     db.refresh(message)
     return {"id": message.id, "liked": message.liked}
+
+
+# ============================================================================
+# Admin
+# ============================================================================
+
+def require_admin(current_user: User = Depends(get_current_user)):
+    if current_user.group != "admin":
+        raise HTTPException(status_code=403, detail="Admin access required")
+    return current_user
+
+
+@app.get("/admin", response_class=HTMLResponse)
+async def admin_page():
+    with open(os.path.join(os.path.dirname(__file__), "..", "frontend", "admin.html"), "r") as f:
+        return f.read()
+
+
+@app.get("/api/admin/users", response_model=list[UserAdminResponse])
+async def admin_list_users(db: Session = Depends(get_db), admin: User = Depends(require_admin)):
+    users = db.query(User).order_by(User.group, User.name).all()
+    return [UserAdminResponse.model_validate(u) for u in users]
+
+
+@app.put("/api/admin/users/{user_id}", response_model=UserAdminResponse)
+async def admin_update_user(
+    user_id: int,
+    body: UserAdminUpdate,
+    db: Session = Depends(get_db),
+    admin: User = Depends(require_admin),
+):
+    u = db.query(User).filter(User.id == user_id).first()
+    if not u:
+        raise HTTPException(status_code=404, detail="User not found")
+    u.email = body.email
+    u.name = body.name
+    if body.initial_password is not None:
+        from datetime import datetime, timezone
+        u.initial_password = body.initial_password or None
+        u.initial_password_created_at = datetime.now(timezone.utc) if body.initial_password else None
+    db.commit()
+    db.refresh(u)
+    return UserAdminResponse.model_validate(u)
+
+
+@app.delete("/api/admin/users/{user_id}", status_code=204)
+async def admin_delete_user(
+    user_id: int,
+    db: Session = Depends(get_db),
+    admin: User = Depends(require_admin),
+):
+    u = db.query(User).filter(User.id == user_id).first()
+    if not u:
+        raise HTTPException(status_code=404, detail="User not found")
+    db.delete(u)
+    db.commit()
+    return Response(status_code=204)
 
 
 # ============================================================================
