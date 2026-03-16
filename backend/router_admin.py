@@ -65,6 +65,8 @@ async def admin_update_user(
     if not u:
         raise HTTPException(status_code=404, detail="User not found")
     if body.email is not None:
+        if db.query(User).filter(User.email == body.email, User.id != user_id).first():
+            raise HTTPException(status_code=400, detail="Email already exists")
         u.email = body.email
     if body.name is not None:
         u.name = body.name
