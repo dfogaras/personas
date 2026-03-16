@@ -2,6 +2,31 @@
     max-width: 900px;
 }
 
+.admin-section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.admin-section-header .admin-section-title {
+    margin-bottom: 0;
+}
+
+.add-btn {
+    font-size: 22px;
+    line-height: 1;
+    padding: 2px 12px;
+    background: var(--persona-light);
+    color: var(--persona-color);
+    border-radius: 8px;
+}
+
+.add-btn:hover {
+    background: var(--persona-color);
+    color: white;
+}
+
 .admin-section-title {
     font-size: 22px;
     font-weight: 700;

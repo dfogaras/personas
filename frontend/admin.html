@@ -22,7 +22,26 @@
         </div>
         <div class="auth-error" id="adminError" style="display:none"></div>
         <section>
-            <h2 class="admin-section-title">Users</h2>
+            <div class="admin-section-header">
+                <h2 class="admin-section-title">Users</h2>
+                <button class="admin-btn add-btn" id="addUserBtn">+</button>
+            </div>
+            <div id="addUserForm" style="display:none">
+                <table class="admin-table" style="margin-bottom:16px">
+                    <tbody>
+                        <tr>
+                            <td><input class="admin-input" id="newEmail" placeholder="Email"></td>
+                            <td><input class="admin-input" id="newName" placeholder="Name"></td>
+                            <td><input class="admin-input" id="newGroup" placeholder="Group"></td>
+                            <td><input class="admin-input" id="newInitialPassword" placeholder="Initial password"></td>
+                            <td class="cell-actions">
+                                <button class="admin-btn save-btn" id="createUserBtn">Create</button>
+                                <button class="admin-btn cancel-btn" id="cancelUserBtn">Cancel</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
             <div id="usersTables"><p class="loading">Loading...</p></div>
         </section>
     </div>

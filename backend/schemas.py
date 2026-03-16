@@ -143,6 +143,15 @@ class UserAdminResponse(BaseModel):
         from_attributes = True
 
 
+class UserAdminCreate(BaseModel):
+    """Schema for creating a user in admin context."""
+
+    email: str
+    name: str
+    group: str
+    initial_password: Optional[str] = None
+
+
 class UserAdminUpdate(BaseModel):
     """Schema for updating a user in admin context."""
 

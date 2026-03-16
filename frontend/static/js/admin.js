@@ -117,6 +117,33 @@ async function init() {
         window.location.href = '/';
     });
 
+    document.getElementById('addUserBtn').addEventListener('click', () => {
+        document.getElementById('addUserForm').style.display = 'block';
+        document.getElementById('addUserBtn').style.display = 'none';
+        document.getElementById('newEmail').focus();
+    });
+
+    document.getElementById('cancelUserBtn').addEventListener('click', () => {
+        document.getElementById('addUserForm').style.display = 'none';
+        document.getElementById('addUserBtn').style.display = '';
+    });
+
+    document.getElementById('createUserBtn').addEventListener('click', async () => {
+        const email            = document.getElementById('newEmail').value.trim();
+        const name             = document.getElementById('newName').value.trim();
+        const group            = document.getElementById('newGroup').value.trim();
+        const initial_password = document.getElementById('newInitialPassword').value.trim();
+        if (!email || !name || !group) return;
+        try {
+            const user = await apiCall('POST', '/admin/users', { email, name, group, initial_password: initial_password || null });
+            document.getElementById('addUserForm').style.display = 'none';
+            document.getElementById('addUserBtn').style.display = '';
+            ['newEmail', 'newName', 'newGroup', 'newInitialPassword'].forEach(id => document.getElementById(id).value = '');
+            const users = await apiCall('GET', '/admin/users');
+            renderUsers(users);
+        } catch (e) { showError(e.message); }
+    });
+
     try {
         const users = await apiCall('GET', '/admin/users');
         renderUsers(users);

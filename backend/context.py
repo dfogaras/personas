@@ -27,5 +27,5 @@ def get_settings():
 def get_ai_service():
     return _ai_service
 
-def get_frontend_path():
-    return _frontend_path
+def get_frontend_path(file_name: str = "") -> str:
+    return os.path.join(_frontend_path, file_name) if file_name else _frontend_path

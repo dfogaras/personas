@@ -10,7 +10,7 @@ from auth import get_current_user
 from context import get_frontend_path
 from database import get_db
 from models import User
-from schemas import UserAdminResponse, UserAdminUpdate
+from schemas import UserAdminCreate, UserAdminResponse, UserAdminUpdate
 
 router = APIRouter()
 
@@ -23,7 +23,7 @@ def require_admin(current_user: User = Depends(get_current_user)):
 
 @router.get("/admin", response_class=HTMLResponse)
 async def admin_page():
-    with open(os.path.join(get_frontend_path(), "admin.html")) as f:
+    with open(get_frontend_path("admin.html")) as f:
         return f.read()
 
 
@@ -31,6 +31,27 @@ async def admin_page():
 async def admin_list_users(db: Session = Depends(get_db), admin: User = Depends(require_admin)):
     users = db.query(User).order_by(User.group, User.name).all()
     return [UserAdminResponse.model_validate(u) for u in users]
+
+
+@router.post("/api/admin/users", response_model=UserAdminResponse, status_code=201)
+async def admin_create_user(
+    body: UserAdminCreate,
+    db: Session = Depends(get_db),
+    admin: User = Depends(require_admin),
+):
+    if db.query(User).filter(User.email == body.email).first():
+        raise HTTPException(status_code=400, detail="Email already exists")
+    u = User(
+        email=body.email,
+        name=body.name,
+        group=body.group,
+        initial_password=body.initial_password,
+        initial_password_created_at=datetime.now(timezone.utc) if body.initial_password else None,
+    )
+    db.add(u)
+    db.commit()
+    db.refresh(u)
+    return UserAdminResponse.model_validate(u)
 
 
 @router.put("/api/admin/users/{user_id}", response_model=UserAdminResponse)

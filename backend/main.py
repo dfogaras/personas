@@ -1,7 +1,6 @@
 """FastAPI application entry point."""
 
 import logging
-import os
 from contextlib import asynccontextmanager
 from typing import List
 
@@ -48,7 +47,7 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
-    app.mount("/static", StaticFiles(directory=os.path.join(get_frontend_path(), "static")), name="static")
+    app.mount("/static", StaticFiles(directory=get_frontend_path("static")), name="static")
     app.include_router(auth_router)
     app.include_router(admin_router)
     return app
@@ -69,7 +68,7 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
 
 @app.get("/", response_class=HTMLResponse)
 async def root():
-    with open(os.path.join(get_frontend_path(), "index.html")) as f:
+    with open(get_frontend_path("index.html")) as f:
         return f.read()
 
 
