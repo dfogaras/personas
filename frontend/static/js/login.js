@@ -8,11 +8,19 @@ function showError(msg) {
     el.style.display = 'block';
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    // Already logged in → go straight to destination
-    if (localStorage.getItem('auth_token')) {
-        window.location.href = returnUrl();
-        return;
+document.addEventListener('DOMContentLoaded', async () => {
+    // Validate existing token; if still good skip the login form
+    const existingToken = localStorage.getItem('auth_token');
+    if (existingToken) {
+        const res = await fetch('/api/auth/me', {
+            headers: { 'Authorization': `Bearer ${existingToken}` },
+        });
+        if (res.ok) {
+            window.location.href = returnUrl();
+            return;
+        }
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('auth_user');
     }
 
     const emailInput = document.getElementById('loginEmail');
