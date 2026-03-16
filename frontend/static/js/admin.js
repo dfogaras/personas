@@ -1,5 +1,8 @@
 const API_BASE = '/api';
 
+let _currentUsers = [];
+let _currentGroups = [];
+
 function getToken() { return localStorage.getItem('auth_token'); }
 function getUser()  { const u = localStorage.getItem('auth_user'); return u ? JSON.parse(u) : null; }
 
@@ -29,6 +32,109 @@ function showError(msg) {
     el.textContent = msg;
     el.style.display = 'block';
 }
+
+// ============================================================================
+// Name → email conversion
+// ============================================================================
+
+function nameToEmail(name, domain) {
+    const local = name
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')  // strip combining diacritical marks
+        .toLowerCase()
+        .replace(/[\s-]+/g, '.')           // spaces and dashes → dots
+        .replace(/\.{2,}/g, '.')           // consecutive dots → single dot
+        .replace(/^\.+|\.+$/g, '');        // trim leading/trailing dots
+    return `${local}@${domain.trim()}`;
+}
+
+// ============================================================================
+// Bulk add modal
+// ============================================================================
+
+function openBulkModal(group) {
+    document.getElementById('bulkGroupLabel').textContent = group;
+    document.getElementById('bulkNames').value = '';
+    document.getElementById('bulkPassword').value = '';
+    document.getElementById('bulkError').style.display = 'none';
+    document.getElementById('bulkPreview').innerHTML = '';
+    document.getElementById('bulkModal').style.display = 'flex';
+
+    const namesEl   = document.getElementById('bulkNames');
+    const domainEl  = document.getElementById('bulkDomain');
+    const previewEl = document.getElementById('bulkPreview');
+    const errorEl   = document.getElementById('bulkError');
+
+    function updatePreview() {
+        const existingEmails = new Set(_currentUsers.map(u => u.email));
+        const entries = parseBulkEntries();
+
+        if (entries.length === 0) { previewEl.innerHTML = ''; return; }
+
+        previewEl.innerHTML = entries.map(e => {
+            const conflict = existingEmails.has(e.email);
+            return `<div class="bulk-preview-item${conflict ? ' conflict' : ''}">
+                ${escapeHtml(e.name)} → ${escapeHtml(e.email)}${conflict ? ' ⚠ already exists' : ''}
+            </div>`;
+        }).join('');
+    }
+
+    namesEl.oninput  = updatePreview;
+    domainEl.oninput = updatePreview;
+
+    document.getElementById('bulkCancelBtn').onclick = closeBulkModal;
+    document.getElementById('bulkModal').onclick = e => {
+        if (e.target === document.getElementById('bulkModal')) closeBulkModal();
+    };
+
+    document.getElementById('bulkAddBtn').onclick = async () => {
+        const entries = parseBulkEntries();
+        if (entries.length === 0) return;
+
+        const existingEmails = new Set(_currentUsers.map(u => u.email));
+        const conflicts = entries.filter(e => existingEmails.has(e.email));
+        if (conflicts.length > 0) {
+            errorEl.textContent = `Already exists: ${conflicts.map(c => c.email).join(', ')}`;
+            errorEl.style.display = 'block';
+            return;
+        }
+
+        document.getElementById('bulkAddBtn').disabled = true;
+        errorEl.style.display = 'none';
+        try {
+            for (const entry of entries) {
+                await apiCall('POST', '/admin/users', { ...entry, group });
+            }
+            closeBulkModal();
+            const users = await apiCall('GET', '/admin/users');
+            renderUsers(users, _currentGroups);
+        } catch (e) {
+            errorEl.textContent = e.message;
+            errorEl.style.display = 'block';
+            document.getElementById('bulkAddBtn').disabled = false;
+        }
+    };
+
+    namesEl.focus();
+}
+
+function closeBulkModal() {
+    document.getElementById('bulkModal').style.display = 'none';
+}
+
+function parseBulkEntries() {
+    const domain   = document.getElementById('bulkDomain').value.trim();
+    const password = document.getElementById('bulkPassword').value.trim() || null;
+    return document.getElementById('bulkNames').value
+        .split('\n')
+        .map(line => line.replace(/\s+$/, ''))  // strip trailing whitespace
+        .filter(line => line.trim() !== '')
+        .map(name => ({ name: name.trim(), email: nameToEmail(name.trim(), domain), initial_password: password }));
+}
+
+// ============================================================================
+// User table rendering
+// ============================================================================
 
 function renderUserRow(user) {
     const tr = document.createElement('tr');
@@ -79,14 +185,17 @@ async function deleteUser(tr, user) {
     } catch (e) { showError(e.message); }
 }
 
-function renderAddRow(tbody, group, groups) {
+function renderAddRow(tbody, group) {
     const tr = document.createElement('tr');
     tr.className = 'add-row';
     tr.innerHTML = `
         <td><input class="admin-input" placeholder="Email"></td>
         <td><input class="admin-input" placeholder="Name"></td>
         <td><input class="admin-input" placeholder="Initial password"></td>
-        <td class="cell-actions"><button class="admin-btn save-btn">Add</button></td>`;
+        <td class="cell-actions">
+            <button class="admin-btn save-btn">Add</button>
+            <button class="admin-btn bulk-btn">Bulk add…</button>
+        </td>`;
     tbody.appendChild(tr);
 
     const [emailIn, nameIn, pwdIn] = tr.querySelectorAll('input');
@@ -100,12 +209,17 @@ function renderAddRow(tbody, group, groups) {
         try {
             await apiCall('POST', '/admin/users', { email, name, group, initial_password });
             const users = await apiCall('GET', '/admin/users');
-            renderUsers(users, groups);
+            renderUsers(users, _currentGroups);
         } catch (e) { showError(e.message); }
     });
+
+    tr.querySelector('.bulk-btn').addEventListener('click', () => openBulkModal(group));
 }
 
 function renderUsers(users, groups) {
+    _currentUsers  = users;
+    _currentGroups = groups;
+
     const byGroup = {};
     for (const g of groups) byGroup[g] = [];
     for (const u of users) {
@@ -125,10 +239,14 @@ function renderUsers(users, groups) {
             </table>`;
         const tbody = section.querySelector('tbody');
         for (const user of byGroup[group]) tbody.appendChild(renderUserRow(user));
-        renderAddRow(tbody, group, groups);
+        renderAddRow(tbody, group);
         container.appendChild(section);
     }
 }
+
+// ============================================================================
+// Init
+// ============================================================================
 
 async function init() {
     const user = getUser();
@@ -141,7 +259,6 @@ async function init() {
         localStorage.removeItem('auth_user');
         window.location.href = '/login';
     });
-
 
     try {
         const [groups, users] = await Promise.all([
