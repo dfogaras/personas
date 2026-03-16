@@ -9,7 +9,7 @@ async function apiCall(method, endpoint, data = null) {
     if (token) options.headers['Authorization'] = `Bearer ${token}`;
     if (data) options.body = JSON.stringify(data);
     const response = await fetch(`${API_BASE}${endpoint}`, options);
-    if (response.status === 401) { window.location.href = '/'; throw new Error('Session expired'); }
+    if (response.status === 401) { window.location.href = `/login?return=${encodeURIComponent(window.location.href)}`; throw new Error('Session expired'); }
     if (!response.ok) { const e = await response.json(); throw new Error(e.detail || 'API error'); }
     if (response.status === 204) return null;
     return response.json();
@@ -139,14 +139,14 @@ function renderUsers(users) {
 
 async function init() {
     const user = getUser();
-    if (!user) { window.location.href = '/'; return; }
+    if (!user) { window.location.href = `/login?return=${encodeURIComponent(window.location.href)}`; return; }
 
     document.getElementById('navUserName').textContent = user.name || user.email;
     document.getElementById('navUser').style.display = 'flex';
     document.getElementById('navLogoutBtn').addEventListener('click', () => {
         localStorage.removeItem('auth_token');
         localStorage.removeItem('auth_user');
-        window.location.href = '/';
+        window.location.href = '/login';
     });
 
 

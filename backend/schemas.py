@@ -23,19 +23,21 @@ class TokenResponse(BaseModel):
 
     token: str
     user: UserResponse
+    must_change_password: bool = False
 
 
-class AuthRequestCode(BaseModel):
-    """Schema for requesting an OTP code."""
-
-    email: str
-
-
-class AuthVerify(BaseModel):
-    """Schema for verifying an OTP code."""
+class LoginRequest(BaseModel):
+    """Schema for password-based login."""
 
     email: str
-    code: str
+    password: str
+
+
+class ChangePasswordRequest(BaseModel):
+    """Schema for changing password."""
+
+    current_password: str
+    new_password: str
 
 
 class PersonaBase(BaseModel):

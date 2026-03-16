@@ -72,6 +72,18 @@ async def root():
         return f.read()
 
 
+@app.get("/login", response_class=HTMLResponse)
+async def login_page():
+    with open(get_frontend_path("login.html")) as f:
+        return f.read()
+
+
+@app.get("/change-password", response_class=HTMLResponse)
+async def change_password_page():
+    with open(get_frontend_path("change-password.html")) as f:
+        return f.read()
+
+
 # ============================================================================
 # Personas API
 # ============================================================================

@@ -1,38 +1,70 @@
 """Authentication endpoints."""
 
-import logging
-
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import Response
 from sqlalchemy.orm import Session
 
-from auth import get_current_user, request_code, verify_code_and_create_token
+from auth import create_token, get_current_user, hash_password, verify_password
 from context import get_settings
 from database import get_db
-from models import User
-from schemas import AuthRequestCode, AuthVerify, TokenResponse, UserResponse
+from models import AuthToken, User
+from schemas import ChangePasswordRequest, LoginRequest, TokenResponse, UserResponse
 
-logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-@router.post("/api/auth/request", status_code=200)
-async def auth_request(body: AuthRequestCode, db: Session = Depends(get_db)):
-    """Request a login OTP. Always returns 200 to avoid email enumeration."""
-    if db.query(User).filter(User.email == body.email).first():
-        request_code(body.email, get_settings().auth.code_expire_minutes, db)
+@router.post("/api/auth/login", response_model=TokenResponse)
+async def login(body: LoginRequest, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.email == body.email.strip().lower()).first()
+    invalid = HTTPException(status_code=401, detail="Invalid email or password")
+    if not user:
+        raise invalid
+
+    must_change = False
+    if user.initial_password and body.password == user.initial_password:
+        must_change = True
+    elif user.password_hash and verify_password(body.password, user.password_hash):
+        pass
     else:
-        logger.info(f"Auth request for unknown email: {body.email}")
-    return {"detail": "If that email exists, a code has been sent"}
+        raise invalid
+
+    token = create_token(user.id, get_settings().auth.token_expire_hours, db)
+    return TokenResponse(
+        token=token.token,
+        user=UserResponse.model_validate(user),
+        must_change_password=must_change,
+    )
 
 
-@router.post("/api/auth/verify", response_model=TokenResponse)
-async def auth_verify(body: AuthVerify, db: Session = Depends(get_db)):
-    """Verify OTP and return a bearer token."""
-    token = verify_code_and_create_token(body.email, body.code, get_settings().auth.token_expire_hours, db)
-    return TokenResponse(token=token.token, user=UserResponse.model_validate(token.user))
+@router.post("/api/auth/change-password", status_code=204)
+async def change_password(
+    body: ChangePasswordRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    # Verify current password
+    valid = (
+        (current_user.initial_password and body.current_password == current_user.initial_password)
+        or (current_user.password_hash and verify_password(body.current_password, current_user.password_hash))
+    )
+    if not valid:
+        raise HTTPException(status_code=401, detail="Current password is incorrect")
+
+    # New password must not equal the initial password
+    if current_user.initial_password and body.new_password == current_user.initial_password:
+        raise HTTPException(status_code=400, detail="New password must differ from the initial password")
+
+    current_user.password_hash = hash_password(body.new_password)
+    current_user.initial_password = None
+    current_user.initial_password_created_at = None
+
+    # Invalidate all tokens → force re-login
+    db.query(AuthToken).filter(AuthToken.user_id == current_user.id).delete()
+    db.commit()
+
+    return Response(status_code=204)
 
 
 @router.get("/api/auth/me", response_model=UserResponse)
 async def auth_me(current_user: User = Depends(get_current_user)):
-    """Return the currently authenticated user."""
     return current_user
