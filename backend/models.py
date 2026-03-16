@@ -17,6 +17,9 @@ class User(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     name = Column(String, nullable=False)
     group = Column(String, nullable=True)
+    password_hash = Column(String, nullable=True)
+    initial_password = Column(String, nullable=True)
+    initial_password_created_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     auth_tokens = relationship("AuthToken", back_populates="user", cascade="all, delete-orphan")

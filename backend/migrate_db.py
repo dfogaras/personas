@@ -32,6 +32,9 @@ def cmd_migrate(engine):
     add_columns = [
         ("personas", "user_id", "INTEGER REFERENCES users(id)"),
         ("sessions", "user_id", "INTEGER REFERENCES users(id)"),
+        ("users", "password_hash", "TEXT"),
+        ("users", "initial_password", "TEXT"),
+        ("users", "initial_password_created_at", "DATETIME"),
     ]
     drop_columns = [
         ("users", "role"),
