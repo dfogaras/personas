@@ -15,6 +15,11 @@ async function apiCall(method, endpoint, data = null) {
     return response.json();
 }
 
+function normalizeEmail(val) {
+    const email = val.trim().toLowerCase();
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? email : null;
+}
+
 function escapeHtml(str) {
     return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
@@ -56,12 +61,12 @@ function startEdit(tr, user) {
 }
 
 async function saveEdit(tr, user) {
-    const email            = tr.querySelector('.cell-email input').value.trim();
-    const name             = tr.querySelector('.cell-name input').value.trim();
-    const initial_password = tr.querySelector('.cell-pwd input').value.trim();
-    if (!email || !name) return;
+    const email            = normalizeEmail(tr.querySelector('.cell-email input').value);
+    const name             = tr.querySelector('.cell-name input').value.trim() || null;
+    const initial_password = tr.querySelector('.cell-pwd input').value.trim() || null;
+    if (tr.querySelector('.cell-email input').value.trim() && !email) { showError('Invalid email address'); return; }
     try {
-        const updated = await apiCall('PUT', `/admin/users/${user.id}`, { email, name, initial_password: initial_password || null });
+        const updated = await apiCall('PUT', `/admin/users/${user.id}`, { email, name, initial_password });
         tr.parentNode.replaceChild(renderUserRow(updated), tr);
     } catch (e) { showError(e.message); }
 }
@@ -87,10 +92,11 @@ function renderAddRow(tbody, group) {
     const [emailIn, nameIn, pwdIn] = tr.querySelectorAll('input');
 
     tr.querySelector('.save-btn').addEventListener('click', async () => {
-        const email            = emailIn.value.trim();
+        const email            = normalizeEmail(emailIn.value);
         const name             = nameIn.value.trim();
         const initial_password = pwdIn.value.trim() || null;
-        if (!email || !name) return;
+        if (!email) { showError('Invalid email address'); return; }
+        if (!name) return;
         try {
             await apiCall('POST', '/admin/users', { email, name, group, initial_password });
             const users = await apiCall('GET', '/admin/users');
