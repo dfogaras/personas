@@ -19,7 +19,7 @@ const T = {
     remixPersona:          'Persona remixelése',
     remix:                 'Remix',
     chat:                  'Chat',
-    previousChats:         'Korábbi chatok',
+    previousChats:         'Korábbi csevegések',
     deleteChat:            'Chat törlése',
 
     // Admin — section headers
