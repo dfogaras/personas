@@ -52,8 +52,6 @@ async function route() {
 
     if (page === 'personas') {
         await showPersonasPage();
-    } else if (page === 'persona-new') {
-        showCreatePersonaPage();
     } else if ((page === 'persona' || page === 'persona-edit' || page === 'persona-remix') && params.id) {
         // Redirect legacy hash routes to the dedicated persona page
         const suffix = page === 'persona-edit' ? '?edit' : page === 'persona-remix' ? '?remix' : '';
@@ -75,62 +73,11 @@ async function showPersonasPage() {
     document.getElementById('page-personas').style.display = 'block';
     document.getElementById('personasPageTitle').textContent = T.personasTitle;
     document.getElementById('personasList').style.display = 'grid';
-    document.getElementById('createPersonaForm').style.display = 'none';
 
     const personas = await apiCall('GET', '/personas');
     renderPersonasList(personas);
 }
 
-function showPersonaForm({ title, prefill = {}, submitLabel, onSubmit, onCancel }) {
-    document.getElementById('page-personas').style.display = 'block';
-    document.getElementById('personasPageTitle').textContent = title;
-    document.getElementById('personasList').style.display = 'none';
-    document.getElementById('createPersonaForm').style.display = 'block';
-
-    const nameInput = document.getElementById('newPersonaName');
-    const descInput = document.getElementById('newPersonaDescription');
-    const specInput = document.getElementById('newPersonaSpecialty');
-
-    nameInput.value = prefill.name || '';
-    descInput.value = prefill.description || '';
-    specInput.value = prefill.specialty || '';
-
-    const oldBtn = document.getElementById('createPersonaBtn');
-    const btn = oldBtn.cloneNode(true);
-    btn.title = submitLabel;
-    oldBtn.parentNode.replaceChild(btn, oldBtn);
-
-    const oldCancelBtn = document.getElementById('cancelCreateBtn');
-    const cancelBtn = oldCancelBtn.cloneNode(true);
-    cancelBtn.title = T.cancel;
-    oldCancelBtn.parentNode.replaceChild(cancelBtn, oldCancelBtn);
-
-    btn.addEventListener('click', async () => {
-        const name = nameInput.value.trim();
-        const description = descInput.value.trim();
-        if (!name || !description) return;
-        await onSubmit({ name, description, specialty: specInput.value.trim() || null });
-    });
-
-    cancelBtn.addEventListener('click', onCancel);
-    nameInput.focus();
-}
-
-function showCreatePersonaPage() {
-    showPersonaForm({
-        title: T.newPersona,
-        submitLabel: T.create,
-        onSubmit: async (data) => {
-            try {
-                const persona = await apiCall('POST', '/personas', data);
-                window.location.href = `/persona/${persona.id}`;
-            } catch (e) {
-                alert(e.message);
-            }
-        },
-        onCancel: () => navigate({ page: 'personas' }),
-    });
-}
 
 
 function createPersonaActions(persona) {
@@ -198,7 +145,7 @@ function renderPersonasList(personas) {
     const addCard = document.createElement('div');
     addCard.className = 'persona-card persona-card-add';
     addCard.textContent = '+';
-    addCard.addEventListener('click', () => navigate({ page: 'persona-new' }));
+    addCard.addEventListener('click', () => { window.location.href = '/persona/new'; });
     list.appendChild(addCard);
 }
 

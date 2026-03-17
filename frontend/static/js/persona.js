@@ -1,6 +1,8 @@
-const personaId = parseInt(location.pathname.split('/').pop());
+const pathPart = location.pathname.split('/').pop();
+const isNew = pathPart === 'new';
+const personaId = isNew ? null : parseInt(pathPart);
 const urlParams = new URLSearchParams(location.search);
-const mode = urlParams.has('edit') ? 'edit' : urlParams.has('remix') ? 'remix' : 'view';
+const mode = isNew ? 'create' : urlParams.has('edit') ? 'edit' : urlParams.has('remix') ? 'remix' : 'view';
 
 // ============================================================================
 // View mode
@@ -125,17 +127,19 @@ function showView(persona, chats) {
 // ============================================================================
 
 function showEditForm(persona) {
+    const isCreate = mode === 'create';
     const isRemix = mode === 'remix';
-    document.getElementById('formTitle').textContent = isRemix ? T.remixPersona : T.editPersona;
-    document.getElementById('pName').value = isRemix ? `${persona.name} #2` : persona.name;
-    document.getElementById('pDesc').value = persona.description || '';
-    document.getElementById('pSpec').value = persona.specialty || '';
-    document.getElementById('submitBtn').title = isRemix ? T.create : T.save;
 
-    document.getElementById('editBackLink').href = `/persona/${personaId}`;
+    document.getElementById('formTitle').textContent = isCreate ? T.newPersona : isRemix ? T.remixPersona : T.editPersona;
+    document.getElementById('pName').value = isRemix ? `${persona.name} #2` : (persona ? persona.name : '');
+    document.getElementById('pDesc').value = persona ? (persona.description || '') : '';
+    document.getElementById('pSpec').value = persona ? (persona.specialty || '') : '';
+    document.getElementById('submitBtn').title = isCreate || isRemix ? T.create : T.save;
+
+    document.getElementById('editBackLink').href = isCreate ? '/' : `/persona/${personaId}`;
     document.getElementById('cancelBtn').title = T.cancel;
     document.getElementById('cancelBtn').addEventListener('click', () => {
-        window.location.href = `/persona/${personaId}`;
+        window.location.href = isCreate ? '/' : `/persona/${personaId}`;
     });
 
     document.getElementById('submitBtn').addEventListener('click', async () => {
@@ -152,7 +156,7 @@ function showEditForm(persona) {
         errorEl.style.display = 'none';
 
         try {
-            if (isRemix) {
+            if (isCreate || isRemix) {
                 const newPersona = await apiCall('POST', '/personas', { name, description, specialty });
                 window.location.href = `/persona/${newPersona.id}`;
             } else {
@@ -187,7 +191,9 @@ async function init() {
     });
 
     try {
-        if (mode === 'view') {
+        if (mode === 'create') {
+            showEditForm(null);
+        } else if (mode === 'view') {
             const [persona, chats] = await Promise.all([
                 apiCall('GET', `/personas/${personaId}`),
                 apiCall('GET', `/chats?persona_id=${personaId}`),

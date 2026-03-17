@@ -80,6 +80,12 @@ async def change_password_page():
         return f.read()
 
 
+@app.get("/persona/new", response_class=HTMLResponse)
+async def persona_new_page():
+    with open(get_frontend_path("persona.html")) as f:
+        return f.read()
+
+
 @app.get("/persona/{persona_id}", response_class=HTMLResponse)
 async def persona_page(persona_id: int):
     with open(get_frontend_path("persona.html")) as f:
