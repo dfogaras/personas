@@ -65,7 +65,7 @@ async def delete_chat(
     chat = db.query(Chat).filter(Chat.id == chat_id).first()
     if not chat:
         raise HTTPException(status_code=404, detail=M["chat_not_found"])
-    if chat.user_id is not None and chat.user_id != current_user.id:
+    if chat.user_id is not None and chat.user_id != current_user.id and current_user.group != "admin":
         raise HTTPException(status_code=403, detail=M["not_your_chat"])
     db.delete(chat)
     db.commit()
