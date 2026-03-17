@@ -60,6 +60,9 @@ const T = {
     deleteChatConfirm:     'Biztosan törlöd ezt a csevegést?',
     chattingAs:            'Csevegés mint:',
 
+    // Chat
+    thinking:              '⏳ Gondolkodom...',
+
     // Errors — admin
     errInvalidEmail:       'Érvénytelen e-mail cím',
     errNameRequired:       'A név megadása kötelező',

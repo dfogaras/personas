@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Persona — AI Personas</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <nav class="top-nav">
+        <a href="/" class="nav-brand">AI Personas</a>
+        <div class="nav-user" id="navUser" style="display:none">
+            <span class="nav-user-name" id="navUserName"></span>
+            <button class="nav-logout-btn" id="navLogoutBtn">Kijelentkezés</button>
+        </div>
+    </nav>
+
+    <!-- View mode -->
+    <div id="viewMode" class="page-content" style="display:none">
+        <a href="/" class="back-link">← Vissza</a>
+        <div class="persona-detail-header">
+            <div>
+                <h1 id="personaName"></h1>
+                <p id="personaSpecialty" class="specialty"></p>
+            </div>
+            <div id="personaActions" class="persona-detail-actions"></div>
+        </div>
+        <p id="personaDescription" class="detail-description"></p>
+        <div id="sessionsList" class="persona-sessions-list"></div>
+    </div>
+
+    <!-- Edit / Remix mode -->
+    <div id="editMode" class="page-content" style="display:none">
+        <a href="/" class="back-link" id="editBackLink">← Vissza</a>
+        <h1 id="formTitle"></h1>
+        <div class="create-form">
+            <input type="text" id="pName" class="form-input" placeholder="Név" />
+            <textarea id="pDesc" class="form-input" rows="5" placeholder="Leírás"></textarea>
+            <input type="text" id="pSpec" class="form-input" placeholder="Szakterület (nem kötelező)" />
+            <div class="auth-error" id="formError" style="display:none"></div>
+            <div class="form-actions">
+                <button id="submitBtn" class="btn-primary"></button>
+                <button id="cancelBtn" class="btn-secondary">Mégse</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="/static/js/i18n.js"></script>
+    <script src="/static/js/auth.js"></script>
+    <script src="/static/js/persona.js"></script>
+</body>
+</html>

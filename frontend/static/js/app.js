@@ -82,12 +82,10 @@ async function route() {
         await showPersonasPage();
     } else if (page === 'persona-new') {
         showCreatePersonaPage();
-    } else if (page === 'persona-edit' && params.id) {
-        await showEditPersonaPage(parseInt(params.id));
-    } else if (page === 'persona-remix' && params.id) {
-        await showRemixPersonaPage(parseInt(params.id));
-    } else if (page === 'persona' && params.id) {
-        await showPersonaPage(parseInt(params.id));
+    } else if ((page === 'persona' || page === 'persona-edit' || page === 'persona-remix') && params.id) {
+        // Redirect legacy hash routes to the dedicated persona page
+        const suffix = page === 'persona-edit' ? '?edit' : page === 'persona-remix' ? '?remix' : '';
+        window.location.href = `/persona/${params.id}${suffix}`;
     } else if (page === 'session' && (params.id || params.persona)) {
         await showSessionPage(params);
     } else {
@@ -150,7 +148,7 @@ function showCreatePersonaPage() {
         onSubmit: async (data) => {
             try {
                 const persona = await apiCall('POST', '/personas', data);
-                navigate({ page: 'persona', id: persona.id });
+                window.location.href = `/persona/${persona.id}`;
             } catch (e) {
                 alert(e.message);
             }
@@ -159,59 +157,25 @@ function showCreatePersonaPage() {
     });
 }
 
-async function showEditPersonaPage(id) {
-    const persona = await apiCall('GET', `/personas/${id}`);
-    showPersonaForm({
-        title: T.editPersona,
-        prefill: persona,
-        submitLabel: T.save,
-        onSubmit: async (data) => {
-            try {
-                await apiCall('POST', `/personas/${id}`, data);
-                navigate({ page: 'persona', id });
-            } catch (e) {
-                alert(e.message);
-            }
-        },
-        onCancel: () => navigate({ page: 'persona', id }),
-    });
-}
-
-async function showRemixPersonaPage(id) {
-    const persona = await apiCall('GET', `/personas/${id}`);
-    showPersonaForm({
-        title: T.remixPersona,
-        prefill: { ...persona, name: `${persona.name} #2` },
-        submitLabel: 'Create',
-        onSubmit: async (data) => {
-            try {
-                const newPersona = await apiCall('POST', '/personas', data);
-                navigate({ page: 'persona', id: newPersona.id });
-            } catch (e) {
-                alert(e.message);
-            }
-        },
-        onCancel: () => navigate({ page: 'persona', id }),
-    });
-}
 
 function createPersonaActions(persona) {
     const id = persona.id;
     const actions = [
-        { title: T.chat,  icon: '💬', nav: { page: 'session', persona: id } },
-        { title: T.edit,  icon: '✏️', nav: { page: 'persona-edit', id } },
-        { title: T.remix, icon: '⧉', nav: { page: 'persona-remix', id } },
+        { title: T.chat,  icon: '💬', href: null, nav: { page: 'session', persona: id } },
+        { title: T.edit,  icon: '✏️', href: `/persona/${id}?edit` },
+        { title: T.remix, icon: '⧉', href: `/persona/${id}?remix` },
     ];
     const div = document.createElement('div');
     div.className = 'persona-card-actions';
-    actions.forEach(({ title, icon, nav }) => {
+    actions.forEach(({ title, icon, href, nav }) => {
         const btn = document.createElement('button');
         btn.className = 'persona-card-btn';
         btn.title = title;
         btn.textContent = icon;
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
-            navigate(nav);
+            if (href) window.location.href = href;
+            else navigate(nav);
         });
         div.appendChild(btn);
     });
@@ -253,7 +217,7 @@ function renderPersonasList(personas) {
             <div class="persona-name">${persona.name}</div>
             <div class="persona-specialty">${persona.specialty || T.general}</div>
         `;
-        body.addEventListener('click', () => navigate({ page: 'persona', id: persona.id }));
+        body.addEventListener('click', () => { window.location.href = `/persona/${persona.id}`; });
 
         card.appendChild(body);
         card.appendChild(createPersonaActions(persona));
@@ -265,70 +229,6 @@ function renderPersonasList(personas) {
     addCard.textContent = '+';
     addCard.addEventListener('click', () => navigate({ page: 'persona-new' }));
     list.appendChild(addCard);
-}
-
-// ============================================================================
-// Persona detail page
-// ============================================================================
-
-async function showPersonaPage(id) {
-    document.getElementById('page-persona').style.display = 'block';
-
-    const [persona, sessions] = await Promise.all([
-        apiCall('GET', `/personas/${id}`),
-        apiCall('GET', `/personas/${id}/sessions`),
-    ]);
-
-    document.getElementById('detailPersonaName').textContent = persona.name;
-    document.getElementById('detailPersonaSpecialty').textContent = persona.specialty || T.general;
-    document.getElementById('detailPersonaDescription').textContent = persona.description;
-
-    const actionsContainer = document.querySelector('.persona-detail-actions');
-    actionsContainer.replaceChildren(createPersonaActions(persona));
-
-    const list = document.getElementById('personaSessionsList');
-    list.innerHTML = '';
-    if (sessions.length === 0) return;
-
-    const heading = document.createElement('h2');
-    heading.className = 'sessions-heading';
-    heading.textContent = T.previousChats;
-    list.appendChild(heading);
-
-    sessions.forEach(session => {
-        const item = document.createElement('div');
-        item.className = 'session-item';
-
-        const info = document.createElement('div');
-        info.className = 'session-item-info';
-        info.innerHTML = `
-            <span class="session-user">${session.user ? session.user.name : ''}</span>
-            <span class="session-date">${new Date(session.updated_at).toLocaleDateString()}</span>
-        `;
-        info.addEventListener('click', () => navigate({ page: 'session', id: session.id }));
-
-        const delBtn = document.createElement('button');
-        delBtn.className = 'session-delete-btn btn-danger';
-        delBtn.title = T.deleteChat;
-        delBtn.textContent = '🗑';
-        delBtn.addEventListener('click', async (e) => {
-            e.stopPropagation();
-            if (!confirm(T.deleteChatConfirm)) return;
-            try {
-                await apiCall('DELETE', `/sessions/${session.id}`);
-                item.remove();
-                if (list.querySelectorAll('.session-item').length === 0) {
-                    list.innerHTML = '';
-                }
-            } catch (err) {
-                alert(err.message);
-            }
-        });
-
-        item.appendChild(info);
-        item.appendChild(delBtn);
-        list.appendChild(item);
-    });
 }
 
 // ============================================================================
@@ -363,7 +263,7 @@ async function showSessionPage(params) {
         document.getElementById('sessionPersonaName').textContent = persona.name;
         document.getElementById('sessionPersonaSpecialty').textContent = persona.specialty || T.general;
         document.getElementById('sessionUserName2').textContent = session.user ? `${T.chattingAs} ${session.user.name}` : '';
-        document.getElementById('backToPersona').href = `#page=persona&id=${persona.id}`;
+        document.getElementById('backToPersona').href = `/persona/${persona.id}`;
 
         namePrompt.style.display = 'none';
         messagesList.style.display = 'flex';
@@ -388,7 +288,7 @@ async function showSessionPage(params) {
             msgInput.value = '';
             sendBtn.disabled = true;
 
-            const loadingId = addMessageToUI('assistant', '⏳ Thinking...');
+            const loadingId = addMessageToUI('assistant', T.thinking);
             try {
                 const response = await apiCall('POST', `/sessions/${sessionId}/messages`, { message: content });
                 document.querySelector(`[data-message-id="${loadingId}"]`)?.remove();
