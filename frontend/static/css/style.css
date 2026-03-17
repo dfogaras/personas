@@ -457,8 +457,8 @@ button, input, select, textarea {
 }
 
 .chat-date {
-    font-size: 15px;
-    color: var(--gray-400);
+    font-size: 13px;
+    color: var(--gray-500);
 }
 
 /* ============================================================================

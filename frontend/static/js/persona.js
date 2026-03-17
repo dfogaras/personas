@@ -59,7 +59,7 @@ function showView(persona, chats) {
             info.className = 'chat-item-info';
             info.innerHTML = `
                 <span class="chat-user">${chat.user ? chat.user.name : ''}</span>
-                <span class="chat-date">${new Date(chat.updated_at).toLocaleDateString()}</span>
+                <span class="chat-date">${prettyTime(chat.updated_at)}</span>
             `;
             info.addEventListener('click', () => { window.location.href = `/chat/${chat.id}`; });
 

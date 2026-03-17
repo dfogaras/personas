@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime, timezone
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
@@ -86,6 +87,7 @@ async def send_message(
     if not chat:
         raise HTTPException(status_code=404, detail=M["chat_not_found"])
 
+    chat.updated_at = datetime.now(timezone.utc).replace(tzinfo=None)
     user_message = Message(chat_id=chat_id, role="user", content=req.message)
     db.add(user_message)
     db.commit()
