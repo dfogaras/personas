@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="hu">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin — AI Personas</title>
+    <title>Adminisztráció — AI Personas</title>
     <link rel="stylesheet" href="/static/css/style.css">
     <link rel="stylesheet" href="/static/css/admin.css">
 </head>
@@ -12,41 +12,41 @@
         <a href="/" class="nav-brand">AI Personas</a>
         <div class="nav-user" id="navUser" style="display:none">
             <span class="nav-user-name" id="navUserName"></span>
-            <button class="nav-logout-btn" id="navLogoutBtn">Sign out</button>
+            <button class="nav-logout-btn" id="navLogoutBtn">Kijelentkezés</button>
         </div>
     </nav>
 
     <div class="page-content admin-content">
         <div class="page-header">
-            <h1>Admin</h1>
+            <h1>Adminisztráció</h1>
         </div>
         <div class="auth-error" id="adminError" style="display:none"></div>
         <section>
-            <h2 class="admin-section-title">Users</h2>
-            <div id="usersTables"><p class="loading">Loading...</p></div>
+            <h2 class="admin-section-title">Felhasználók</h2>
+            <div id="usersTables"><p class="loading">Betöltés...</p></div>
         </section>
     </div>
 
     <!-- Single add modal -->
     <div id="addModal" class="modal-overlay" style="display:none">
         <div class="modal">
-            <h2 class="modal-title">Add user — <span id="addGroupLabel"></span></h2>
+            <h2 class="modal-title">Felhasználó hozzáadása — <span id="addGroupLabel"></span></h2>
             <div class="modal-field">
-                <label class="modal-label">Email</label>
-                <input id="addEmail" class="admin-input" placeholder="name@kincskereso-iskola.hu">
+                <label class="modal-label">E-mail</label>
+                <input id="addEmail" class="admin-input" placeholder="nev@kincskereso-iskola.hu">
             </div>
             <div class="modal-field">
-                <label class="modal-label">Name</label>
+                <label class="modal-label">Név</label>
                 <input id="addName" class="admin-input" placeholder="Kovács Anna">
             </div>
             <div class="modal-field">
-                <label class="modal-label">Initial password</label>
-                <input id="addPassword" class="admin-input" placeholder="(none)">
+                <label class="modal-label">Kezdő jelszó</label>
+                <input id="addPassword" class="admin-input" placeholder="(nincs)">
             </div>
             <div class="auth-error" id="addError" style="display:none"></div>
             <div class="modal-actions">
-                <button id="addSubmitBtn" class="admin-btn save-btn">Add</button>
-                <button id="addCancelBtn" class="admin-btn cancel-btn">Cancel</button>
+                <button id="addSubmitBtn" class="admin-btn save-btn">Hozzáadás</button>
+                <button id="addCancelBtn" class="admin-btn cancel-btn">Mégse</button>
             </div>
         </div>
     </div>
@@ -54,28 +54,29 @@
     <!-- Bulk add modal -->
     <div id="bulkModal" class="modal-overlay" style="display:none">
         <div class="modal">
-            <h2 class="modal-title">Bulk add — <span id="bulkGroupLabel"></span></h2>
+            <h2 class="modal-title">Tömeges hozzáadás — <span id="bulkGroupLabel"></span></h2>
             <div class="modal-row">
                 <div class="modal-field">
-                    <label class="modal-label">Email domain</label>
+                    <label class="modal-label">E-mail domain</label>
                     <input id="bulkDomain" class="admin-input" value="kincskereso-iskola.hu">
                 </div>
                 <div class="modal-field">
-                    <label class="modal-label">Initial password</label>
-                    <input id="bulkPassword" class="admin-input" placeholder="(none)">
+                    <label class="modal-label">Kezdő jelszó</label>
+                    <input id="bulkPassword" class="admin-input" placeholder="(nincs)">
                 </div>
             </div>
-            <label class="modal-label">Names (one per line)</label>
+            <label class="modal-label">Nevek (soronként egy)</label>
             <textarea id="bulkNames" class="admin-textarea" rows="8" placeholder="Kovács Anna&#10;Tóth Péter"></textarea>
             <div id="bulkPreview" class="bulk-preview"></div>
             <div class="auth-error" id="bulkError" style="display:none"></div>
             <div class="modal-actions">
-                <button id="bulkAddBtn" class="admin-btn save-btn">Add all</button>
-                <button id="bulkCancelBtn" class="admin-btn cancel-btn">Cancel</button>
+                <button id="bulkAddBtn" class="admin-btn save-btn">Mind hozzáadása</button>
+                <button id="bulkCancelBtn" class="admin-btn cancel-btn">Mégse</button>
             </div>
         </div>
     </div>
 
+    <script src="/static/js/i18n.js"></script>
     <script src="/static/js/auth.js"></script>
     <script src="/static/js/admin.js"></script>
 </body>

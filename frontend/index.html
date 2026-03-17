@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="hu">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,7 +11,7 @@
         <a href="#page=personas" class="nav-brand">AI Personas</a>
         <div class="nav-user" id="navUser" style="display:none">
             <span class="nav-user-name" id="navUserName"></span>
-            <button class="nav-logout-btn" id="navLogoutBtn">Sign out</button>
+            <button class="nav-logout-btn" id="navLogoutBtn">Kijelentkezés</button>
         </div>
     </nav>
 
@@ -19,18 +19,18 @@
     <div id="page-personas" class="page">
         <div class="page-content">
             <div class="page-header">
-                <h1 id="personasPageTitle">Personas</h1>
+                <h1 id="personasPageTitle">Personák</h1>
             </div>
             <div id="personasList" class="personas-grid">
-                <p class="loading">Loading...</p>
+                <p class="loading">Betöltés...</p>
             </div>
             <div id="createPersonaForm" class="create-form" style="display:none">
-                <input type="text" id="newPersonaName" placeholder="Name" class="form-input" />
-                <textarea id="newPersonaDescription" placeholder="Description" class="form-input" rows="3"></textarea>
-                <input type="text" id="newPersonaSpecialty" placeholder="Specialty (optional)" class="form-input" />
+                <input type="text" id="newPersonaName" placeholder="Név" class="form-input" />
+                <textarea id="newPersonaDescription" placeholder="Leírás" class="form-input" rows="3"></textarea>
+                <input type="text" id="newPersonaSpecialty" placeholder="Szakterület (nem kötelező)" class="form-input" />
                 <div class="form-actions">
-                    <button id="createPersonaBtn" class="btn-primary">Create</button>
-                    <button id="cancelCreateBtn" class="btn-secondary">Cancel</button>
+                    <button id="createPersonaBtn" class="btn-primary">Létrehozás</button>
+                    <button id="cancelCreateBtn" class="btn-secondary">Mégse</button>
                 </div>
             </div>
         </div>
@@ -39,7 +39,7 @@
     <!-- Persona detail page -->
     <div id="page-persona" class="page">
         <div class="page-content">
-            <a href="#page=personas" class="back-link">← Back to Personas</a>
+            <a href="#page=personas" class="back-link">← Vissza</a>
             <div class="persona-detail-header">
                 <div>
                     <h1 id="detailPersonaName"></h1>
@@ -52,7 +52,7 @@
         </div>
     </div>
 
-""    <!-- Session page (handles both new and existing sessions) -->
+    <!-- Session page (handles both new and existing sessions) -->
     <div id="page-session" class="page session-page">
         <div class="chat-area">
             <header class="chat-header">
@@ -68,24 +68,24 @@
             <!-- Name prompt: shown when starting a new session -->
             <div id="sessionNamePrompt" class="session-name-prompt" style="display:none">
                 <div class="name-prompt-card">
-                    <p class="name-prompt-label">What's your name?</p>
-                    <input type="text" id="chatUserName" placeholder="Your name" class="form-input" />
-                    <button id="chatStartBtn" class="btn-primary" disabled>Start Chat</button>
+                    <p class="name-prompt-label">Mi a neved?</p>
+                    <input type="text" id="chatUserName" placeholder="Neved" class="form-input" />
+                    <button id="chatStartBtn" class="btn-primary" disabled>Chat indítása</button>
                 </div>
             </div>
             <!-- Chat UI: shown for existing sessions -->
             <div id="messagesList" class="messages-list" style="display:none"></div>
             <div id="chatInputArea" class="chat-input-area" style="display:none">
                 <form id="messageForm" class="message-form">
-                    <input type="text" id="messageInput" placeholder="Type your message..." autocomplete="off" />
-                    <button type="submit" class="send-btn">Send</button>
+                    <input type="text" id="messageInput" placeholder="Írj üzenetet..." autocomplete="off" />
+                    <button type="submit" class="send-btn">Küldés</button>
                 </form>
             </div>
         </div>
     </div>
 
-
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="/static/js/i18n.js"></script>
     <script src="/static/js/auth.js"></script>
     <script src="/static/js/app.js"></script>
 </body>

@@ -35,11 +35,11 @@ async function apiCall(method, endpoint, data = null) {
     const response = await fetch(`${API_BASE}${endpoint}`, options);
     if (response.status === 401) {
         redirectToLogin();
-        throw new Error('Session expired — please sign in again');
+        throw new Error(T.errSessionExpired);
     }
     if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.detail || 'API error');
+        throw new Error(error.detail || T.errApiError);
     }
     if (response.status === 204) return null;
     return response.json();
@@ -101,7 +101,7 @@ async function route() {
 
 async function showPersonasPage() {
     document.getElementById('page-personas').style.display = 'block';
-    document.getElementById('personasPageTitle').textContent = 'Personas';
+    document.getElementById('personasPageTitle').textContent = T.personasTitle;
     document.getElementById('personasList').style.display = 'grid';
     document.getElementById('createPersonaForm').style.display = 'none';
 
@@ -145,8 +145,8 @@ function showPersonaForm({ title, prefill = {}, submitLabel, onSubmit, onCancel 
 
 function showCreatePersonaPage() {
     showPersonaForm({
-        title: 'New Persona',
-        submitLabel: 'Create',
+        title: T.newPersona,
+        submitLabel: T.create,
         onSubmit: async (data) => {
             try {
                 const persona = await apiCall('POST', '/personas', data);
@@ -162,9 +162,9 @@ function showCreatePersonaPage() {
 async function showEditPersonaPage(id) {
     const persona = await apiCall('GET', `/personas/${id}`);
     showPersonaForm({
-        title: 'Edit Persona',
+        title: T.editPersona,
         prefill: persona,
-        submitLabel: 'Save',
+        submitLabel: T.save,
         onSubmit: async (data) => {
             try {
                 await apiCall('POST', `/personas/${id}`, data);
@@ -180,7 +180,7 @@ async function showEditPersonaPage(id) {
 async function showRemixPersonaPage(id) {
     const persona = await apiCall('GET', `/personas/${id}`);
     showPersonaForm({
-        title: 'Remix Persona',
+        title: T.remixPersona,
         prefill: { ...persona, name: `${persona.name} #2` },
         submitLabel: 'Create',
         onSubmit: async (data) => {
@@ -198,9 +198,9 @@ async function showRemixPersonaPage(id) {
 function createPersonaActions(persona) {
     const id = persona.id;
     const actions = [
-        { title: 'Chat',  icon: '💬', nav: { page: 'session', persona: id } },
-        { title: 'Edit',  icon: '✏️', nav: { page: 'persona-edit', id } },
-        { title: 'Remix', icon: '⧉', nav: { page: 'persona-remix', id } },
+        { title: T.chat,  icon: '💬', nav: { page: 'session', persona: id } },
+        { title: T.edit,  icon: '✏️', nav: { page: 'persona-edit', id } },
+        { title: T.remix, icon: '⧉', nav: { page: 'persona-remix', id } },
     ];
     const div = document.createElement('div');
     div.className = 'persona-card-actions';
@@ -218,11 +218,11 @@ function createPersonaActions(persona) {
 
     const delBtn = document.createElement('button');
     delBtn.className = 'persona-card-btn btn-danger';
-    delBtn.title = 'Delete';
+    delBtn.title = T.delete;
     delBtn.textContent = '🗑';
     delBtn.addEventListener('click', async (e) => {
         e.stopPropagation();
-        if (!confirm(`Delete persona "${persona.name}"? This will also delete all its chats.`)) return;
+        if (!confirm(`"${persona.name}" — ${T.deletePersonaConfirm}`)) return;
         try {
             await apiCall('DELETE', `/personas/${id}`);
             const card = delBtn.closest('.persona-card');
@@ -251,7 +251,7 @@ function renderPersonasList(personas) {
         body.className = 'persona-card-body';
         body.innerHTML = `
             <div class="persona-name">${persona.name}</div>
-            <div class="persona-specialty">${persona.specialty || 'General'}</div>
+            <div class="persona-specialty">${persona.specialty || T.general}</div>
         `;
         body.addEventListener('click', () => navigate({ page: 'persona', id: persona.id }));
 
@@ -280,7 +280,7 @@ async function showPersonaPage(id) {
     ]);
 
     document.getElementById('detailPersonaName').textContent = persona.name;
-    document.getElementById('detailPersonaSpecialty').textContent = persona.specialty || 'General';
+    document.getElementById('detailPersonaSpecialty').textContent = persona.specialty || T.general;
     document.getElementById('detailPersonaDescription').textContent = persona.description;
 
     const actionsContainer = document.querySelector('.persona-detail-actions');
@@ -292,7 +292,7 @@ async function showPersonaPage(id) {
 
     const heading = document.createElement('h2');
     heading.className = 'sessions-heading';
-    heading.textContent = 'Previous chats';
+    heading.textContent = T.previousChats;
     list.appendChild(heading);
 
     sessions.forEach(session => {
@@ -309,11 +309,11 @@ async function showPersonaPage(id) {
 
         const delBtn = document.createElement('button');
         delBtn.className = 'session-delete-btn btn-danger';
-        delBtn.title = 'Delete chat';
+        delBtn.title = T.deleteChat;
         delBtn.textContent = '🗑';
         delBtn.addEventListener('click', async (e) => {
             e.stopPropagation();
-            if (!confirm(`Delete this chat with ${session.user ? session.user.name : 'this user'}?`)) return;
+            if (!confirm(T.deleteChatConfirm)) return;
             try {
                 await apiCall('DELETE', `/sessions/${session.id}`);
                 item.remove();
@@ -361,8 +361,8 @@ async function showSessionPage(params) {
         const persona = session.persona;
 
         document.getElementById('sessionPersonaName').textContent = persona.name;
-        document.getElementById('sessionPersonaSpecialty').textContent = persona.specialty || 'General';
-        document.getElementById('sessionUserName2').textContent = session.user ? `Chatting as: ${session.user.name}` : '';
+        document.getElementById('sessionPersonaSpecialty').textContent = persona.specialty || T.general;
+        document.getElementById('sessionUserName2').textContent = session.user ? `${T.chattingAs} ${session.user.name}` : '';
         document.getElementById('backToPersona').href = `#page=persona&id=${persona.id}`;
 
         namePrompt.style.display = 'none';

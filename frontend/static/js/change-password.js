@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const repeat           = cpRepeat.value;
 
         if (!current_password || !new_password || !repeat) return;
-        if (new_password !== repeat) { showError('Passwords do not match'); return; }
+        if (new_password !== repeat) { showError(T.errPwdMismatch); return; }
 
         btn.disabled = true;
         document.getElementById('cpError').style.display = 'none';
@@ -42,7 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             if (!res.ok) {
                 const err = await res.json();
-                throw new Error(err.detail || 'Failed to change password');
+                throw new Error(err.detail || T.errPwdChangeFailed);
             }
             // Tokens invalidated server-side — clear local auth and return to login
             clearAuth();

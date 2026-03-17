@@ -42,7 +42,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
             if (!res.ok) {
                 const err = await res.json();
-                throw new Error(err.detail || 'Login failed');
+                throw new Error(err.detail || T.errLoginFailed);
             }
             const data = await res.json();
             localStorage.setItem('auth_token', data.token);

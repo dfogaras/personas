@@ -74,13 +74,13 @@ function openBulkModal(group) {
 
         errorEl.style.display = 'none';
         if (!isValidDomain(domain)) {
-            errorEl.textContent = 'Invalid email domain';
+            errorEl.textContent = T.errInvalidDomain;
             errorEl.style.display = 'block';
             previewEl.innerHTML = '';
             return;
         }
         if (!password) {
-            errorEl.textContent = 'Initial password is required';
+            errorEl.textContent = T.errPwdRequired;
             errorEl.style.display = 'block';
             previewEl.innerHTML = '';
             return;
@@ -97,9 +97,9 @@ function openBulkModal(group) {
 
         previewEl.innerHTML = entries.map(e => {
             const conflict = e.invalid || existingEmails.has(e.email) || duplicateInBatch.has(e.email);
-            const reason   = e.invalid ? ' ⚠ looks like an email, not a name'
-                           : existingEmails.has(e.email) ? ' ⚠ already exists'
-                           : duplicateInBatch.has(e.email) ? ' ⚠ duplicate' : '';
+            const reason   = e.invalid ? ` ${T.previewLooksLikeEmail}`
+                           : existingEmails.has(e.email) ? ` ${T.previewAlreadyExists}`
+                           : duplicateInBatch.has(e.email) ? ` ${T.previewDuplicate}` : '';
             return `<div class="bulk-preview-item${conflict ? ' conflict' : ''}">
                 ${escapeHtml(e.name)} → ${escapeHtml(e.email)}${reason}
             </div>`;
@@ -221,8 +221,8 @@ function renderUserRow(user) {
         <td class="cell-group"><select class="group-select" disabled>${groupOptions}</select></td>
         <td class="cell-pwd">${escapeHtml(pwdText)}</td>
         <td class="cell-actions">
-            <button class="table-icon-btn edit-btn" title="Edit">${ICON_EDIT}</button>
-            <button class="table-icon-btn delete-btn" title="Delete">${ICON_DELETE}</button>
+            <button class="table-icon-btn edit-btn" title="${T.ttEdit}">${ICON_EDIT}</button>
+            <button class="table-icon-btn delete-btn" title="${T.ttDelete}">${ICON_DELETE}</button>
         </td>`;
 
     tr.querySelector('.edit-btn').addEventListener('click', () => startEdit(tr, user));
@@ -234,10 +234,10 @@ function startEdit(tr, user) {
     tr.querySelector('.cell-email').innerHTML = `<input class="admin-input" value="${escapeHtml(user.email)}">`;
     tr.querySelector('.cell-name').innerHTML  = `<input class="admin-input" value="${escapeHtml(user.name)}">`;
     tr.querySelector('.cell-group').querySelector('select').disabled = false;
-    tr.querySelector('.cell-pwd').innerHTML   = `<input class="admin-input" placeholder="leave blank to keep" value="${escapeHtml(user.initial_password ?? '')}">`;
+    tr.querySelector('.cell-pwd').innerHTML   = `<input class="admin-input" placeholder="${T.pwdLeaveBlank}" value="${escapeHtml(user.initial_password ?? '')}">`;
     tr.querySelector('.cell-actions').innerHTML = `
-        <button class="table-icon-btn save-btn" title="Save">${ICON_SAVE}</button>
-        <button class="table-icon-btn cancel-btn" title="Cancel">${ICON_CANCEL}</button>`;
+        <button class="table-icon-btn save-btn" title="${T.ttSave}">${ICON_SAVE}</button>
+        <button class="table-icon-btn cancel-btn" title="${T.ttCancel}">${ICON_CANCEL}</button>`;
 
     tr.querySelector('.save-btn').addEventListener('click', () => saveEdit(tr, user));
     tr.querySelector('.cancel-btn').addEventListener('click', () => tr.parentNode.replaceChild(renderUserRow(user), tr));
@@ -250,7 +250,7 @@ async function saveEdit(tr, user) {
     const name             = tr.querySelector('.cell-name input').value.trim() || null;
     const group            = tr.querySelector('.cell-group select').value;
     const initial_password = tr.querySelector('.cell-pwd input').value.trim() || null;
-    if (tr.querySelector('.cell-email input').value.trim() && !email) { showError('Invalid email address'); return; }
+    if (tr.querySelector('.cell-email input').value.trim() && !email) { showError(T.errInvalidEmail); return; }
     try {
         const updated = await apiCall('PUT', `/admin/users/${user.id}`, { email, name, group, initial_password });
         tr.parentNode.replaceChild(renderUserRow(updated), tr);
@@ -258,7 +258,7 @@ async function saveEdit(tr, user) {
 }
 
 async function deleteUser(tr, user) {
-    if (!confirm(`Delete "${user.name}" (${user.email})?`)) return;
+    if (!confirm(`${T.deleteConfirm} "${user.name}" (${user.email})?`)) return;
     try {
         await apiCall('DELETE', `/admin/users/${user.id}`);
         tr.remove();
@@ -289,8 +289,8 @@ function openAddModal(group) {
         const email            = normalizeEmail(emailEl.value);
         const name             = nameEl.value.trim();
         const initial_password = pwdEl.value.trim() || null;
-        if (!email) { errorEl.textContent = 'Invalid email address'; errorEl.style.display = 'block'; return; }
-        if (!name)  { errorEl.textContent = 'Name is required'; errorEl.style.display = 'block'; return; }
+        if (!email) { errorEl.textContent = T.errInvalidEmail; errorEl.style.display = 'block'; return; }
+        if (!name)  { errorEl.textContent = T.errNameRequired; errorEl.style.display = 'block'; return; }
         btn.disabled = true;
         errorEl.style.display = 'none';
         try {
@@ -332,13 +332,13 @@ function renderUsers(users, groups) {
                 <span class="admin-group-toggle">▶</span>
                 <span class="admin-group-name">${escapeHtml(group)}</span>
                 <span class="admin-group-actions">
-                    <button class="group-icon-btn add-one-btn" title="Add user">
+                    <button class="group-icon-btn add-one-btn" title="${T.ttAddUser}">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
                             <line x1="19" y1="8" x2="19" y2="14"/><line x1="16" y1="11" x2="22" y2="11"/>
                         </svg>
                     </button>
-                    <button class="group-icon-btn add-bulk-btn" title="Bulk add">
+                    <button class="group-icon-btn add-bulk-btn" title="${T.ttBulkAdd}">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
                             <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
@@ -348,7 +348,7 @@ function renderUsers(users, groups) {
             </h3>
             <div class="admin-group-body">
                 <table class="admin-table">
-                    <thead><tr><th>Email</th><th>Name</th><th>Group</th><th>Init pwd</th><th>Actions</th></tr></thead>
+                    <thead><tr><th>${T.colEmail}</th><th>${T.colName}</th><th>${T.colGroup}</th><th>${T.colInitPwd}</th><th>${T.colActions}</th></tr></thead>
                     <tbody></tbody>
                 </table>
             </div>`;
