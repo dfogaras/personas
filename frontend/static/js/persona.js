@@ -6,7 +6,7 @@ const mode = urlParams.has('edit') ? 'edit' : urlParams.has('remix') ? 'remix' :
 // View mode
 // ============================================================================
 
-function showView(persona, sessions) {
+function showView(persona, chats) {
     document.title = `${persona.name} — AI Personas`;
     document.getElementById('personaName').textContent = persona.name;
     document.getElementById('personaSpecialty').textContent = persona.specialty || T.general;
@@ -19,8 +19,8 @@ function showView(persona, sessions) {
     chatBtn.textContent = `💬 ${T.chat}`;
     chatBtn.addEventListener('click', async () => {
         try {
-            const session = await apiCall('POST', '/sessions', { persona_id: personaId });
-            window.location.href = `/session/${session.id}`;
+            const chat = await apiCall('POST', '/chats', { persona_id: personaId });
+            window.location.href = `/chat/${chat.id}`;
         } catch (e) { alert(e.message); }
     });
 
@@ -47,39 +47,39 @@ function showView(persona, sessions) {
 
     actions.append(chatBtn, editBtn, remixBtn, delBtn);
 
-    const list = document.getElementById('sessionsList');
-    if (sessions.length > 0) {
+    const list = document.getElementById('chatsList');
+    if (chats.length > 0) {
         const heading = document.createElement('h2');
-        heading.className = 'sessions-heading';
+        heading.className = 'chats-heading';
         heading.textContent = T.previousChats;
         list.appendChild(heading);
 
-        sessions.forEach(session => {
+        chats.forEach(chat => {
             const item = document.createElement('div');
-            item.className = 'session-item';
+            item.className = 'chat-item';
 
             const info = document.createElement('div');
-            info.className = 'session-item-info';
+            info.className = 'chat-item-info';
             info.innerHTML = `
-                <span class="session-user">${session.user ? session.user.name : ''}</span>
-                <span class="session-date">${new Date(session.updated_at).toLocaleDateString()}</span>
+                <span class="chat-user">${chat.user ? chat.user.name : ''}</span>
+                <span class="chat-date">${new Date(chat.updated_at).toLocaleDateString()}</span>
             `;
-            info.addEventListener('click', () => { window.location.href = `/session/${session.id}`; });
+            info.addEventListener('click', () => { window.location.href = `/chat/${chat.id}`; });
 
-            const sessionDelBtn = document.createElement('button');
-            sessionDelBtn.className = 'session-delete-btn btn-danger';
-            sessionDelBtn.title = T.deleteChat;
-            sessionDelBtn.textContent = '🗑';
-            sessionDelBtn.addEventListener('click', async (e) => {
+            const delBtn = document.createElement('button');
+            delBtn.className = 'chat-delete-btn btn-danger';
+            delBtn.title = T.deleteChat;
+            delBtn.textContent = '🗑';
+            delBtn.addEventListener('click', async (e) => {
                 e.stopPropagation();
                 if (!confirm(T.deleteChatConfirm)) return;
                 try {
-                    await apiCall('DELETE', `/sessions/${session.id}`);
+                    await apiCall('DELETE', `/chats/${chat.id}`);
                     item.remove();
                 } catch (e) { alert(e.message); }
             });
 
-            item.append(info, sessionDelBtn);
+            item.append(info, delBtn);
             list.appendChild(item);
         });
     }
@@ -154,11 +154,11 @@ async function init() {
 
     try {
         if (mode === 'view') {
-            const [persona, sessions] = await Promise.all([
+            const [persona, chats] = await Promise.all([
                 apiCall('GET', `/personas/${personaId}`),
-                apiCall('GET', `/personas/${personaId}/sessions`),
+                apiCall('GET', `/chats?persona_id=${personaId}`),
             ]);
-            showView(persona, sessions);
+            showView(persona, chats);
         } else {
             const persona = await apiCall('GET', `/personas/${personaId}`);
             showEditForm(persona);

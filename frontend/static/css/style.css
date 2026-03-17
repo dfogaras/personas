@@ -259,8 +259,7 @@ button, input, select, textarea {
    Forms (Create / Edit / Remix)
    ============================================================================ */
 
-.create-form,
-.start-session-form {
+.create-form {
     background: white;
     border-radius: var(--radius-md);
     box-shadow: 0 4px 0 var(--persona-shadow), 0 8px 24px rgba(124, 58, 237, 0.1);
@@ -387,14 +386,14 @@ button, input, select, textarea {
 }
 
 /* ============================================================================
-   Persona Sessions List
+   Persona Chats List
    ============================================================================ */
 
-.persona-sessions-list {
+.persona-chats-list {
     margin-top: 28px;
 }
 
-.sessions-heading {
+.chats-heading {
     font-size: 16px;
     font-weight: 700;
     color: var(--gray-500);
@@ -403,7 +402,7 @@ button, input, select, textarea {
     margin-bottom: 12px;
 }
 
-.session-item {
+.chat-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -415,7 +414,7 @@ button, input, select, textarea {
     transition: var(--transition);
 }
 
-.session-item-info {
+.chat-item-info {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -423,7 +422,7 @@ button, input, select, textarea {
     cursor: pointer;
 }
 
-.session-delete-btn {
+.chat-delete-btn {
     border: none;
     background: none;
     font-size: 16px;
@@ -436,90 +435,37 @@ button, input, select, textarea {
     flex-shrink: 0;
 }
 
-.session-delete-btn:hover {
+.chat-delete-btn:hover {
     opacity: 1;
 }
 
-.session-item:hover {
+.chat-item:hover {
     transform: translateX(3px);
     box-shadow: 4px 6px 16px rgba(124, 58, 237, 0.14);
 }
 
-.session-user {
+.chat-user {
     font-weight: 600;
     font-size: 17px;
     color: var(--gray-900);
 }
 
-.session-date {
+.chat-date {
     font-size: 15px;
     color: var(--gray-400);
 }
 
 /* ============================================================================
-   Session Name Prompt
+   Chat Page
    ============================================================================ */
 
-.session-name-prompt {
-    flex: 1;
-    align-items: center;
-    justify-content: center;
-    background: #f0f9ff;
-}
-
-.session-name-prompt[style*="display: flex"] {
-    display: flex;
-}
-
-.name-prompt-card {
-    background: white;
-    border-radius: var(--radius-md);
-    box-shadow: 0 4px 0 var(--chat-shadow), 0 8px 24px rgba(8, 145, 178, 0.15);
-    padding: 36px 40px;
-    width: 100%;
-    max-width: 420px;
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-}
-
-.name-prompt-label {
-    font-size: 20px;
-    font-weight: 700;
-    color: var(--chat-color);
-}
-
-.name-prompt-card .form-input:focus {
-    border-color: var(--chat-color);
-    box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.15);
-}
-
-.name-prompt-card .btn-primary {
-    background: var(--chat-color);
-    box-shadow: 0 3px 0 var(--chat-dark);
-}
-
-.name-prompt-card .btn-primary:hover:not(:disabled) {
-    background: var(--chat-dark);
-    box-shadow: 0 4px 0 #164e63;
-}
-
-.name-prompt-card .btn-primary:disabled {
-    background: var(--gray-300);
-    box-shadow: 0 3px 0 var(--gray-400);
-}
-
-/* ============================================================================
-   Session Page
-   ============================================================================ */
-
-.session-page {
+.chat-page {
     height: calc(100vh - 60px);
     flex-direction: column;
     overflow: hidden;
 }
 
-.session-page .chat-area {
+.chat-page .chat-area {
     flex: 1;
     overflow: hidden;
     display: flex;

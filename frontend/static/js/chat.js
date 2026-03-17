@@ -1,8 +1,8 @@
 /**
- * Chat page — /session/{id}
+ * Chat page — /chat/{id}
  */
 
-const sessionId = parseInt(location.pathname.split('/').pop());
+const chatId = parseInt(location.pathname.split('/').pop());
 
 // ============================================================================
 // Messages
@@ -48,7 +48,7 @@ function addMessageToUI(role, content, messageId = null) {
 
 async function submitFeedback(messageId, liked) {
     try {
-        await apiCall('POST', `/messages/${messageId}/feedback`, { liked });
+        await apiCall('POST', `/chats/messages/${messageId}/feedback`, { liked });
         const buttons = document.querySelectorAll(`[data-message-id="${messageId}"] .feedback-btn`);
         buttons.forEach(btn => {
             if ((liked && btn.classList.contains('like-btn')) ||
@@ -71,16 +71,16 @@ async function init() {
     if (!getToken()) { redirectToLogin(); return; }
 
     try {
-        const session = await apiCall('GET', `/sessions/${sessionId}`);
-        const persona = session.persona;
+        const chat = await apiCall('GET', `/chats/${chatId}`);
+        const persona = chat.persona;
 
         document.title = `${persona.name} — AI Personas`;
-        document.getElementById('sessionPersonaName').textContent = persona.name;
-        document.getElementById('sessionPersonaSpecialty').textContent = persona.specialty || T.general;
-        document.getElementById('sessionUserName').textContent = session.user ? `${T.chattingAs} ${session.user.name}` : '';
+        document.getElementById('chatPersonaName').textContent = persona.name;
+        document.getElementById('chatPersonaSpecialty').textContent = persona.specialty || T.general;
+        document.getElementById('chatUserName').textContent = chat.user ? `${T.chattingAs} ${chat.user.name}` : '';
         document.getElementById('backToPersona').href = `/persona/${persona.id}`;
 
-        session.messages.forEach(m => addMessageToUI(m.role, m.content, m.role === 'assistant' ? m.id : null));
+        chat.messages.forEach(m => addMessageToUI(m.role, m.content, m.role === 'assistant' ? m.id : null));
 
         const msgInput = document.getElementById('messageInput');
         const sendBtn  = document.querySelector('.send-btn');
@@ -96,7 +96,7 @@ async function init() {
 
             const loadingId = addMessageToUI('assistant', T.thinking);
             try {
-                const response = await apiCall('POST', `/sessions/${sessionId}/messages`, { message: content });
+                const response = await apiCall('POST', `/chats/${chatId}/messages`, { message: content });
                 document.querySelector(`[data-message-id="${loadingId}"]`)?.remove();
                 addMessageToUI('assistant', response.content, response.id);
             } catch (e) {

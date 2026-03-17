@@ -58,10 +58,10 @@ async function route() {
         // Redirect legacy hash routes to the dedicated persona page
         const suffix = page === 'persona-edit' ? '?edit' : page === 'persona-remix' ? '?remix' : '';
         window.location.href = `/persona/${params.id}${suffix}`;
-    } else if (page === 'session' && params.id) {
-        window.location.href = `/session/${params.id}`;
-    } else if (page === 'session' && params.persona) {
-        await startNewSession(parseInt(params.persona));
+    } else if (page === 'chat' && params.id) {
+        window.location.href = `/chat/${params.id}`;
+    } else if (page === 'chat' && params.persona) {
+        await startNewChat(parseInt(params.persona));
     } else {
         navigate({ page: 'personas' });
     }
@@ -135,7 +135,7 @@ function showCreatePersonaPage() {
 function createPersonaActions(persona) {
     const id = persona.id;
     const actions = [
-        { title: T.chat,  icon: '💬', handler: (e) => { e.stopPropagation(); startNewSession(id); } },
+        { title: T.chat,  icon: '💬', handler: (e) => { e.stopPropagation(); startNewChat(id); } },
         { title: T.edit,  icon: '✏️', handler: (e) => { e.stopPropagation(); window.location.href = `/persona/${id}?edit`; } },
         { title: T.remix, icon: '⧉', handler: (e) => { e.stopPropagation(); window.location.href = `/persona/${id}?remix`; } },
     ];
@@ -202,13 +202,13 @@ function renderPersonasList(personas) {
 }
 
 // ============================================================================
-// Session helpers
+// Chat helpers
 // ============================================================================
 
-async function startNewSession(personaId) {
+async function startNewChat(personaId) {
     try {
-        const session = await apiCall('POST', '/sessions', { persona_id: personaId });
-        window.location.href = `/session/${session.id}`;
+        const chat = await apiCall('POST', '/chats', { persona_id: personaId });
+        window.location.href = `/chat/${chat.id}`;
     } catch (e) {
         alert(e.message);
     }

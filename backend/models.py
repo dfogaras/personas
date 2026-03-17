@@ -63,13 +63,13 @@ class Persona(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
 
-    sessions = relationship("Session", back_populates="persona")
+    chats = relationship("Chat", back_populates="persona")
 
 
-class Session(Base):
-    """Chat session model."""
+class Chat(Base):
+    """Chat session between a user and a persona."""
 
-    __tablename__ = "sessions"
+    __tablename__ = "chats"
 
     id = Column(Integer, primary_key=True, index=True)
     persona_id = Column(Integer, ForeignKey("personas.id"))
@@ -77,9 +77,9 @@ class Session(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
 
-    persona = relationship("Persona", back_populates="sessions")
+    persona = relationship("Persona", back_populates="chats")
     user = relationship("User")
-    messages = relationship("Message", back_populates="session", cascade="all, delete-orphan")
+    messages = relationship("Message", back_populates="chat", cascade="all, delete-orphan")
 
 
 class Message(Base):
@@ -88,7 +88,7 @@ class Message(Base):
     __tablename__ = "messages"
 
     id = Column(Integer, primary_key=True, index=True)
-    session_id = Column(Integer, ForeignKey("sessions.id"))
+    chat_id = Column(Integer, ForeignKey("chats.id"))
     role = Column(String)  # "user" or "assistant"
     content = Column(Text)
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -96,5 +96,5 @@ class Message(Base):
     prompt_tokens = Column(Integer, nullable=True)
     completion_tokens = Column(Integer, nullable=True)
     total_tokens = Column(Integer, nullable=True)
-    
-    session = relationship("Session", back_populates="messages")
+
+    chat = relationship("Chat", back_populates="messages")

@@ -65,23 +65,12 @@ class PersonaResponse(PersonaBase):
         from_attributes = True
 
 
-class MessageBase(BaseModel):
-    """Base message schema."""
-
-    content: str
-
-
-class MessageCreate(MessageBase):
-    """Schema for creating a message."""
-
-    pass
-
-
-class MessageResponse(MessageBase):
+class MessageResponse(BaseModel):
     """Schema for message response."""
 
     id: int
     role: str
+    content: str
     created_at: datetime
     liked: Optional[bool] = None
     prompt_tokens: Optional[int] = None
@@ -92,14 +81,14 @@ class MessageResponse(MessageBase):
         from_attributes = True
 
 
-class SessionCreate(BaseModel):
-    """Schema for creating a session."""
+class ChatCreate(BaseModel):
+    """Schema for creating a chat."""
 
     persona_id: int
 
 
-class SessionResponse(BaseModel):
-    """Schema for session response."""
+class ChatResponse(BaseModel):
+    """Schema for chat response."""
 
     id: int
     persona_id: int
@@ -107,20 +96,20 @@ class SessionResponse(BaseModel):
     user: Optional[UserResponse] = None
     created_at: datetime
     updated_at: datetime
-    messages: List[MessageResponse] = []
 
     class Config:
         from_attributes = True
 
 
-class SessionDetailResponse(SessionResponse):
-    """Schema for detailed session response."""
+class ChatDetailResponse(ChatResponse):
+    """Schema for detailed chat response (includes persona and messages)."""
 
     persona: PersonaResponse
+    messages: List[MessageResponse] = []
 
 
-class ChatRequest(BaseModel):
-    """Schema for chat message request."""
+class MessageRequest(BaseModel):
+    """Schema for sending a chat message."""
 
     message: str
 

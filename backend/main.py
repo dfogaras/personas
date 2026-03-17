@@ -12,6 +12,7 @@ from context import get_frontend_path, get_settings
 from database import init_db
 from router_admin import router as admin_router
 from router_auth import router as auth_router
+from router_chats import router as chats_router
 from router_personas import router as personas_router
 
 logger = logging.getLogger(__name__)
@@ -44,6 +45,7 @@ def create_app() -> FastAPI:
     app.include_router(auth_router)
     app.include_router(admin_router)
     app.include_router(personas_router)
+    app.include_router(chats_router)
     return app
 
 
@@ -84,8 +86,8 @@ async def persona_page(persona_id: int):
         return f.read()
 
 
-@app.get("/session/{session_id}", response_class=HTMLResponse)
-async def session_page(session_id: int):
+@app.get("/chat/{chat_id}", response_class=HTMLResponse)
+async def chat_page(chat_id: int):
     with open(get_frontend_path("chat.html")) as f:
         return f.read()
 
