@@ -97,11 +97,12 @@ function showPersonaForm({ title, prefill = {}, submitLabel, onSubmit, onCancel 
 
     const oldBtn = document.getElementById('createPersonaBtn');
     const btn = oldBtn.cloneNode(true);
-    btn.textContent = submitLabel;
+    btn.title = submitLabel;
     oldBtn.parentNode.replaceChild(btn, oldBtn);
 
     const oldCancelBtn = document.getElementById('cancelCreateBtn');
     const cancelBtn = oldCancelBtn.cloneNode(true);
+    cancelBtn.title = T.cancel;
     oldCancelBtn.parentNode.replaceChild(cancelBtn, oldCancelBtn);
 
     btn.addEventListener('click', async () => {

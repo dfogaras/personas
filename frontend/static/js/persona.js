@@ -130,9 +130,10 @@ function showEditForm(persona) {
     document.getElementById('pName').value = isRemix ? `${persona.name} #2` : persona.name;
     document.getElementById('pDesc').value = persona.description || '';
     document.getElementById('pSpec').value = persona.specialty || '';
-    document.getElementById('submitBtn').textContent = isRemix ? T.create : T.save;
+    document.getElementById('submitBtn').title = isRemix ? T.create : T.save;
 
     document.getElementById('editBackLink').href = `/persona/${personaId}`;
+    document.getElementById('cancelBtn').title = T.cancel;
     document.getElementById('cancelBtn').addEventListener('click', () => {
         window.location.href = `/persona/${personaId}`;
     });
