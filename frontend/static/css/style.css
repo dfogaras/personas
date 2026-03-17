@@ -375,6 +375,12 @@ button, input, select, textarea {
     padding: 8px 10px;
 }
 
+.persona-created-by {
+    font-size: 13px;
+    color: var(--gray-500);
+    margin: 2px 0 0;
+}
+
 .detail-description {
     color: var(--gray-700);
     font-size: 18px;

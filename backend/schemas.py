@@ -60,6 +60,7 @@ class PersonaResponse(PersonaBase):
     id: int
     created_at: datetime
     user_id: Optional[int] = None
+    user: Optional[UserResponse] = None
 
     class Config:
         from_attributes = True

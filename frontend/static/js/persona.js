@@ -12,6 +12,10 @@ function showView(persona, chats) {
     document.getElementById('personaSpecialty').textContent = persona.specialty || T.general;
     document.getElementById('personaDescription').textContent = persona.description;
 
+    const createdByEl = document.getElementById('personaCreatedBy');
+    const creator = persona.user ? persona.user.name : null;
+    createdByEl.textContent = `${T.createdBy} ${creator || '?'} — ${prettyTime(persona.created_at)}`;
+
     const actions = document.getElementById('personaActions');
 
     const headerBtns = [

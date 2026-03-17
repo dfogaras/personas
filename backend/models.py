@@ -64,6 +64,7 @@ class Persona(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
 
     chats = relationship("Chat", back_populates="persona")
+    user = relationship("User")
 
 
 class Chat(Base):

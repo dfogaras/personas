@@ -25,6 +25,39 @@ function redirectToLogin() {
 }
 
 // ============================================================================
+// Time formatting
+// ============================================================================
+
+function prettyTime(iso) {
+    // Server stores UTC with datetime.utcnow() which serializes without 'Z'.
+    // Force UTC interpretation so local timezone doesn't skew calculations.
+    if (iso && !iso.endsWith('Z') && !/[+\-]\d{2}:\d{2}$/.test(iso)) {
+        iso = iso + 'Z';
+    }
+    const date = new Date(iso);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMin = Math.floor(diffMs / 60000);
+
+    if (diffMin < 1)  return T.timeJustNow;
+    if (diffMin < 60) return `${diffMin} ${T.timeMinutesAgo}`;
+
+    const pad = n => String(n).padStart(2, '0');
+    const hhmm = `${pad(date.getHours())}:${pad(date.getMinutes())}`;
+
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    if (date >= todayStart) return hhmm;
+
+    const dateStart = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const days = Math.round((todayStart - dateStart) / 86400000);
+
+    if (days < 7) return `${days} ${T.timeDaysAgo}, ${hhmm}`;
+
+    const yy = String(date.getFullYear()).slice(2);
+    return `${yy}/${date.getMonth() + 1}/${date.getDate()} ${hhmm}`;
+}
+
+// ============================================================================
 // API
 // ============================================================================
 

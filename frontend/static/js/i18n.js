@@ -60,6 +60,12 @@ const T = {
     deleteChatConfirm:     'Biztosan törlöd ezt a csevegést?',
     chattingAs:            'Csevegés mint:',
 
+    // Time formatting
+    timeJustNow:           'most',
+    timeMinutesAgo:        'perce',
+    timeDaysAgo:           'napja',
+    createdBy:             'készítette',
+
     // Chat
     thinking:              '⏳ Gondolkodom...',
 
