@@ -14,38 +14,31 @@ function showView(persona, chats) {
 
     const actions = document.getElementById('personaActions');
 
-    const chatBtn = document.createElement('button');
-    chatBtn.className = 'btn-primary';
-    chatBtn.textContent = `💬 ${T.chat}`;
-    chatBtn.addEventListener('click', async () => {
-        try {
-            const chat = await apiCall('POST', '/chats', { persona_id: personaId });
-            window.location.href = `/chat/${chat.id}`;
-        } catch (e) { alert(e.message); }
+    const headerBtns = [
+        { icon: '💬', title: T.chat,   cls: '',          onClick: async () => {
+            try {
+                const chat = await apiCall('POST', '/chats', { persona_id: personaId });
+                window.location.href = `/chat/${chat.id}`;
+            } catch (e) { alert(e.message); }
+        }},
+        { icon: '✏️', title: T.edit,   cls: '',          onClick: () => { window.location.href = `/persona/${personaId}?edit`; } },
+        { icon: '⧉',  title: T.remix,  cls: '',          onClick: () => { window.location.href = `/persona/${personaId}?remix`; } },
+        { icon: '🗑',  title: T.delete, cls: 'btn-danger', onClick: async () => {
+            if (!confirm(`"${persona.name}" — ${T.deletePersonaConfirm}`)) return;
+            try {
+                await apiCall('DELETE', `/personas/${personaId}`);
+                window.location.href = '/';
+            } catch (e) { alert(e.message); }
+        }},
+    ];
+    headerBtns.forEach(({ icon, title, cls, onClick }) => {
+        const btn = document.createElement('button');
+        btn.className = ('persona-card-btn ' + cls).trim();
+        btn.title = title;
+        btn.textContent = icon;
+        btn.addEventListener('click', onClick);
+        actions.appendChild(btn);
     });
-
-    const editBtn = document.createElement('button');
-    editBtn.className = 'btn-secondary';
-    editBtn.textContent = `✏️ ${T.edit}`;
-    editBtn.addEventListener('click', () => { window.location.href = `/persona/${personaId}?edit`; });
-
-    const remixBtn = document.createElement('button');
-    remixBtn.className = 'btn-secondary';
-    remixBtn.textContent = `⧉ ${T.remix}`;
-    remixBtn.addEventListener('click', () => { window.location.href = `/persona/${personaId}?remix`; });
-
-    const delBtn = document.createElement('button');
-    delBtn.className = 'btn-danger';
-    delBtn.textContent = `🗑 ${T.delete}`;
-    delBtn.addEventListener('click', async () => {
-        if (!confirm(`"${persona.name}" — ${T.deletePersonaConfirm}`)) return;
-        try {
-            await apiCall('DELETE', `/personas/${personaId}`);
-            window.location.href = '/';
-        } catch (e) { alert(e.message); }
-    });
-
-    actions.append(chatBtn, editBtn, remixBtn, delBtn);
 
     const list = document.getElementById('chatsList');
     if (chats.length > 0) {
