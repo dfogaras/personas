@@ -267,6 +267,16 @@ button, input, select, textarea {
     margin-top: 8px;
 }
 
+.form-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--gray-500);
+    margin-bottom: 4px;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+}
+
 .form-input {
     display: block;
     width: 100%;
@@ -284,6 +294,38 @@ button, input, select, textarea {
     outline: none;
     border-color: var(--persona-color);
     box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.12);
+}
+
+.form-input.input-error {
+    border-color: #e53e3e;
+    box-shadow: 0 0 0 3px rgba(229, 62, 62, 0.12);
+}
+
+.form-field {
+    position: relative;
+    margin-bottom: 14px;
+}
+
+.form-field .form-input {
+    margin-bottom: 0;
+}
+
+.form-input-with-counter {
+    padding-right: 56px;
+}
+
+.form-char-counter {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 12px;
+    color: var(--gray-400);
+    pointer-events: none;
+}
+
+.form-char-counter.form-char-counter-near {
+    color: #e53e3e;
 }
 
 .form-actions {

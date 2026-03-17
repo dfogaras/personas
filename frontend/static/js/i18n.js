@@ -72,6 +72,7 @@ const T = {
     // Errors — admin
     errInvalidEmail:       'Érvénytelen e-mail cím',
     errNameRequired:       'A név megadása kötelező',
+    errRequiredFields:     'Minden mező kitöltése kötelező',
     errInvalidDomain:      'Érvénytelen e-mail domain',
     errPwdRequired:        'A kezdő jelszó megadása kötelező',
     errSessionExpired:     'A munkamenet lejárt',

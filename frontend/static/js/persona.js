@@ -133,7 +133,19 @@ function showEditForm(persona) {
     document.getElementById('formTitle').textContent = isCreate ? T.newPersona : isRemix ? T.remixPersona : T.editPersona;
     document.getElementById('pName').value = isRemix ? `${persona.name} #2` : (persona ? persona.name : '');
     document.getElementById('pDesc').value = persona ? (persona.description || '') : '';
-    document.getElementById('pSpec').value = persona ? (persona.specialty || '') : '';
+
+    const specInput = document.getElementById('pSpec');
+    const specCounter = document.getElementById('pSpecCounter');
+    specInput.value = persona ? (persona.specialty || '') : '';
+
+    function updateSpecCounter() {
+        const len = specInput.value.length;
+        specCounter.textContent = `${len} / 40`;
+        specCounter.classList.toggle('form-char-counter-near', len >= 33);
+    }
+    specInput.addEventListener('input', updateSpecCounter);
+    updateSpecCounter();
+
     document.getElementById('submitBtn').title = isCreate || isRemix ? T.create : T.save;
 
     document.getElementById('editBackLink').href = isCreate ? '/' : `/persona/${personaId}`;
@@ -143,13 +155,19 @@ function showEditForm(persona) {
     });
 
     document.getElementById('submitBtn').addEventListener('click', async () => {
-        const name = document.getElementById('pName').value.trim();
-        const description = document.getElementById('pDesc').value.trim();
-        const specialty = document.getElementById('pSpec').value.trim() || null;
+        const nameEl = document.getElementById('pName');
+        const descEl = document.getElementById('pDesc');
+        const name = nameEl.value.trim();
+        const description = descEl.value.trim();
+        const specialty = specInput.value.trim();
         const errorEl = document.getElementById('formError');
 
-        if (!name || !description) {
-            errorEl.textContent = T.errNameRequired;
+        nameEl.classList.toggle('input-error', !name);
+        specInput.classList.toggle('input-error', !specialty);
+        descEl.classList.toggle('input-error', !description);
+
+        if (!name || !specialty || !description) {
+            errorEl.textContent = T.errRequiredFields;
             errorEl.style.display = 'block';
             return;
         }
@@ -160,13 +178,17 @@ function showEditForm(persona) {
                 const newPersona = await apiCall('POST', '/personas', { name, description, specialty });
                 window.location.href = `/persona/${newPersona.id}`;
             } else {
-                await apiCall('POST', `/personas/${personaId}`, { name, description, specialty });
+                await apiCall('POST', `/personas/${personaId}`, { name, description, specialty: specialty || null });
                 window.location.href = `/persona/${personaId}`;
             }
         } catch (e) {
             errorEl.textContent = e.message;
             errorEl.style.display = 'block';
         }
+    });
+
+    [document.getElementById('pName'), specInput, document.getElementById('pDesc')].forEach(el => {
+        el.addEventListener('input', () => el.classList.remove('input-error'));
     });
 
     document.getElementById('editMode').style.display = 'block';
