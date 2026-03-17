@@ -36,39 +36,6 @@
         </div>
     </div>
 
-    <!-- Session page (handles both new and existing sessions) -->
-    <div id="page-session" class="page session-page">
-        <div class="chat-area">
-            <header class="chat-header">
-                <div class="chat-header-left">
-                    <a id="backToPersona" href="#page=personas" class="back-link-inline">←</a>
-                    <div>
-                        <h2 id="sessionPersonaName"></h2>
-                        <p id="sessionPersonaSpecialty" class="specialty"></p>
-                    </div>
-                </div>
-                <p id="sessionUserName2" class="user-name-display"></p>
-            </header>
-            <!-- Name prompt: shown when starting a new session -->
-            <div id="sessionNamePrompt" class="session-name-prompt" style="display:none">
-                <div class="name-prompt-card">
-                    <p class="name-prompt-label">Mi a neved?</p>
-                    <input type="text" id="chatUserName" placeholder="Neved" class="form-input" />
-                    <button id="chatStartBtn" class="btn-primary" disabled>Chat indítása</button>
-                </div>
-            </div>
-            <!-- Chat UI: shown for existing sessions -->
-            <div id="messagesList" class="messages-list" style="display:none"></div>
-            <div id="chatInputArea" class="chat-input-area" style="display:none">
-                <form id="messageForm" class="message-form">
-                    <input type="text" id="messageInput" placeholder="Írj üzenetet..." autocomplete="off" />
-                    <button type="submit" class="send-btn">Küldés</button>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="/static/js/i18n.js"></script>
     <script src="/static/js/common.js"></script>
     <script src="/static/js/app.js"></script>

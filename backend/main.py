@@ -84,6 +84,12 @@ async def persona_page(persona_id: int):
         return f.read()
 
 
+@app.get("/session/{session_id}", response_class=HTMLResponse)
+async def session_page(session_id: int):
+    with open(get_frontend_path("chat.html")) as f:
+        return f.read()
+
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("main:app", host=get_settings().app.host, port=get_settings().app.port, reload=get_settings().app.debug)

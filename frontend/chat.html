@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat — AI Personas</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body data-theme="chat">
+    <div class="session-page">
+        <div class="chat-area">
+            <header class="chat-header">
+                <div class="chat-header-left">
+                    <a id="backToPersona" href="/" class="back-link-inline">←</a>
+                    <div>
+                        <h2 id="sessionPersonaName"></h2>
+                        <p id="sessionPersonaSpecialty" class="specialty"></p>
+                    </div>
+                </div>
+                <p id="sessionUserName" class="user-name-display"></p>
+            </header>
+            <div id="messagesList" class="messages-list"></div>
+            <div class="chat-input-area">
+                <form id="messageForm" class="message-form">
+                    <input type="text" id="messageInput" placeholder="Írj üzenetet..." autocomplete="off" />
+                    <button type="submit" class="send-btn">Küldés</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="/static/js/i18n.js"></script>
+    <script src="/static/js/common.js"></script>
+    <script src="/static/js/chat.js"></script>
+</body>
+</html>

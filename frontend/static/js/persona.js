@@ -17,7 +17,12 @@ function showView(persona, sessions) {
     const chatBtn = document.createElement('button');
     chatBtn.className = 'btn-primary';
     chatBtn.textContent = `💬 ${T.chat}`;
-    chatBtn.addEventListener('click', () => { window.location.href = `/#page=session&persona=${personaId}`; });
+    chatBtn.addEventListener('click', async () => {
+        try {
+            const session = await apiCall('POST', '/sessions', { persona_id: personaId });
+            window.location.href = `/session/${session.id}`;
+        } catch (e) { alert(e.message); }
+    });
 
     const editBtn = document.createElement('button');
     editBtn.className = 'btn-secondary';
@@ -59,7 +64,7 @@ function showView(persona, sessions) {
                 <span class="session-user">${session.user ? session.user.name : ''}</span>
                 <span class="session-date">${new Date(session.updated_at).toLocaleDateString()}</span>
             `;
-            info.addEventListener('click', () => { window.location.href = `/#page=session&id=${session.id}`; });
+            info.addEventListener('click', () => { window.location.href = `/session/${session.id}`; });
 
             const sessionDelBtn = document.createElement('button');
             sessionDelBtn.className = 'session-delete-btn btn-danger';

@@ -48,7 +48,6 @@ async function route() {
     }
 
     document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
-    document.body.dataset.theme = (page === 'session') ? 'chat' : 'persona';
     updateNav();
 
     if (page === 'personas') {
@@ -59,8 +58,10 @@ async function route() {
         // Redirect legacy hash routes to the dedicated persona page
         const suffix = page === 'persona-edit' ? '?edit' : page === 'persona-remix' ? '?remix' : '';
         window.location.href = `/persona/${params.id}${suffix}`;
-    } else if (page === 'session' && (params.id || params.persona)) {
-        await showSessionPage(params);
+    } else if (page === 'session' && params.id) {
+        window.location.href = `/session/${params.id}`;
+    } else if (page === 'session' && params.persona) {
+        await startNewSession(parseInt(params.persona));
     } else {
         navigate({ page: 'personas' });
     }
@@ -134,22 +135,18 @@ function showCreatePersonaPage() {
 function createPersonaActions(persona) {
     const id = persona.id;
     const actions = [
-        { title: T.chat,  icon: '💬', href: null, nav: { page: 'session', persona: id } },
-        { title: T.edit,  icon: '✏️', href: `/persona/${id}?edit` },
-        { title: T.remix, icon: '⧉', href: `/persona/${id}?remix` },
+        { title: T.chat,  icon: '💬', handler: (e) => { e.stopPropagation(); startNewSession(id); } },
+        { title: T.edit,  icon: '✏️', handler: (e) => { e.stopPropagation(); window.location.href = `/persona/${id}?edit`; } },
+        { title: T.remix, icon: '⧉', handler: (e) => { e.stopPropagation(); window.location.href = `/persona/${id}?remix`; } },
     ];
     const div = document.createElement('div');
     div.className = 'persona-card-actions';
-    actions.forEach(({ title, icon, href, nav }) => {
+    actions.forEach(({ title, icon, handler }) => {
         const btn = document.createElement('button');
         btn.className = 'persona-card-btn';
         btn.title = title;
         btn.textContent = icon;
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            if (href) window.location.href = href;
-            else navigate(nav);
-        });
+        btn.addEventListener('click', handler);
         div.appendChild(btn);
     });
 
@@ -205,134 +202,13 @@ function renderPersonasList(personas) {
 }
 
 // ============================================================================
-// Session page  (handles both new sessions and existing ones)
+// Session helpers
 // ============================================================================
 
-async function showSessionPage(params) {
-    document.getElementById('page-session').style.display = 'flex';
-
-    const namePrompt   = document.getElementById('sessionNamePrompt');
-    const messagesList = document.getElementById('messagesList');
-    const chatInputArea = document.getElementById('chatInputArea');
-
-    if (params.persona) {
-        // --- New session: create immediately using the logged-in user's name ---
-        const personaId = parseInt(params.persona);
-        try {
-            const session = await apiCall('POST', '/sessions', {
-                persona_id: personaId,
-            });
-            navigate({ page: 'session', id: session.id });
-        } catch (e) {
-            alert(e.message);
-        }
-
-    } else {
-        // --- Existing session: show chat ---
-        const sessionId = parseInt(params.id);
-        const session = await apiCall('GET', `/sessions/${sessionId}`);
-        const persona = session.persona;
-
-        document.getElementById('sessionPersonaName').textContent = persona.name;
-        document.getElementById('sessionPersonaSpecialty').textContent = persona.specialty || T.general;
-        document.getElementById('sessionUserName2').textContent = session.user ? `${T.chattingAs} ${session.user.name}` : '';
-        document.getElementById('backToPersona').href = `/persona/${persona.id}`;
-
-        namePrompt.style.display = 'none';
-        messagesList.style.display = 'flex';
-        chatInputArea.style.display = 'block';
-
-        messagesList.innerHTML = '';
-        session.messages.forEach(m => addMessageToUI(m.role, m.content, m.role === 'assistant' ? m.id : null));
-
-        const oldForm = document.getElementById('messageForm');
-        const form = oldForm.cloneNode(true);
-        oldForm.parentNode.replaceChild(form, oldForm);
-
-        const msgInput = form.querySelector('#messageInput');
-        const sendBtn  = form.querySelector('.send-btn');
-
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const content = msgInput.value.trim();
-            if (!content || sendBtn.disabled) return;
-
-            addMessageToUI('user', content);
-            msgInput.value = '';
-            sendBtn.disabled = true;
-
-            const loadingId = addMessageToUI('assistant', T.thinking);
-            try {
-                const response = await apiCall('POST', `/sessions/${sessionId}/messages`, { message: content });
-                document.querySelector(`[data-message-id="${loadingId}"]`)?.remove();
-                addMessageToUI('assistant', response.content, response.id);
-            } catch (e) {
-                document.querySelector(`[data-message-id="${loadingId}"]`)?.remove();
-                alert(e.message);
-            } finally {
-                sendBtn.disabled = false;
-                msgInput.focus();
-            }
-        });
-
-        msgInput.focus();
-    }
-}
-
-// ============================================================================
-// Messages
-// ============================================================================
-
-function addMessageToUI(role, content, messageId = null) {
-    const messagesList = document.getElementById('messagesList');
-    const message = document.createElement('div');
-    message.className = `message ${role}`;
-
-    const id = messageId || `temp-${Date.now()}-${Math.random()}`;
-    message.setAttribute('data-message-id', id);
-
-    const contentDiv = document.createElement('div');
-    contentDiv.className = 'message-content';
-    contentDiv.innerHTML = marked.parse(content);
-
-    message.appendChild(contentDiv);
-
-    if (role === 'assistant' && messageId) {
-        const actionsDiv = document.createElement('div');
-        actionsDiv.className = 'message-actions';
-
-        const likeBtn = document.createElement('button');
-        likeBtn.className = 'feedback-btn like-btn';
-        likeBtn.textContent = '👍';
-        likeBtn.addEventListener('click', () => submitFeedback(messageId, true));
-
-        const dislikeBtn = document.createElement('button');
-        dislikeBtn.className = 'feedback-btn dislike-btn';
-        dislikeBtn.textContent = '👎';
-        dislikeBtn.addEventListener('click', () => submitFeedback(messageId, false));
-
-        actionsDiv.appendChild(likeBtn);
-        actionsDiv.appendChild(dislikeBtn);
-        contentDiv.appendChild(actionsDiv);
-    }
-
-    messagesList.appendChild(message);
-    messagesList.scrollTop = messagesList.scrollHeight;
-    return id;
-}
-
-async function submitFeedback(messageId, liked) {
+async function startNewSession(personaId) {
     try {
-        await apiCall('POST', `/messages/${messageId}/feedback`, { liked });
-        const buttons = document.querySelectorAll(`[data-message-id="${messageId}"] .feedback-btn`);
-        buttons.forEach(btn => {
-            if ((liked && btn.classList.contains('like-btn')) ||
-                (!liked && btn.classList.contains('dislike-btn'))) {
-                btn.classList.add(liked ? 'liked' : 'disliked');
-            } else {
-                btn.classList.remove('liked', 'disliked');
-            }
-        });
+        const session = await apiCall('POST', '/sessions', { persona_id: personaId });
+        window.location.href = `/session/${session.id}`;
     } catch (e) {
         alert(e.message);
     }
