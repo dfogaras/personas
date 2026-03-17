@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy.orm import Session
 
 from auth import get_current_user
+from messages import M
 from database import get_db
 from models import Persona, User
 from schemas import PersonaCreate, PersonaResponse
@@ -28,7 +29,7 @@ async def create_persona(
     current_user: User = Depends(get_current_user),
 ):
     if db.query(Persona).filter(Persona.name == persona.name).first():
-        raise HTTPException(status_code=400, detail="Persona already exists")
+        raise HTTPException(status_code=400, detail=M["persona_exists"])
     db_persona = Persona(**persona.model_dump(), user_id=current_user.id)
     db.add(db_persona)
     db.commit()
@@ -40,7 +41,7 @@ async def create_persona(
 async def get_persona(persona_id: int, db: Session = Depends(get_db)):
     persona = db.query(Persona).filter(Persona.id == persona_id).first()
     if not persona:
-        raise HTTPException(status_code=404, detail="Persona not found")
+        raise HTTPException(status_code=404, detail=M["persona_not_found"])
     return persona
 
 
@@ -53,11 +54,11 @@ async def overwrite_persona(
 ):
     db_persona = db.query(Persona).filter(Persona.id == persona_id).first()
     if not db_persona:
-        raise HTTPException(status_code=404, detail="Persona not found")
+        raise HTTPException(status_code=404, detail=M["persona_not_found"])
     if db_persona.user_id is not None and db_persona.user_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not your persona")
+        raise HTTPException(status_code=403, detail=M["not_your_persona"])
     if db.query(Persona).filter(Persona.name == persona.name, Persona.id != persona_id).first():
-        raise HTTPException(status_code=400, detail="Persona name already exists")
+        raise HTTPException(status_code=400, detail=M["persona_name_exists"])
     for key, value in persona.model_dump().items():
         setattr(db_persona, key, value)
     db.commit()
@@ -73,9 +74,9 @@ async def delete_persona(
 ):
     db_persona = db.query(Persona).filter(Persona.id == persona_id).first()
     if not db_persona:
-        raise HTTPException(status_code=404, detail="Persona not found")
+        raise HTTPException(status_code=404, detail=M["persona_not_found"])
     if db_persona.user_id is not None and db_persona.user_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not your persona")
+        raise HTTPException(status_code=403, detail=M["not_your_persona"])
     for chat in db_persona.chats:
         db.delete(chat)
     db.delete(db_persona)

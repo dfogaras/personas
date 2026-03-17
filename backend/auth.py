@@ -9,6 +9,7 @@ import bcrypt
 from sqlalchemy.orm import Session
 
 from database import get_db
+from messages import M
 from models import AuthToken, User
 
 _bearer = HTTPBearer()
@@ -44,5 +45,5 @@ def get_current_user(
         .first()
     )
     if not row:
-        raise HTTPException(status_code=401, detail="Invalid or expired token")
+        raise HTTPException(status_code=401, detail=M["invalid_token"])
     return row.user

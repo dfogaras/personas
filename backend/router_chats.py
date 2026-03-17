@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from sqlalchemy.orm import Session
 
 from auth import get_current_user
+from messages import M
 from context import get_ai_service
 from database import get_db
 from models import Chat, Message, Persona, User
@@ -39,7 +40,7 @@ async def create_chat(
     current_user: User = Depends(get_current_user),
 ):
     if not db.query(Persona).filter(Persona.id == chat.persona_id).first():
-        raise HTTPException(status_code=404, detail="Persona not found")
+        raise HTTPException(status_code=404, detail=M["persona_not_found"])
     db_chat = Chat(**chat.model_dump(), user_id=current_user.id)
     db.add(db_chat)
     db.commit()
@@ -51,7 +52,7 @@ async def create_chat(
 async def get_chat(chat_id: int, db: Session = Depends(get_db)):
     chat = db.query(Chat).filter(Chat.id == chat_id).first()
     if not chat:
-        raise HTTPException(status_code=404, detail="Chat not found")
+        raise HTTPException(status_code=404, detail=M["chat_not_found"])
     return chat
 
 
@@ -63,9 +64,9 @@ async def delete_chat(
 ):
     chat = db.query(Chat).filter(Chat.id == chat_id).first()
     if not chat:
-        raise HTTPException(status_code=404, detail="Chat not found")
+        raise HTTPException(status_code=404, detail=M["chat_not_found"])
     if chat.user_id is not None and chat.user_id != current_user.id:
-        raise HTTPException(status_code=403, detail="Not your chat")
+        raise HTTPException(status_code=403, detail=M["not_your_chat"])
     db.delete(chat)
     db.commit()
     return Response(status_code=204)
@@ -83,7 +84,7 @@ async def send_message(
 ):
     chat = db.query(Chat).filter(Chat.id == chat_id).first()
     if not chat:
-        raise HTTPException(status_code=404, detail="Chat not found")
+        raise HTTPException(status_code=404, detail=M["chat_not_found"])
 
     user_message = Message(chat_id=chat_id, role="user", content=req.message)
     db.add(user_message)
@@ -137,7 +138,7 @@ async def submit_feedback(
 ):
     message = db.query(Message).filter(Message.id == message_id).first()
     if not message:
-        raise HTTPException(status_code=404, detail="Message not found")
+        raise HTTPException(status_code=404, detail=M["message_not_found"])
     message.liked = feedback.liked
     db.commit()
     db.refresh(message)

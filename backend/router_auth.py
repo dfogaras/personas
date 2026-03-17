@@ -5,6 +5,7 @@ from fastapi.responses import Response
 from sqlalchemy.orm import Session
 
 from auth import create_token, get_current_user, hash_password, verify_password
+from messages import M
 from context import get_settings
 from database import get_db
 from models import AuthToken, User
@@ -16,7 +17,7 @@ router = APIRouter()
 @router.post("/api/auth/login", response_model=TokenResponse)
 async def login(body: LoginRequest, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == body.email.strip().lower()).first()
-    invalid = HTTPException(status_code=401, detail="Invalid email or password")
+    invalid = HTTPException(status_code=401, detail=M["invalid_credentials"])
     if not user:
         raise invalid
 
@@ -48,11 +49,11 @@ async def change_password(
         or (current_user.password_hash and verify_password(body.current_password, current_user.password_hash))
     )
     if not valid:
-        raise HTTPException(status_code=401, detail="Current password is incorrect")
+        raise HTTPException(status_code=401, detail=M["wrong_current_password"])
 
     # New password must not equal the initial password
     if current_user.initial_password and body.new_password == current_user.initial_password:
-        raise HTTPException(status_code=400, detail="New password must differ from the initial password")
+        raise HTTPException(status_code=400, detail=M["password_same_as_initial"])
 
     current_user.password_hash = hash_password(body.new_password)
     current_user.initial_password = None

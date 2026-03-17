@@ -7,6 +7,7 @@ from fastapi.responses import HTMLResponse, Response
 from sqlalchemy.orm import Session
 
 from auth import get_current_user
+from messages import M
 from groups import GROUPS
 from context import get_frontend_path
 from database import get_db
@@ -18,7 +19,7 @@ router = APIRouter()
 
 def require_admin(current_user: User = Depends(get_current_user)):
     if current_user.group != "admin":
-        raise HTTPException(status_code=403, detail="Admin access required")
+        raise HTTPException(status_code=403, detail=M["admin_required"])
     return current_user
 
 
@@ -46,9 +47,9 @@ async def admin_create_user(
     admin: User = Depends(require_admin),
 ):
     if body.group not in GROUPS:
-        raise HTTPException(status_code=400, detail=f"Invalid group. Must be one of: {', '.join(GROUPS)}")
+        raise HTTPException(status_code=400, detail=f"{M['invalid_group']}: {', '.join(GROUPS)}")
     if db.query(User).filter(User.email == body.email).first():
-        raise HTTPException(status_code=400, detail="Email already exists")
+        raise HTTPException(status_code=400, detail=M["email_exists"])
     u = User(
         email=body.email,
         name=body.name,
@@ -71,14 +72,14 @@ async def admin_update_user(
 ):
     u = db.query(User).filter(User.id == user_id).first()
     if not u:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=404, detail=M["user_not_found"])
     if body.group is not None:
         if body.group not in GROUPS:
-            raise HTTPException(status_code=400, detail=f"Invalid group. Must be one of: {', '.join(GROUPS)}")
+            raise HTTPException(status_code=400, detail=f"{M['invalid_group']}: {', '.join(GROUPS)}")
         u.group = body.group
     if body.email is not None:
         if db.query(User).filter(User.email == body.email, User.id != user_id).first():
-            raise HTTPException(status_code=400, detail="Email already exists")
+            raise HTTPException(status_code=400, detail=M["email_exists"])
         u.email = body.email
     if body.name is not None:
         u.name = body.name
@@ -98,7 +99,7 @@ async def admin_delete_user(
 ):
     u = db.query(User).filter(User.id == user_id).first()
     if not u:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=404, detail=M["user_not_found"])
     db.delete(u)
     db.commit()
     return Response(status_code=204)
