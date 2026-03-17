@@ -1,19 +1,5 @@
-const API_BASE = '/api';
-
 let _currentUsers = [];
 let _currentGroups = [];
-
-async function apiCall(method, endpoint, data = null) {
-    const options = { method, headers: { 'Content-Type': 'application/json' } };
-    const token = getToken();
-    if (token) options.headers['Authorization'] = `Bearer ${token}`;
-    if (data) options.body = JSON.stringify(data);
-    const response = await fetch(`${API_BASE}${endpoint}`, options);
-    if (response.status === 401) { redirectToLogin(); throw new Error('Session expired'); }
-    if (!response.ok) { const e = await response.json(); throw new Error(e.detail || 'API error'); }
-    if (response.status === 204) return null;
-    return response.json();
-}
 
 function normalizeEmail(val) {
     const email = val.trim().toLowerCase();

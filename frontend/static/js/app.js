@@ -2,8 +2,6 @@
  * AI Personas - Frontend Application
  */
 
-const API_BASE = '/api';
-
 // ============================================================================
 // Auth state
 // ============================================================================
@@ -18,31 +16,6 @@ function updateNav() {
     } else {
         navUser.style.display = 'none';
     }
-}
-
-// ============================================================================
-// API
-// ============================================================================
-
-async function apiCall(method, endpoint, data = null) {
-    const options = {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-    };
-    const token = getToken();
-    if (token) options.headers['Authorization'] = `Bearer ${token}`;
-    if (data) options.body = JSON.stringify(data);
-    const response = await fetch(`${API_BASE}${endpoint}`, options);
-    if (response.status === 401) {
-        redirectToLogin();
-        throw new Error(T.errSessionExpired);
-    }
-    if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.detail || T.errApiError);
-    }
-    if (response.status === 204) return null;
-    return response.json();
 }
 
 // ============================================================================
