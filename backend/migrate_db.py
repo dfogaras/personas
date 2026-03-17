@@ -2,8 +2,8 @@
 
 Usage:
     python migrate_db.py --config config.json migrate
-    python migrate_db.py --config config.json add-user --email alice@example.com --name Alice
-    python migrate_db.py --config config.json add-user --email bob@example.com --name Bob --role admin --group teachers
+    python migrate_db.py --config config.json add-user --email alice@example.com --name Alice --initial-password secret
+    python migrate_db.py --config config.json add-user --email bob@example.com --name Bob --group teachers
     python migrate_db.py --config config.json list-users
 """
 
@@ -59,18 +59,22 @@ def cmd_migrate(engine):
                 print(f"  {table}.{column} already absent")
 
 
-def cmd_add_user(engine, email, name, group):
+def cmd_add_user(engine, email, name, group, initial_password):
     with engine.connect() as conn:
         existing = conn.execute(text("SELECT id FROM users WHERE email = :email"), {"email": email}).first()
         if existing:
             conn.execute(text("DELETE FROM users WHERE email = :email"), {"email": email})
             print(f"  Replaced existing user <{email}>")
         conn.execute(
-            text('INSERT INTO users (email, name, "group", created_at) VALUES (:email, :name, :group, CURRENT_TIMESTAMP)'),
-            {"email": email, "name": name, "group": group},
+            text(
+                'INSERT INTO users (email, name, "group", initial_password, created_at)'
+                " VALUES (:email, :name, :group, :initial_password, CURRENT_TIMESTAMP)"
+            ),
+            {"email": email, "name": name, "group": group, "initial_password": initial_password},
         )
         conn.commit()
-    print(f"✓ Created user {name!r} <{email}>" + (f" group={group}" if group else ""))
+    parts = [f"group={group}" if group else "", f"initial_password=***" if initial_password else ""]
+    print(f"✓ Created user {name!r} <{email}>" + (f"  ({', '.join(p for p in parts if p)})" if any(parts) else ""))
 
 
 def cmd_list_users(engine):
@@ -96,6 +100,7 @@ def main():
     p_add.add_argument("--email", required=True)
     p_add.add_argument("--name", required=True)
     p_add.add_argument("--group", default=None)
+    p_add.add_argument("--initial-password", default=None, dest="initial_password")
 
     sub.add_parser("list-users", help="List all users")
 
@@ -110,7 +115,7 @@ def main():
     if args.command == "migrate":
         cmd_migrate(engine)
     elif args.command == "add-user":
-        cmd_add_user(engine, args.email, args.name, args.group)
+        cmd_add_user(engine, args.email, args.name, args.group, args.initial_password)
     elif args.command == "list-users":
         cmd_list_users(engine)
 
