@@ -193,6 +193,18 @@ function parseBulkEntries() {
 }
 
 // ============================================================================
+// Icons
+// ============================================================================
+
+function _svg(paths) {
+    return `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${paths}</svg>`;
+}
+const ICON_EDIT   = _svg('<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>');
+const ICON_DELETE = _svg('<polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>');
+const ICON_SAVE   = _svg('<polyline points="20 6 9 17 4 12"/>');
+const ICON_CANCEL = _svg('<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>');
+
+// ============================================================================
 // User table rendering
 // ============================================================================
 
@@ -209,8 +221,8 @@ function renderUserRow(user) {
         <td class="cell-group"><select class="group-select" disabled>${groupOptions}</select></td>
         <td class="cell-pwd">${escapeHtml(pwdText)}</td>
         <td class="cell-actions">
-            <button class="admin-btn edit-btn">Edit</button>
-            <button class="admin-btn delete-btn">Delete</button>
+            <button class="table-icon-btn edit-btn" title="Edit">${ICON_EDIT}</button>
+            <button class="table-icon-btn delete-btn" title="Delete">${ICON_DELETE}</button>
         </td>`;
 
     tr.querySelector('.edit-btn').addEventListener('click', () => startEdit(tr, user));
@@ -224,8 +236,8 @@ function startEdit(tr, user) {
     tr.querySelector('.cell-group').querySelector('select').disabled = false;
     tr.querySelector('.cell-pwd').innerHTML   = `<input class="admin-input" placeholder="leave blank to keep" value="${escapeHtml(user.initial_password ?? '')}">`;
     tr.querySelector('.cell-actions').innerHTML = `
-        <button class="admin-btn save-btn">Save</button>
-        <button class="admin-btn cancel-btn">Cancel</button>`;
+        <button class="table-icon-btn save-btn" title="Save">${ICON_SAVE}</button>
+        <button class="table-icon-btn cancel-btn" title="Cancel">${ICON_CANCEL}</button>`;
 
     tr.querySelector('.save-btn').addEventListener('click', () => saveEdit(tr, user));
     tr.querySelector('.cancel-btn').addEventListener('click', () => tr.parentNode.replaceChild(renderUserRow(user), tr));
@@ -253,36 +265,51 @@ async function deleteUser(tr, user) {
     } catch (e) { showError(e.message); }
 }
 
-function renderAddRow(tbody, group) {
-    const tr = document.createElement('tr');
-    tr.className = 'add-row';
-    tr.innerHTML = `
-        <td><input class="admin-input" placeholder="Email"></td>
-        <td><input class="admin-input" placeholder="Name"></td>
-        <td></td>
-        <td><input class="admin-input" placeholder="Init pwd"></td>
-        <td class="cell-actions">
-            <button class="admin-btn save-btn">Add</button>
-            <button class="admin-btn bulk-btn">Bulk add…</button>
-        </td>`;
-    tbody.appendChild(tr);
+function openAddModal(group) {
+    document.getElementById('addGroupLabel').textContent = group;
+    document.getElementById('addEmail').value    = '';
+    document.getElementById('addName').value     = '';
+    document.getElementById('addPassword').value = '';
+    document.getElementById('addError').style.display = 'none';
+    document.getElementById('addModal').style.display = 'flex';
 
-    const [emailIn, nameIn, pwdIn] = [...tr.querySelectorAll('input')];
+    document.getElementById('addCancelBtn').onclick = closeAddModal;
+    document.getElementById('addModal').onclick = e => {
+        if (e.target === document.getElementById('addModal')) closeAddModal();
+    };
 
-    tr.querySelector('.save-btn').addEventListener('click', async () => {
-        const email            = normalizeEmail(emailIn.value);
-        const name             = nameIn.value.trim();
-        const initial_password = pwdIn.value.trim() || null;
-        if (!email) { showError('Invalid email address'); return; }
-        if (!name) return;
+    const emailEl = document.getElementById('addEmail');
+    const nameEl  = document.getElementById('addName');
+    const pwdEl   = document.getElementById('addPassword');
+    const errorEl = document.getElementById('addError');
+    const btn     = document.getElementById('addSubmitBtn');
+
+    btn.disabled = false;
+    btn.onclick = async () => {
+        const email            = normalizeEmail(emailEl.value);
+        const name             = nameEl.value.trim();
+        const initial_password = pwdEl.value.trim() || null;
+        if (!email) { errorEl.textContent = 'Invalid email address'; errorEl.style.display = 'block'; return; }
+        if (!name)  { errorEl.textContent = 'Name is required'; errorEl.style.display = 'block'; return; }
+        btn.disabled = true;
+        errorEl.style.display = 'none';
         try {
             await apiCall('POST', '/admin/users', { email, name, group, initial_password });
+            closeAddModal();
             const users = await apiCall('GET', '/admin/users');
             renderUsers(users, _currentGroups);
-        } catch (e) { showError(e.message); }
-    });
+        } catch (e) {
+            errorEl.textContent = e.message;
+            errorEl.style.display = 'block';
+            btn.disabled = false;
+        }
+    };
 
-    tr.querySelector('.bulk-btn').addEventListener('click', () => openBulkModal(group));
+    emailEl.focus();
+}
+
+function closeAddModal() {
+    document.getElementById('addModal').style.display = 'none';
 }
 
 function renderUsers(users, groups) {
@@ -302,7 +329,22 @@ function renderUsers(users, groups) {
         const section = document.createElement('div');
         section.className = 'admin-group collapsed';
         section.innerHTML = `<h3 class="admin-group-title">
-                <span class="admin-group-toggle">▶</span> ${escapeHtml(group)}
+                <span class="admin-group-toggle">▶</span>
+                <span class="admin-group-name">${escapeHtml(group)}</span>
+                <span class="admin-group-actions">
+                    <button class="group-icon-btn add-one-btn" title="Add user">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+                            <line x1="19" y1="8" x2="19" y2="14"/><line x1="16" y1="11" x2="22" y2="11"/>
+                        </svg>
+                    </button>
+                    <button class="group-icon-btn add-bulk-btn" title="Bulk add">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                        </svg>
+                    </button>
+                </span>
             </h3>
             <div class="admin-group-body">
                 <table class="admin-table">
@@ -310,12 +352,14 @@ function renderUsers(users, groups) {
                     <tbody></tbody>
                 </table>
             </div>`;
-        section.querySelector('.admin-group-title').addEventListener('click', () => {
-            section.classList.toggle('collapsed');
+        const title = section.querySelector('.admin-group-title');
+        title.addEventListener('click', e => {
+            if (!e.target.closest('button')) section.classList.toggle('collapsed');
         });
+        section.querySelector('.add-one-btn').addEventListener('click',  () => openAddModal(group));
+        section.querySelector('.add-bulk-btn').addEventListener('click', () => openBulkModal(group));
         const tbody = section.querySelector('tbody');
         for (const user of byGroup[group]) tbody.appendChild(renderUserRow(user));
-        renderAddRow(tbody, group);
         container.appendChild(section);
     }
 }

@@ -30,9 +30,73 @@
     display: flex;
     align-items: center;
     gap: 8px;
+    padding-right: 4px;
 }
 
-.admin-group-title:hover {
+.admin-group-title:hover .admin-group-name {
+    color: var(--gray-700);
+}
+
+.admin-group-actions {
+    margin-left: auto;
+    display: flex;
+    gap: 2px;
+    opacity: 0;
+    transition: opacity 0.15s;
+}
+
+.admin-group:hover .admin-group-actions {
+    opacity: 1;
+}
+
+.group-icon-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--gray-500);
+    padding: 0;
+    transition: background 0.15s, color 0.15s;
+}
+
+.group-icon-btn:hover {
+    background: var(--persona-light);
+    color: var(--persona-color);
+}
+
+.table-icon-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--gray-400);
+    padding: 0;
+    transition: background 0.15s, color 0.15s;
+}
+
+.table-icon-btn.edit-btn:hover,
+.table-icon-btn.save-btn:hover {
+    background: var(--persona-light);
+    color: var(--persona-color);
+}
+
+.table-icon-btn.delete-btn:hover {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+.table-icon-btn.cancel-btn:hover {
+    background: var(--gray-200);
     color: var(--gray-700);
 }
 
