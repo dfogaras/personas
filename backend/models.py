@@ -82,6 +82,20 @@ class Chat(Base):
     user = relationship("User")
     messages = relationship("Message", back_populates="chat", cascade="all, delete-orphan")
 
+    @property
+    def preview(self):
+        msg = next((m for m in self.messages if m.role == "user"), None)
+        if not msg:
+            return None
+        return msg.content[:80] + ("…" if len(msg.content) > 80 else "")
+
+    @property
+    def excerpt(self):
+        return [
+            {"role": m.role, "content": m.content[:300] + ("…" if len(m.content) > 300 else "")}
+            for m in self.messages[:4]
+        ]
+
 
 class Message(Base):
     """Chat message model."""

@@ -97,6 +97,8 @@ class ChatResponse(BaseModel):
     user: Optional[UserResponse] = None
     created_at: datetime
     updated_at: datetime
+    preview: Optional[str] = None
+    excerpt: List[dict] = []
 
     class Config:
         from_attributes = True
