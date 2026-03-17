@@ -31,14 +31,14 @@ def cmd_migrate(engine):
     inspector = inspect(engine)
     add_columns = [
         ("personas", "user_id", "INTEGER REFERENCES users(id)"),
-        ("sessions", "user_id", "INTEGER REFERENCES users(id)"),
+        ("chats", "user_id", "INTEGER REFERENCES users(id)"),
         ("users", "password_hash", "TEXT"),
         ("users", "initial_password", "TEXT"),
         ("users", "initial_password_created_at", "DATETIME"),
     ]
     drop_columns = [
         ("users", "role"),
-        ("sessions", "user_name"),
+        ("chats", "user_name"),
     ]
     with engine.connect() as conn:
         for table, column, col_def in add_columns:
