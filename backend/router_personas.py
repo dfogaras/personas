@@ -3,7 +3,7 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy.orm import Session
 
-from auth import get_current_user
+from auth import get_current_user, check_owner_or_admin
 from messages import M
 from database import get_db
 from models import Persona, User
@@ -55,8 +55,7 @@ async def overwrite_persona(
     db_persona = db.query(Persona).filter(Persona.id == persona_id).first()
     if not db_persona:
         raise HTTPException(status_code=404, detail=M["persona_not_found"])
-    if db_persona.user_id is not None and db_persona.user_id != current_user.id and current_user.group != "admin":
-        raise HTTPException(status_code=403, detail=M["not_your_persona"])
+    check_owner_or_admin(db_persona, current_user, "not_your_persona")
     if db.query(Persona).filter(Persona.name == persona.name, Persona.id != persona_id).first():
         raise HTTPException(status_code=400, detail=M["persona_name_exists"])
     for key, value in persona.model_dump().items():
@@ -75,8 +74,7 @@ async def delete_persona(
     db_persona = db.query(Persona).filter(Persona.id == persona_id).first()
     if not db_persona:
         raise HTTPException(status_code=404, detail=M["persona_not_found"])
-    if db_persona.user_id is not None and db_persona.user_id != current_user.id and current_user.group != "admin":
-        raise HTTPException(status_code=403, detail=M["not_your_persona"])
+    check_owner_or_admin(db_persona, current_user, "not_your_persona")
     for chat in db_persona.chats:
         db.delete(chat)
     db.delete(db_persona)

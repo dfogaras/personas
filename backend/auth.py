@@ -12,6 +12,7 @@ from database import get_db
 from messages import M
 from models import AuthToken, User
 
+
 _bearer = HTTPBearer()
 
 
@@ -47,3 +48,16 @@ def get_current_user(
     if not row:
         raise HTTPException(status_code=401, detail=M["invalid_token"])
     return row.user
+
+
+def require_admin(current_user: User = Depends(get_current_user)) -> User:
+    """FastAPI dependency — raises 403 if current user is not admin."""
+    if current_user.group != "admin":
+        raise HTTPException(status_code=403, detail=M["admin_required"])
+    return current_user
+
+
+def check_owner_or_admin(resource, current_user: User, error_key: str) -> None:
+    """Raise 403 unless current_user owns resource or is admin. Legacy rows (user_id=None) are open."""
+    if resource.user_id is not None and resource.user_id != current_user.id and current_user.group != "admin":
+        raise HTTPException(status_code=403, detail=M[error_key])

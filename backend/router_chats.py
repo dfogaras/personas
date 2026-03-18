@@ -5,7 +5,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from sqlalchemy.orm import Session
 
-from auth import get_current_user
+from auth import get_current_user, check_owner_or_admin
 from messages import M
 from context import get_ai_service
 from database import get_db
@@ -66,8 +66,7 @@ async def delete_chat(
     chat = db.query(Chat).filter(Chat.id == chat_id).first()
     if not chat:
         raise HTTPException(status_code=404, detail=M["chat_not_found"])
-    if chat.user_id is not None and chat.user_id != current_user.id and current_user.group != "admin":
-        raise HTTPException(status_code=403, detail=M["not_your_chat"])
+    check_owner_or_admin(chat, current_user, "not_your_chat")
     db.delete(chat)
     db.commit()
     return Response(status_code=204)
@@ -82,10 +81,12 @@ async def send_message(
     chat_id: int,
     req: MessageRequest,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     chat = db.query(Chat).filter(Chat.id == chat_id).first()
     if not chat:
         raise HTTPException(status_code=404, detail=M["chat_not_found"])
+    check_owner_or_admin(chat, current_user, "not_your_chat")
 
     chat.updated_at = datetime.now(timezone.utc).replace(tzinfo=None)
     user_message = Message(chat_id=chat_id, role="user", content=req.message)
@@ -138,10 +139,12 @@ async def submit_feedback(
     message_id: int,
     feedback: FeedbackRequest,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     message = db.query(Message).filter(Message.id == message_id).first()
     if not message:
         raise HTTPException(status_code=404, detail=M["message_not_found"])
+    check_owner_or_admin(message.chat, current_user, "not_your_chat")
     message.liked = feedback.liked
     db.commit()
     db.refresh(message)

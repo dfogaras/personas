@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import Response
 from sqlalchemy.orm import Session
 
-from auth import get_current_user
+from auth import require_admin
 from messages import M
 from groups import GROUPS
 from database import get_db
@@ -14,12 +14,6 @@ from models import User
 from schemas import UserAdminCreate, UserAdminResponse, UserAdminUpdate
 
 router = APIRouter()
-
-
-def require_admin(current_user: User = Depends(get_current_user)):
-    if current_user.group != "admin":
-        raise HTTPException(status_code=403, detail=M["admin_required"])
-    return current_user
 
 
 @router.get("/api/admin/groups", response_model=list[str])
