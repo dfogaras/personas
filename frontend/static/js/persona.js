@@ -191,6 +191,23 @@ function showEditForm(persona) {
         el.addEventListener('input', () => el.classList.remove('input-error'));
     });
 
+    const descEl = document.getElementById('pDesc');
+    const prompts = ['Életkora', 'Neme', 'Személyisége', 'Stílusa', 'Érdeklődése', 'Végzettsége', 'Munkája', 'Humora', 'Értékei', 'Szokásai'];
+    const promptsEl = document.getElementById('descPrompts');
+    prompts.forEach(label => {
+        const chip = document.createElement('button');
+        chip.type = 'button';
+        chip.className = 'desc-prompt-chip';
+        chip.textContent = label + '?';
+        chip.addEventListener('click', () => {
+            const insert = (descEl.value.length > 0 && !descEl.value.endsWith('\n') ? '\n' : '') + label + ': ';
+            descEl.value += insert;
+            descEl.focus();
+            descEl.setSelectionRange(descEl.value.length, descEl.value.length);
+        });
+        promptsEl.appendChild(chip);
+    });
+
     document.getElementById('editMode').style.display = 'block';
     document.getElementById('pName').focus();
 }

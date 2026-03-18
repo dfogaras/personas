@@ -328,6 +328,29 @@ button, input, select, textarea {
     color: #e53e3e;
 }
 
+.desc-prompts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+.desc-prompt-chip {
+    background: var(--gray-100);
+    border: 1px solid var(--gray-200);
+    border-radius: 20px;
+    padding: 3px 10px;
+    font-size: 13px;
+    color: var(--gray-500);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.desc-prompt-chip:hover {
+    background: var(--gray-200);
+    color: var(--gray-700);
+}
+
 .form-actions {
     display: flex;
     gap: 10px;
