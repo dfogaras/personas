@@ -3,13 +3,12 @@
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import HTMLResponse, Response
+from fastapi.responses import Response
 from sqlalchemy.orm import Session
 
 from auth import get_current_user
 from messages import M
 from groups import GROUPS
-from context import get_frontend_path
 from database import get_db
 from models import User
 from schemas import UserAdminCreate, UserAdminResponse, UserAdminUpdate
@@ -21,12 +20,6 @@ def require_admin(current_user: User = Depends(get_current_user)):
     if current_user.group != "admin":
         raise HTTPException(status_code=403, detail=M["admin_required"])
     return current_user
-
-
-@router.get("/admin", response_class=HTMLResponse)
-async def admin_page():
-    with open(get_frontend_path("admin.html")) as f:
-        return f.read()
 
 
 @router.get("/api/admin/groups", response_model=list[str])

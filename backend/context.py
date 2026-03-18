@@ -29,3 +29,7 @@ def get_ai_service():
 
 def get_frontend_path(file_name: str = "") -> str:
     return os.path.join(_frontend_path, file_name) if file_name else _frontend_path
+
+def read_frontend_file(filename: str) -> str:
+    with open(get_frontend_path(filename)) as f:
+        return f.read()

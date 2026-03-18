@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from context import get_frontend_path, get_settings
+from context import get_frontend_path, get_settings, read_frontend_file
 from database import init_db
 from router_admin import router as admin_router
 from router_auth import router as auth_router
@@ -64,38 +64,37 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
 
 @app.get("/", response_class=HTMLResponse)
 async def root():
-    with open(get_frontend_path("index.html")) as f:
-        return f.read()
+    return read_frontend_file("index.html")
 
 
 @app.get("/login", response_class=HTMLResponse)
 async def login_page():
-    with open(get_frontend_path("login.html")) as f:
-        return f.read()
+    return read_frontend_file("login.html")
 
 
 @app.get("/change-password", response_class=HTMLResponse)
 async def change_password_page():
-    with open(get_frontend_path("change-password.html")) as f:
-        return f.read()
+    return read_frontend_file("change-password.html")
 
 
 @app.get("/persona/new", response_class=HTMLResponse)
 async def persona_new_page():
-    with open(get_frontend_path("persona.html")) as f:
-        return f.read()
+    return read_frontend_file("persona.html")
 
 
 @app.get("/persona/{persona_id}", response_class=HTMLResponse)
 async def persona_page(persona_id: int):
-    with open(get_frontend_path("persona.html")) as f:
-        return f.read()
+    return read_frontend_file("persona.html")
+
+
+@app.get("/admin", response_class=HTMLResponse)
+async def admin_page():
+    return read_frontend_file("admin.html")
 
 
 @app.get("/chat/{chat_id}", response_class=HTMLResponse)
 async def chat_page(chat_id: int):
-    with open(get_frontend_path("chat.html")) as f:
-        return f.read()
+    return read_frontend_file("chat.html")
 
 
 if __name__ == "__main__":
