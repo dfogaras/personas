@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from auth import get_current_user, check_owner_or_admin
 from messages import M
@@ -31,7 +31,11 @@ async def list_chats(
     limit: Optional[int] = Query(None),
     db: Session = Depends(get_db),
 ):
-    q = db.query(Chat)
+    q = db.query(Chat).options(
+        selectinload(Chat.messages),
+        selectinload(Chat.user),
+        selectinload(Chat.persona),
+    )
     if persona_id is not None:
         q = q.filter(Chat.persona_id == persona_id)
     if user_id is not None:
@@ -99,6 +103,8 @@ async def send_message(
     check_owner_or_admin(chat, current_user, "not_your_chat")
 
     chat.updated_at = datetime.now(timezone.utc).replace(tzinfo=None)
+    if chat.preview_text is None:
+        chat.preview_text = req.message[:80] + ("…" if len(req.message) > 80 else "")
     user_message = Message(chat_id=chat_id, role="user", content=req.message)
     db.add(user_message)
     db.commit()

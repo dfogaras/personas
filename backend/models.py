@@ -78,12 +78,17 @@ class Chat(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
 
+    preview_text = Column(String, nullable=True)
+
     persona = relationship("Persona", back_populates="chats")
     user = relationship("User")
     messages = relationship("Message", back_populates="chat", cascade="all, delete-orphan")
 
     @property
     def preview(self):
+        if self.preview_text is not None:
+            return self.preview_text
+        # fallback for rows created before preview_text column existed
         msg = next((m for m in self.messages if m.role == "user"), None)
         if not msg:
             return None

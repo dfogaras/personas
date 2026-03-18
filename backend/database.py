@@ -21,6 +21,7 @@ def init_db(settings) -> None:
         for stmt in [
             "ALTER TABLE sessions RENAME TO chats",
             "ALTER TABLE messages RENAME COLUMN session_id TO chat_id",
+            "ALTER TABLE chats ADD COLUMN preview_text VARCHAR",
         ]:
             try:
                 conn.execute(text(stmt))
