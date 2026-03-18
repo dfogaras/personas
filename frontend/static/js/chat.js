@@ -70,6 +70,16 @@ async function submitFeedback(messageId, liked) {
 async function init() {
     if (!getToken()) { redirectToLogin(); return; }
 
+    const user = getUser();
+    if (user) {
+        document.getElementById('navUserName').textContent = user.name || user.email;
+        document.getElementById('navUser').style.display = 'flex';
+    }
+    document.getElementById('navLogoutBtn').addEventListener('click', () => {
+        clearAuth();
+        window.location.href = '/login';
+    });
+
     try {
         const chat = await apiCall('GET', `/chats/${chatId}`);
         const persona = chat.persona;
