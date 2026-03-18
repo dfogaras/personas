@@ -75,10 +75,27 @@ async function init() {
         const persona = chat.persona;
 
         document.title = `${persona.name} — AI Personas`;
-        document.getElementById('chatPersonaMeta').innerHTML = personaMetaHtml(persona);
+        const metaEl = document.getElementById('chatPersonaMeta');
+        metaEl.innerHTML = personaMetaHtml(persona);
+
+        const createdLine = metaEl.querySelector('.persona-meta-created');
+        if (createdLine) {
+            [
+                { icon: '✏️', title: T.edit,  href: `/persona/${persona.id}?edit` },
+                { icon: '⧉',  title: T.remix, href: `/persona/${persona.id}?remix` },
+            ].forEach(({ icon, title, href }) => {
+                const btn = document.createElement('button');
+                btn.className = 'persona-card-btn chat-persona-action-btn';
+                btn.title = title;
+                btn.textContent = icon;
+                btn.addEventListener('click', (e) => { e.stopPropagation(); window.location.href = href; });
+                createdLine.appendChild(btn);
+            });
+        }
+        metaEl.addEventListener('click', () => { window.location.href = `/persona/${persona.id}`; });
+
         document.getElementById('chatUserName').textContent = chat.user ? chat.user.name : '';
         document.getElementById('chatUserEmail').textContent = chat.user ? chat.user.email : '';
-        document.getElementById('chatPersonaMeta').addEventListener('click', () => { window.location.href = `/persona/${persona.id}`; });
 
         const createdAt = chat.created_at;
         function updateChatTimes(updatedAt) {

@@ -728,6 +728,23 @@ button, input, select, textarea {
     transform: translateY(-1px);
 }
 
+.persona-meta-created {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.chat-persona-action-btn {
+    font-size: 13px !important;
+    padding: 1px 4px !important;
+    opacity: 0.35;
+}
+
+.chat-persona-action-btn:hover {
+    background: var(--chat-light) !important;
+    opacity: 1;
+}
+
 .back-link-inline {
     color: var(--chat-color);
     text-decoration: none;
