@@ -168,9 +168,11 @@ function renderPersonasList(personas, container, showAddBtn = false) {
 
         const body = document.createElement('div');
         body.className = 'persona-card-body';
+        const creator = persona.user?.name;
         body.innerHTML = `
             <div class="persona-name">${persona.name}</div>
             <div class="persona-specialty">${persona.specialty || T.general}</div>
+            ${creator ? `<div class="persona-card-creator">${T.createdBy} ${creator} — ${prettyTime(persona.created_at)}</div>` : ''}
         `;
         body.addEventListener('click', () => { window.location.href = `/persona/${persona.id}`; });
 

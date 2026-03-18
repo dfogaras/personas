@@ -251,6 +251,12 @@ button, input, select, textarea {
     opacity: 0.8;
 }
 
+.persona-card-creator {
+    font-size: 12px;
+    color: var(--gray-400);
+    margin-top: 6px;
+}
+
 .persona-card-actions {
     padding: 8px 12px 10px;
     border-top: 1px solid var(--persona-light);
