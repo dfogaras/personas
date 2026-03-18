@@ -76,7 +76,7 @@ async function init() {
         const chat = await apiCall('GET', `/chats/${chatId}`);
         const persona = chat.persona;
 
-        document.title = `${persona.name} — AI Personas`;
+        document.title = `${persona.name} — kincskereso.ai`;
         const metaEl = document.getElementById('chatPersonaMeta');
         metaEl.innerHTML = personaMetaHtml(persona);
 

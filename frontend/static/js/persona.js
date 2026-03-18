@@ -10,7 +10,7 @@ const backUrl = urlParams.get('back') || '/';
 // ============================================================================
 
 function showView(persona, chats) {
-    document.title = `${persona.name} — AI Personas`;
+    document.title = `${persona.name} — kincskereso.ai`;
     document.getElementById('personaMeta').innerHTML = personaMetaHtml(persona);
     document.getElementById('personaDescription').textContent = persona.description;
 
