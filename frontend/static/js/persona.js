@@ -198,16 +198,7 @@ function showEditForm(persona) {
 async function init() {
     if (!getToken()) { redirectToLogin(); return; }
 
-    const user = getUser();
-    if (user) {
-        document.getElementById('navUserName').textContent = user.name || user.email;
-        document.getElementById('navUser').style.display = 'flex';
-    }
-    document.getElementById('navUserName').addEventListener('click', () => { window.location.href = '/'; });
-    document.getElementById('navLogoutBtn').addEventListener('click', () => {
-        clearAuth();
-        window.location.href = '/login';
-    });
+    setupNav();
 
     try {
         if (mode === 'create') {

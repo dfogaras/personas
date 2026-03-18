@@ -72,6 +72,38 @@ function personaMetaHtml(persona) {
 }
 
 // ============================================================================
+// Nav setup (shared across all pages)
+// ============================================================================
+
+function setupNav({ onNameClick } = {}) {
+    const user = getUser();
+    const navUser = document.getElementById('navUser');
+    if (!navUser) return;
+
+    if (!user) { navUser.style.display = 'none'; return; }
+
+    const nameBtn = document.getElementById('navUserName');
+    nameBtn.textContent = user.name || user.email;
+    nameBtn.addEventListener('click', onNameClick ?? (() => { window.location.href = '/'; }));
+    navUser.style.display = 'flex';
+
+    const logoutBtn = document.getElementById('navLogoutBtn');
+    logoutBtn.addEventListener('click', () => {
+        clearAuth();
+        window.location.href = '/login';
+    });
+
+    if (user.group && user.group !== 'admin') {
+        const a = document.createElement('a');
+        a.id = 'navGroupLink';
+        a.href = `/#page=group&id=${encodeURIComponent(user.group)}`;
+        a.className = 'nav-logout-btn';
+        a.textContent = user.group + ' csoport';
+        navUser.insertBefore(a, logoutBtn);
+    }
+}
+
+// ============================================================================
 // Chat item component
 // ============================================================================
 

@@ -127,9 +127,9 @@ button, input, select, textarea {
 .nav-user-name {
     background: rgba(255,255,255,0.15);
     color: white;
-    border: none;
+    border: 1px solid rgba(255,255,255,0.3);
     border-radius: 8px;
-    padding: 6px 14px;
+    padding: 5px 12px;
     font-size: 15px;
     font-weight: 600;
     cursor: pointer;
@@ -141,8 +141,12 @@ button, input, select, textarea {
 }
 
 .nav-logout-btn {
+    display: inline-flex;
+    align-items: center;
+    line-height: normal;
     background: rgba(255,255,255,0.15);
     color: white;
+    text-decoration: none;
     border: 1px solid rgba(255,255,255,0.3);
     border-radius: 8px;
     padding: 5px 12px;

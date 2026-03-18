@@ -9,22 +9,19 @@
 function updateNav() {
     const user = getUser();
     const navUser = document.getElementById('navUser');
-    const navLinks = document.getElementById('navLinks');
-
-    if (user) {
-        document.getElementById('navUserName').textContent = user.name || user.email;
-        navUser.style.display = 'flex';
-
-        navLinks.innerHTML = '';
-        if (user.group && user.group !== 'admin') {
-            const a = document.createElement('a');
-            a.href = `#page=group&id=${encodeURIComponent(user.group)}`;
-            a.className = 'nav-link';
-            a.textContent = user.group + ' csoport';
-            navLinks.appendChild(a);
-        }
-    } else {
-        navUser.style.display = 'none';
+    if (!user) { navUser.style.display = 'none'; return; }
+    document.getElementById('navUserName').textContent = user.name || user.email;
+    navUser.style.display = 'flex';
+    const existing = document.getElementById('navGroupLink');
+    if (existing) existing.remove();
+    if (user.group && user.group !== 'admin') {
+        const a = document.createElement('a');
+        a.id = 'navGroupLink';
+        a.href = `/#page=group&id=${encodeURIComponent(user.group)}`;
+        a.className = 'nav-logout-btn';
+        a.textContent = user.group + ' csoport';
+        const logoutBtn = document.getElementById('navLogoutBtn');
+        logoutBtn.parentElement.insertBefore(a, logoutBtn);
     }
 }
 
@@ -209,12 +206,7 @@ async function startNewChat(personaId) {
 // ============================================================================
 
 async function init() {
-    document.getElementById('navUserName').addEventListener('click', () => navigate({ page: 'me' }));
-    document.getElementById('navLogoutBtn').addEventListener('click', () => {
-        clearAuth();
-        window.location.href = '/login';
-    });
-
+    setupNav({ onNameClick: () => navigate({ page: 'me' }) });
     window.addEventListener('hashchange', route);
 
     if (!getToken()) {
