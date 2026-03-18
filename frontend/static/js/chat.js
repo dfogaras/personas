@@ -76,8 +76,9 @@ async function init() {
 
         document.title = `${persona.name} — AI Personas`;
         document.getElementById('chatPersonaMeta').innerHTML = personaMetaHtml(persona);
-        document.getElementById('chatUserName').textContent = chat.user ? `${T.chattingAs} ${chat.user.name}` : '';
-        document.getElementById('backToPersona').href = `/persona/${persona.id}`;
+        document.getElementById('chatUserName').textContent = chat.user ? chat.user.name : '';
+        document.getElementById('chatUserEmail').textContent = chat.user ? chat.user.email : '';
+        document.getElementById('chatPersonaMeta').addEventListener('click', () => { window.location.href = `/persona/${persona.id}`; });
 
         const createdAt = chat.created_at;
         function updateChatTimes(updatedAt) {
