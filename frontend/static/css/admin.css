@@ -69,6 +69,42 @@
     color: var(--persona-color);
 }
 
+.access-toggle-btn {
+    width: 40px;
+    height: 24px;
+    border-radius: 12px;
+    border: none;
+    cursor: pointer;
+    position: relative;
+    flex-shrink: 0;
+    transition: background 0.2s;
+}
+
+.access-toggle-btn::after {
+    content: '';
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: white;
+    top: 3px;
+    left: 3px;
+    transition: transform 0.2s;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+
+.access-toggle-btn.access-on {
+    background: #34c759;
+}
+
+.access-toggle-btn.access-off {
+    background: #d1d5db;
+}
+
+.access-toggle-btn.access-on::after {
+    transform: translateX(16px);
+}
+
 .table-icon-btn {
     width: 30px;
     height: 30px;

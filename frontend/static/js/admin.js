@@ -1,5 +1,6 @@
 let _currentUsers = [];
 let _currentGroups = [];
+let _currentAccess = {};
 
 function normalizeEmail(val) {
     const email = val.trim().toLowerCase();
@@ -153,7 +154,7 @@ function openBulkModal(group) {
             }
             closeBulkModal();
             const users = await apiCall('GET', '/admin/users');
-            renderUsers(users, _currentGroups);
+            renderUsers(users, _currentGroups, _currentAccess);
         } catch (e) {
             errorEl.textContent = e.message;
             errorEl.style.display = 'block';
@@ -189,6 +190,7 @@ const ICON_EDIT   = _svg('<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2
 const ICON_DELETE = _svg('<polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>');
 const ICON_SAVE   = _svg('<polyline points="20 6 9 17 4 12"/>');
 const ICON_CANCEL = _svg('<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>');
+const ICON_POWER  = _svg('<path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/>');
 
 // ============================================================================
 // User table rendering
@@ -283,7 +285,7 @@ function openAddModal(group) {
             await apiCall('POST', '/admin/users', { email, name, group, initial_password });
             closeAddModal();
             const users = await apiCall('GET', '/admin/users');
-            renderUsers(users, _currentGroups);
+            renderUsers(users, _currentGroups, _currentAccess);
         } catch (e) {
             errorEl.textContent = e.message;
             errorEl.style.display = 'block';
@@ -298,9 +300,10 @@ function closeAddModal() {
     document.getElementById('addModal').style.display = 'none';
 }
 
-function renderUsers(users, groups) {
+function renderUsers(users, groups, access) {
     _currentUsers  = users;
     _currentGroups = groups;
+    _currentAccess = access;
 
     const byGroup = {};
     for (const g of groups) byGroup[g] = [];
@@ -312,6 +315,9 @@ function renderUsers(users, groups) {
     container.innerHTML = '';
 
     for (const group of groups) {
+        const enabled = access[group] ?? false;
+        const isAdmin = group === 'admin';
+
         const section = document.createElement('div');
         section.className = 'admin-group collapsed';
         section.innerHTML = `<h3 class="admin-group-title">
@@ -338,7 +344,22 @@ function renderUsers(users, groups) {
                     <tbody></tbody>
                 </table>
             </div>`;
+
         const title = section.querySelector('.admin-group-title');
+        if (!isAdmin) {
+            const accessBtn = document.createElement('button');
+            accessBtn.className = `access-toggle-btn ${enabled ? 'access-on' : 'access-off'}`;
+            accessBtn.title = enabled ? 'Letiltás' : 'Engedélyezés';
+            accessBtn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                try {
+                    const newAccess = await apiCall('PATCH', `/admin/access/${group}`, { enabled: !enabled });
+                    renderUsers(_currentUsers, _currentGroups, newAccess);
+                } catch (err) { showError(err.message); }
+            });
+            title.insertBefore(accessBtn, title.querySelector('.admin-group-actions'));
+        }
+
         title.addEventListener('click', e => {
             if (!e.target.closest('button')) section.classList.toggle('collapsed');
         });
@@ -366,11 +387,12 @@ async function init() {
     });
 
     try {
-        const [groups, users] = await Promise.all([
+        const [groups, users, access] = await Promise.all([
             apiCall('GET', '/admin/groups'),
             apiCall('GET', '/admin/users'),
+            apiCall('GET', '/admin/access'),
         ]);
-        renderUsers(users, groups);
+        renderUsers(users, groups, access);
     } catch (e) {
         document.getElementById('usersTables').innerHTML = '';
         showError(e.message);

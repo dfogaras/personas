@@ -4,8 +4,10 @@ from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import Response
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
+import access
 from auth import require_admin
 from messages import M
 from groups import GROUPS
@@ -90,3 +92,28 @@ async def admin_delete_user(
     db.delete(u)
     db.commit()
     return Response(status_code=204)
+
+
+# ============================================================================
+# Group access control
+# ============================================================================
+
+class _AccessUpdate(BaseModel):
+    enabled: bool
+
+
+@router.get("/api/admin/access", response_model=dict[str, bool])
+async def get_access(_: User = Depends(require_admin)):
+    return access.get_status()
+
+
+@router.patch("/api/admin/access/{group}", response_model=dict[str, bool])
+async def set_group_access(
+    group: str,
+    body: _AccessUpdate,
+    _: User = Depends(require_admin),
+):
+    if group not in GROUPS:
+        raise HTTPException(status_code=404, detail=M["group_not_found"])
+    access.set_enabled(group, body.enabled)
+    return access.get_status()

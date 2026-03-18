@@ -9,6 +9,7 @@ import bcrypt
 from sqlalchemy.orm import Session
 
 from database import get_db
+import access
 from messages import M
 from models import AuthToken, User
 
@@ -47,6 +48,8 @@ def get_current_user(
     )
     if not row:
         raise HTTPException(status_code=401, detail=M["invalid_token"])
+    if not access.is_enabled(row.user.group):
+        raise HTTPException(status_code=403, detail=M["group_disabled"])
     return row.user
 
 

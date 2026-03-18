@@ -9,6 +9,8 @@ M = {
 
     # Authorization
     "admin_required":         "Adminisztrátori jogosultság szükséges",
+    "group_disabled":         "Ez a csoport jelenleg nem engedélyezett",
+    "group_not_found":        "Ismeretlen csoport",
     "not_your_persona":       "Ez nem a te personád",
     "not_your_chat":          "Ez nem a te csevegésed",
 

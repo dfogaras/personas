@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import Response
 from sqlalchemy.orm import Session
 
+import access
 from auth import create_token, get_current_user, hash_password, verify_password
 from messages import M
 from context import get_settings
@@ -20,6 +21,9 @@ async def login(body: LoginRequest, db: Session = Depends(get_db)):
     invalid = HTTPException(status_code=401, detail=M["invalid_credentials"])
     if not user:
         raise invalid
+
+    if not access.is_enabled(user.group):
+        raise HTTPException(status_code=403, detail=M["group_disabled"])
 
     must_change = False
     if user.initial_password and body.password == user.initial_password:
