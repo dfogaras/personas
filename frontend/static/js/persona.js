@@ -190,20 +190,62 @@ function showEditForm(persona) {
     });
 
     const descEl = document.getElementById('pDesc');
-    const prompts = ['Életkora', 'Neme', 'Személyisége', 'Stílusa', 'Érdeklődése', 'Végzettsége', 'Munkája', 'Humora', 'Értékei', 'Szokásai'];
+    const promptSections = [
+        { title: 'Alapok', prompts: [
+            { label: 'Életkora',      example: 'pl. 42 éves' },
+            { label: 'Kinézete',      example: 'pl. mindig ugyanazt a kopott fekete kapucnis pulcsit hordja' },
+            { label: 'Munkája',       example: 'pl. infótanár egy átlagos általánosban, ahol a gépek fele nem bootol' },
+            { label: 'Érdeklődése',   example: 'pl. retro számítógépek, sci-fi filmek, és hogy miért nem működik a nyomtató' },
+        ]},
+        { title: 'Személyiség', prompts: [
+            { label: 'Személyisége',  example: 'pl. türelmes, kicsit szórakozott, de ha kódról van szó, teljesen felébred' },
+            { label: 'Minek örül',    example: 'pl. ha valaki először ír működő ciklust, és maga is meglepődik rajta' },
+            { label: 'Mi idegesíti',  example: 'pl. ha valaki Ctrl+Z helyett mindent kitöröl és elölről kezdi' },
+            { label: 'Mire büszke',   example: 'pl. hogy a 2009-es weboldala még mindig működik valahol' },
+            { label: 'Mitől fél',     example: 'pl. hogy az összes diák csak drag-and-drop appokat fog csinálni ChatGPT-vel' },
+        ]},
+        { title: 'Kommunikáció', prompts: [
+            { label: 'Hogyan beszél',         example: 'pl. rengeteg analógiát használ, sokszor elkalandozik, de mindig visszatalál' },
+            { label: 'Tipikus szóhasználata', example: 'pl. „Ez olyan mint a LEGO, csak ha elrontod, lefagy az egész", „debuggoljuk!"' },
+            { label: 'Humora',                example: 'pl. régi programozós vicceket mesél amiket senki nem ért, aztán maga nevet a legjobban' },
+        ]},
+        { title: 'Célok', prompts: [
+            { label: 'Mi a célja általában', example: 'pl. hogy legalább egy diák megszeresse a programozást, nem csak a Robloxot' },
+            { label: 'Most mi a célja',      example: 'pl. hogy elmagyarázza az Excel formulákat úgy, hogy ne kelljen harmadjára is' },
+            { label: 'Mit akar elkerülni',   example: 'pl. hogy megint mindenki a YouTube-ot nézze óra közben' },
+        ]},
+    ];
     const promptsEl = document.getElementById('descPrompts');
-    prompts.forEach(label => {
-        const chip = document.createElement('button');
-        chip.type = 'button';
-        chip.className = 'desc-prompt-chip';
-        chip.textContent = label + '?';
-        chip.addEventListener('click', () => {
-            const insert = (descEl.value.length > 0 && !descEl.value.endsWith('\n') ? '\n' : '') + label + ': ';
-            descEl.value += insert;
-            descEl.focus();
-            descEl.setSelectionRange(descEl.value.length, descEl.value.length);
+    promptSections.forEach(({ title, prompts }) => {
+        const row = document.createElement('div');
+        row.className = 'desc-section';
+
+        const sectionLabel = document.createElement('span');
+        sectionLabel.className = 'desc-section-label';
+        sectionLabel.textContent = title + ':';
+        row.appendChild(sectionLabel);
+
+        prompts.forEach(({ label, example }) => {
+            const chip = document.createElement('button');
+            chip.type = 'button';
+            chip.className = 'desc-prompt-chip';
+            chip.textContent = label + '?';
+
+            const tooltip = document.createElement('span');
+            tooltip.className = 'chip-tooltip';
+            tooltip.textContent = example;
+            chip.appendChild(tooltip);
+
+            chip.addEventListener('click', () => {
+                const insert = (descEl.value.length > 0 && !descEl.value.endsWith('\n') ? '\n' : '') + label + ': ';
+                descEl.value += insert;
+                descEl.focus();
+                descEl.setSelectionRange(descEl.value.length, descEl.value.length);
+            });
+            row.appendChild(chip);
         });
-        promptsEl.appendChild(chip);
+
+        promptsEl.appendChild(row);
     });
 
     document.getElementById('editMode').style.display = 'block';

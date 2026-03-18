@@ -330,9 +330,24 @@ button, input, select, textarea {
 
 .desc-prompts {
     display: flex;
-    flex-wrap: wrap;
+    flex-direction: column;
     gap: 6px;
     margin-bottom: 8px;
+}
+
+.desc-section {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+}
+
+.desc-section-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--gray-400);
 }
 
 .desc-prompt-chip {
@@ -344,11 +359,33 @@ button, input, select, textarea {
     color: var(--gray-500);
     cursor: pointer;
     transition: var(--transition);
+    position: relative;
 }
 
 .desc-prompt-chip:hover {
     background: var(--gray-200);
     color: var(--gray-700);
+}
+
+.chip-tooltip {
+    position: absolute;
+    bottom: calc(100% + 7px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--gray-700);
+    color: white;
+    font-size: 12px;
+    padding: 5px 10px;
+    border-radius: 8px;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s;
+    z-index: 10;
+}
+
+.desc-prompt-chip:hover .chip-tooltip {
+    opacity: 1;
 }
 
 .form-actions {
