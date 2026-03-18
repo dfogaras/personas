@@ -2,7 +2,7 @@
 
 from datetime import datetime
 from typing import Optional, List
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class UserResponse(BaseModel):
@@ -43,9 +43,9 @@ class ChangePasswordRequest(BaseModel):
 class PersonaBase(BaseModel):
     """Base persona schema."""
 
-    name: str
-    description: str
-    specialty: Optional[str] = None
+    name: str = Field(min_length=1, max_length=100)
+    description: str = Field(min_length=1, max_length=4000)
+    specialty: Optional[str] = Field(default=None, max_length=40)
 
 
 class PersonaCreate(PersonaBase):
@@ -116,7 +116,7 @@ class ChatDetailResponse(ChatResponse):
 class MessageRequest(BaseModel):
     """Schema for sending a chat message."""
 
-    message: str
+    message: str = Field(min_length=1, max_length=500)
 
 
 class FeedbackRequest(BaseModel):

@@ -39,6 +39,8 @@ async def create_persona(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    if db.query(Persona).filter(Persona.user_id == current_user.id).count() >= 20:
+        raise HTTPException(status_code=400, detail=M["too_many_personas"])
     db_persona = Persona(**persona.model_dump(), user_id=current_user.id)
     db.add(db_persona)
     db.commit()

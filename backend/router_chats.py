@@ -102,6 +102,9 @@ async def send_message(
         raise HTTPException(status_code=404, detail=M["chat_not_found"])
     check_owner_or_admin(chat, current_user, "not_your_chat")
 
+    if db.query(Message).filter(Message.chat_id == chat_id).count() >= 30:
+        raise HTTPException(status_code=400, detail=M["too_many_messages"])
+
     chat.updated_at = datetime.now(timezone.utc).replace(tzinfo=None)
     if chat.preview_text is None:
         chat.preview_text = req.message[:80] + ("…" if len(req.message) > 80 else "")

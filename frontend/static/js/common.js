@@ -192,7 +192,7 @@ async function apiCall(method, endpoint, data = null) {
     if (data) options.body = JSON.stringify(data);
     const response = await fetch(`${API_BASE}${endpoint}`, options);
     if (response.status === 401) { redirectToLogin(); throw new Error(T.errSessionExpired); }
-    if (!response.ok) { const e = await response.json(); throw new Error(e.detail || T.errApiError); }
+    if (!response.ok) { const e = await response.json(); const detail = e.detail; throw new Error(Array.isArray(detail) ? detail[0]?.msg ?? T.errApiError : detail || T.errApiError); }
     if (response.status === 204) return null;
     return response.json();
 }
