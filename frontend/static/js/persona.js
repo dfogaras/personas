@@ -10,13 +10,8 @@ const mode = isNew ? 'create' : urlParams.has('edit') ? 'edit' : urlParams.has('
 
 function showView(persona, chats) {
     document.title = `${persona.name} — AI Personas`;
-    document.getElementById('personaName').textContent = persona.name;
-    document.getElementById('personaSpecialty').textContent = persona.specialty || T.general;
+    document.getElementById('personaMeta').innerHTML = personaMetaHtml(persona);
     document.getElementById('personaDescription').textContent = persona.description;
-
-    const createdByEl = document.getElementById('personaCreatedBy');
-    const creator = persona.user ? persona.user.name : null;
-    createdByEl.textContent = `${T.createdBy} ${creator || '?'} — ${prettyTime(persona.created_at)}`;
 
     const actions = document.getElementById('personaActions');
 

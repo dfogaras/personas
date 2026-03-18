@@ -446,6 +446,37 @@ button, input, select, textarea {
     margin: 2px 0 0;
 }
 
+.persona-meta-name {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--gray-900);
+}
+
+.persona-meta-specialty {
+    font-size: 14px;
+    color: var(--gray-500);
+    margin: 2px 0 0;
+}
+
+.persona-meta-created {
+    font-size: 12px;
+    color: var(--gray-400);
+    margin: 3px 0 0;
+}
+
+[data-theme="chat"] .persona-meta-name {
+    color: var(--chat-dark);
+}
+
+[data-theme="chat"] .persona-meta-specialty {
+    color: var(--chat-color);
+}
+
+[data-theme="chat"] .persona-meta-created {
+    color: var(--chat-color);
+    opacity: 0.7;
+}
+
 .detail-description {
     color: var(--gray-700);
     font-size: 18px;
@@ -637,18 +668,6 @@ button, input, select, textarea {
     gap: 14px;
 }
 
-.chat-header h2 {
-    font-size: 22px;
-    font-weight: 800;
-    color: var(--gray-900);
-    margin-bottom: 2px;
-}
-
-.chat-header .specialty {
-    color: var(--chat-color);
-    font-size: 15px;
-    font-weight: 600;
-}
 
 .user-name-display {
     font-size: 15px;

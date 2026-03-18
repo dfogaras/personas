@@ -58,6 +58,20 @@ function prettyTime(iso) {
 }
 
 // ============================================================================
+// Components
+// ============================================================================
+
+function personaMetaHtml(persona) {
+    const creator = persona.user?.name;
+    const createdBy = creator ? `<p class="persona-meta-created">${T.createdBy} ${creator} — ${prettyTime(persona.created_at)}</p>` : '';
+    return `
+        <div class="persona-meta-name">${persona.name}</div>
+        <div class="persona-meta-specialty">${persona.specialty || T.general}</div>
+        ${createdBy}
+    `;
+}
+
+// ============================================================================
 // API
 // ============================================================================
 

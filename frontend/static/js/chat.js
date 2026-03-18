@@ -75,8 +75,7 @@ async function init() {
         const persona = chat.persona;
 
         document.title = `${persona.name} — AI Personas`;
-        document.getElementById('chatPersonaName').textContent = persona.name;
-        document.getElementById('chatPersonaSpecialty').textContent = persona.specialty || T.general;
+        document.getElementById('chatPersonaMeta').innerHTML = personaMetaHtml(persona);
         document.getElementById('chatUserName').textContent = chat.user ? `${T.chattingAs} ${chat.user.name}` : '';
         document.getElementById('backToPersona').href = `/persona/${persona.id}`;
 
