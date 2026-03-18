@@ -205,7 +205,7 @@ function renderUserRow(user) {
 
     tr.innerHTML = `
         <td class="cell-email">${escapeHtml(user.email)}</td>
-        <td class="cell-name">${escapeHtml(user.name)}</td>
+        <td class="cell-name"><a class="admin-user-link" href="/?#page=user&id=${user.id}">${escapeHtml(user.name)}</a></td>
         <td class="cell-group"><select class="group-select" disabled>${groupOptions}</select></td>
         <td class="cell-pwd">${escapeHtml(pwdText)}</td>
         <td class="cell-actions">
@@ -322,7 +322,7 @@ function renderUsers(users, groups, access) {
         section.className = 'admin-group collapsed';
         section.innerHTML = `<h3 class="admin-group-title">
                 <span class="admin-group-toggle">▶</span>
-                <span class="admin-group-name">${escapeHtml(group)}</span>
+                <a class="admin-group-name" href="/?#page=group&id=${encodeURIComponent(group)}">${escapeHtml(group)}</a>
                 <span class="admin-group-actions">
                     <button class="group-icon-btn add-one-btn" title="${T.ttAddUser}">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -361,7 +361,7 @@ function renderUsers(users, groups, access) {
         }
 
         title.addEventListener('click', e => {
-            if (!e.target.closest('button')) section.classList.toggle('collapsed');
+            if (!e.target.closest('button') && !e.target.closest('a')) section.classList.toggle('collapsed');
         });
         section.querySelector('.add-one-btn').addEventListener('click',  () => openAddModal(group));
         section.querySelector('.add-bulk-btn').addEventListener('click', () => openBulkModal(group));

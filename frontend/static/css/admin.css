@@ -37,6 +37,25 @@
     color: var(--gray-700);
 }
 
+.admin-group-name {
+    text-decoration: none;
+    color: inherit;
+}
+
+.admin-group-name:hover {
+    text-decoration: underline;
+}
+
+.admin-user-link {
+    text-decoration: none;
+    color: inherit;
+}
+
+.admin-user-link:hover {
+    color: var(--persona-color);
+    text-decoration: underline;
+}
+
 .admin-group-actions {
     margin-left: auto;
     display: flex;

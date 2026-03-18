@@ -26,12 +26,22 @@ router = APIRouter(dependencies=[Depends(get_current_user)])
 @router.get("/api/chats", response_model=List[ChatResponse])
 async def list_chats(
     persona_id: Optional[int] = Query(None),
+    user_id: Optional[int] = Query(None),
+    group: Optional[str] = Query(None),
+    limit: Optional[int] = Query(None),
     db: Session = Depends(get_db),
 ):
     q = db.query(Chat)
     if persona_id is not None:
         q = q.filter(Chat.persona_id == persona_id)
-    return q.order_by(Chat.updated_at.desc()).all()
+    if user_id is not None:
+        q = q.filter(Chat.user_id == user_id)
+    if group is not None:
+        q = q.join(User, Chat.user_id == User.id).filter(User.group == group)
+    q = q.order_by(Chat.updated_at.desc())
+    if limit is not None:
+        q = q.limit(limit)
+    return q.all()
 
 
 @router.post("/api/chats", response_model=ChatResponse)

@@ -9,10 +9,20 @@
 function updateNav() {
     const user = getUser();
     const navUser = document.getElementById('navUser');
-    const navUserName = document.getElementById('navUserName');
+    const navLinks = document.getElementById('navLinks');
+
     if (user) {
-        navUserName.textContent = user.name || user.email;
+        document.getElementById('navUserName').textContent = user.name || user.email;
         navUser.style.display = 'flex';
+
+        navLinks.innerHTML = '';
+        if (user.group && user.group !== 'admin') {
+            const a = document.createElement('a');
+            a.href = `#page=group&id=${encodeURIComponent(user.group)}`;
+            a.className = 'nav-link';
+            a.textContent = user.group + ' csoport';
+            navLinks.appendChild(a);
+        }
     } else {
         navUser.style.display = 'none';
     }
@@ -27,20 +37,20 @@ function parseHash() {
     const params = {};
     hash.split('&').forEach(part => {
         const [key, val] = part.split('=');
-        if (key) params[key] = val;
+        if (key) params[key] = val ? decodeURIComponent(val) : val;
     });
     return params;
 }
 
 function navigate(params) {
     window.location.hash = Object.entries(params)
-        .map(([k, v]) => `${k}=${v}`)
+        .map(([k, v]) => `${k}=${encodeURIComponent(v)}`)
         .join('&');
 }
 
 async function route() {
     const params = parseHash();
-    const page = params.page || 'personas';
+    const page = params.page || 'me';
 
     if (!getToken()) {
         redirectToLogin();
@@ -50,10 +60,13 @@ async function route() {
     document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
     updateNav();
 
-    if (page === 'personas') {
-        await showPersonasPage();
+    if (page === 'me') {
+        await showMePage();
+    } else if (page === 'group' && params.id) {
+        await showGroupPage(params.id);
+    } else if (page === 'user' && params.id) {
+        await showUserPage(parseInt(params.id));
     } else if ((page === 'persona' || page === 'persona-edit' || page === 'persona-remix') && params.id) {
-        // Redirect legacy hash routes to the dedicated persona page
         const suffix = page === 'persona-edit' ? '?edit' : page === 'persona-remix' ? '?remix' : '';
         window.location.href = `/persona/${params.id}${suffix}`;
     } else if (page === 'chat' && params.id) {
@@ -61,24 +74,57 @@ async function route() {
     } else if (page === 'chat' && params.persona) {
         await startNewChat(parseInt(params.persona));
     } else {
-        navigate({ page: 'personas' });
+        navigate({ page: 'me' });
     }
 }
 
 // ============================================================================
-// Personas page
+// Dashboard (me / group / user)
 // ============================================================================
 
-async function showPersonasPage() {
-    document.getElementById('page-personas').style.display = 'block';
-    document.getElementById('personasPageTitle').textContent = T.personasTitle;
-    document.getElementById('personasList').style.display = 'grid';
-
-    const personas = await apiCall('GET', '/personas');
-    renderPersonasList(personas);
+async function showMePage() {
+    const user = getUser();
+    await showDashboardPage('Saját personáim', `user_id=${user.id}`, `user_id=${user.id}`, true);
 }
 
+async function showGroupPage(group) {
+    const label = group + ' csoport';
+    await showDashboardPage(label, `group=${encodeURIComponent(group)}`, `group=${encodeURIComponent(group)}`);
+}
 
+async function showUserPage(userId) {
+    await showDashboardPage('Felhasználó', `user_id=${userId}`, `user_id=${userId}`);
+}
+
+async function showDashboardPage(title, personaQuery, chatQuery, showAddBtn = false) {
+    document.getElementById('dashboardTitle').textContent = title;
+    document.getElementById('page-dashboard').style.display = 'block';
+    document.getElementById('dashboardPersonas').innerHTML = '';
+    document.getElementById('dashboardChats').innerHTML = '';
+    document.getElementById('dashboardChatsHeading').style.display = 'none';
+
+    const [personas, chats] = await Promise.all([
+        apiCall('GET', `/personas?${personaQuery}`),
+        apiCall('GET', `/chats?${chatQuery}&limit=10`),
+    ]);
+
+    renderPersonasList(personas, document.getElementById('dashboardPersonas'), showAddBtn);
+
+    if (chats.length > 0) {
+        document.getElementById('dashboardChatsHeading').style.display = 'block';
+        renderDashboardChats(chats, document.getElementById('dashboardChats'));
+    }
+}
+
+function renderDashboardChats(chats, container) {
+    chats.forEach(chat => {
+        container.appendChild(createChatItem(chat, { showPersonaTag: true }));
+    });
+}
+
+// ============================================================================
+// Persona card rendering
+// ============================================================================
 
 function createPersonaActions(persona) {
     const id = persona.id;
@@ -107,12 +153,7 @@ function createPersonaActions(persona) {
         if (!confirm(`"${persona.name}" — ${T.deletePersonaConfirm}`)) return;
         try {
             await apiCall('DELETE', `/personas/${id}`);
-            const card = delBtn.closest('.persona-card');
-            if (card) {
-                card.remove();
-            } else {
-                navigate({ page: 'personas' });
-            }
+            delBtn.closest('.persona-card')?.remove();
         } catch (err) {
             alert(err.message);
         }
@@ -122,9 +163,8 @@ function createPersonaActions(persona) {
     return div;
 }
 
-function renderPersonasList(personas) {
-    const list = document.getElementById('personasList');
-    list.innerHTML = '';
+function renderPersonasList(personas, container, showAddBtn = false) {
+    container.innerHTML = '';
     personas.forEach(persona => {
         const card = document.createElement('div');
         card.className = 'persona-card';
@@ -139,14 +179,16 @@ function renderPersonasList(personas) {
 
         card.appendChild(body);
         card.appendChild(createPersonaActions(persona));
-        list.appendChild(card);
+        container.appendChild(card);
     });
 
-    const addCard = document.createElement('div');
-    addCard.className = 'persona-card persona-card-add';
-    addCard.textContent = '+';
-    addCard.addEventListener('click', () => { window.location.href = '/persona/new'; });
-    list.appendChild(addCard);
+    if (showAddBtn) {
+        const addCard = document.createElement('div');
+        addCard.className = 'persona-card persona-card-add';
+        addCard.textContent = '+';
+        addCard.addEventListener('click', () => { window.location.href = '/persona/new'; });
+        container.appendChild(addCard);
+    }
 }
 
 // ============================================================================
@@ -167,6 +209,7 @@ async function startNewChat(personaId) {
 // ============================================================================
 
 async function init() {
+    document.getElementById('navUserName').addEventListener('click', () => navigate({ page: 'me' }));
     document.getElementById('navLogoutBtn').addEventListener('click', () => {
         clearAuth();
         window.location.href = '/login';
@@ -179,7 +222,7 @@ async function init() {
         return;
     }
     if (!window.location.hash) {
-        navigate({ page: 'personas' });
+        navigate({ page: 'me' });
     } else {
         await route();
     }

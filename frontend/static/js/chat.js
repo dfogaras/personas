@@ -75,6 +75,7 @@ async function init() {
         document.getElementById('navUserName').textContent = user.name || user.email;
         document.getElementById('navUser').style.display = 'flex';
     }
+    document.getElementById('navUserName').addEventListener('click', () => { window.location.href = '/'; });
     document.getElementById('navLogoutBtn').addEventListener('click', () => {
         clearAuth();
         window.location.href = '/login';

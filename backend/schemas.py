@@ -96,6 +96,7 @@ class ChatResponse(BaseModel):
     persona_id: int
     user_id: Optional[int] = None
     user: Optional[UserResponse] = None
+    persona: Optional[PersonaResponse] = None
     created_at: datetime
     updated_at: datetime
     preview: Optional[str] = None

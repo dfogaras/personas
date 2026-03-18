@@ -1,6 +1,8 @@
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException, Response
+from typing import Optional
+
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from sqlalchemy.orm import Session
 
 from auth import get_current_user, check_owner_or_admin
@@ -18,8 +20,17 @@ router = APIRouter(dependencies=[Depends(get_current_user)])
 # ============================================================================
 
 @router.get("/api/personas", response_model=list[PersonaResponse])
-async def list_personas(db: Session = Depends(get_db)):
-    return db.query(Persona).all()
+async def list_personas(
+    group: Optional[str] = Query(None),
+    user_id: Optional[int] = Query(None),
+    db: Session = Depends(get_db),
+):
+    q = db.query(Persona)
+    if user_id is not None:
+        q = q.filter(Persona.user_id == user_id)
+    if group is not None:
+        q = q.join(User, Persona.user_id == User.id).filter(User.group == group)
+    return q.all()
 
 
 @router.post("/api/personas", response_model=PersonaResponse)

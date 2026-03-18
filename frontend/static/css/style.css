@@ -80,19 +80,64 @@ button, input, select, textarea {
     color: white;
     text-decoration: none;
     letter-spacing: -0.3px;
-    flex: 1;
+}
+
+.nav-links {
+    display: flex;
+    gap: 4px;
+    margin-left: 16px;
+}
+
+.nav-link {
+    color: rgba(255, 255, 255, 0.8);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 5px 12px;
+    border-radius: 8px;
+    transition: background 0.15s, color 0.15s;
+}
+
+.nav-link:hover, .nav-link.active {
+    background: rgba(255, 255, 255, 0.18);
+    color: white;
+}
+
+.section-heading {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--gray-500);
+    margin: 28px 0 12px;
+}
+
+.chat-persona-tag {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--persona-color);
+    margin-right: 6px;
 }
 
 .nav-user {
     display: flex;
     align-items: center;
     gap: 12px;
+    margin-left: auto;
 }
 
 .nav-user-name {
-    color: rgba(255,255,255,0.9);
-    font-size: 16px;
+    background: rgba(255,255,255,0.15);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-size: 15px;
     font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.nav-user-name:hover {
+    background: rgba(255,255,255,0.28);
 }
 
 .nav-logout-btn {

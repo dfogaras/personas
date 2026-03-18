@@ -9,22 +9,23 @@
 </head>
 <body>
     <nav class="top-nav">
-        <a href="#page=personas" class="nav-brand">AI Personas</a>
+        <a href="#page=me" class="nav-brand">AI Personas</a>
+        <div class="nav-links" id="navLinks"></div>
         <div class="nav-user" id="navUser" style="display:none">
-            <span class="nav-user-name" id="navUserName"></span>
+            <button class="nav-user-name" id="navUserName"></button>
             <button class="nav-logout-btn" id="navLogoutBtn">Kijelentkezés</button>
         </div>
     </nav>
 
-    <!-- Personas list page -->
-    <div id="page-personas" class="page">
+    <!-- Dashboard page (me / group / user) -->
+    <div id="page-dashboard" class="page" style="display:none">
         <div class="page-content">
             <div class="page-header">
-                <h1 id="personasPageTitle">Personák</h1>
+                <h1 id="dashboardTitle"></h1>
             </div>
-            <div id="personasList" class="personas-grid">
-                <p class="loading">Betöltés...</p>
-            </div>
+            <div id="dashboardPersonas" class="personas-grid"></div>
+            <h2 id="dashboardChatsHeading" class="section-heading" style="display:none">Legutóbbi csevegések</h2>
+            <div id="dashboardChats"></div>
         </div>
     </div>
 
