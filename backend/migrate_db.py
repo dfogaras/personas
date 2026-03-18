@@ -40,6 +40,10 @@ def cmd_migrate(engine):
         ("users", "role"),
         ("chats", "user_name"),
     ]
+    drop_unique_indexes = [
+        # personas.name no longer needs to be unique (users may create same-named personas)
+        ("DROP INDEX IF EXISTS ix_personas_name", "CREATE INDEX IF NOT EXISTS ix_personas_name ON personas (name)"),
+    ]
     with engine.connect() as conn:
         for table, column, col_def in add_columns:
             existing = {col["name"] for col in inspector.get_columns(table)}
@@ -57,6 +61,11 @@ def cmd_migrate(engine):
                 print(f"✓ Dropped {table}.{column}")
             else:
                 print(f"  {table}.{column} already absent")
+        for drop_sql, create_sql in drop_unique_indexes:
+            conn.execute(text(drop_sql))
+            conn.execute(text(create_sql))
+            conn.commit()
+            print(f"✓ Re-indexed: {drop_sql}")
 
 
 def cmd_add_user(engine, email, name, group, initial_password):

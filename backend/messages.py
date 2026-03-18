@@ -21,8 +21,6 @@ M = {
     "user_not_found":         "A felhasználó nem található",
 
     # Conflict / validation
-    "persona_exists":         "Ez a persona már létezik",
-    "persona_name_exists":    "Ez a persona név már foglalt",
     "email_exists":           "Az e-mail cím már foglalt",
     "invalid_group":          "Érvénytelen csoport. Lehetséges értékek",
 }

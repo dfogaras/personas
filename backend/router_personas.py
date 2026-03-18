@@ -39,8 +39,6 @@ async def create_persona(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    if db.query(Persona).filter(Persona.name == persona.name).first():
-        raise HTTPException(status_code=400, detail=M["persona_exists"])
     db_persona = Persona(**persona.model_dump(), user_id=current_user.id)
     db.add(db_persona)
     db.commit()
@@ -67,8 +65,6 @@ async def overwrite_persona(
     if not db_persona:
         raise HTTPException(status_code=404, detail=M["persona_not_found"])
     check_owner_or_admin(db_persona, current_user, "not_your_persona")
-    if db.query(Persona).filter(Persona.name == persona.name, Persona.id != persona_id).first():
-        raise HTTPException(status_code=400, detail=M["persona_name_exists"])
     for key, value in persona.model_dump().items():
         setattr(db_persona, key, value)
     db.commit()
