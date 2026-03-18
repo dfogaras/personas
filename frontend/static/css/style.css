@@ -886,7 +886,7 @@ button, input, select, textarea {
 }
 
 .send-btn {
-    padding: 13px 26px;
+    padding: 13px 18px;
     background: var(--chat-color);
     color: white;
     border: none;
