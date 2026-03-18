@@ -79,6 +79,16 @@ async function init() {
         document.getElementById('chatUserName').textContent = chat.user ? `${T.chattingAs} ${chat.user.name}` : '';
         document.getElementById('backToPersona').href = `/persona/${persona.id}`;
 
+        const createdAt = chat.created_at;
+        function updateChatTimes(updatedAt) {
+            const created = prettyTime(createdAt);
+            const updated = prettyTime(updatedAt);
+            document.getElementById('chatTimes').textContent = created === updated
+                ? `${T.chatCreated} ${created}`
+                : `${T.chatCreated} ${created} · ${T.chatUpdated} ${updated}`;
+        }
+        updateChatTimes(chat.updated_at);
+
         chat.messages.forEach(m => addMessageToUI(m.role, m.content, m.role === 'assistant' ? m.id : null));
 
         const msgInput = document.getElementById('messageInput');
@@ -98,6 +108,7 @@ async function init() {
                 const response = await apiCall('POST', `/chats/${chatId}/messages`, { message: content });
                 document.querySelector(`[data-message-id="${loadingId}"]`)?.remove();
                 addMessageToUI('assistant', response.content, response.id);
+                if (response.chat_updated_at) updateChatTimes(response.chat_updated_at);
             } catch (e) {
                 document.querySelector(`[data-message-id="${loadingId}"]`)?.remove();
                 alert(e.message);

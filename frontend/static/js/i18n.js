@@ -59,6 +59,8 @@ const T = {
     deletePersonaConfirm:  'Biztosan törlöd ezt a personát? Az összes csevegése is törlődik.',
     deleteChatConfirm:     'Biztosan törlöd ezt a csevegést?',
     chattingAs:            'Csevegés mint:',
+    chatCreated:           'létrehozva',
+    chatUpdated:           'frissítve',
 
     // Time formatting
     timeJustNow:           'most',

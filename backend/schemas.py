@@ -73,6 +73,7 @@ class MessageResponse(BaseModel):
     role: str
     content: str
     created_at: datetime
+    chat_updated_at: Optional[datetime] = None
     liked: Optional[bool] = None
     prompt_tokens: Optional[int] = None
     completion_tokens: Optional[int] = None

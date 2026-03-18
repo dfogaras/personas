@@ -129,6 +129,7 @@ async def send_message(
     db.commit()
     db.refresh(assistant_message)
     logger.info(f"DB write: assistant message id={assistant_message.id}")
+    assistant_message.chat_updated_at = chat.updated_at
     return assistant_message
 
 

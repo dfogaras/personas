@@ -669,6 +669,19 @@ button, input, select, textarea {
 }
 
 
+.chat-header-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+}
+
+.chat-times {
+    font-size: 11px;
+    color: var(--chat-color);
+    opacity: 0.7;
+}
+
 .user-name-display {
     font-size: 15px;
     color: var(--chat-dark);
