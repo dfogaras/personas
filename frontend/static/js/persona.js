@@ -3,6 +3,7 @@ const isNew = pathPart === 'new';
 const personaId = isNew ? null : parseInt(pathPart);
 const urlParams = new URLSearchParams(location.search);
 const mode = isNew ? 'create' : urlParams.has('edit') ? 'edit' : urlParams.has('remix') ? 'remix' : 'view';
+const backUrl = urlParams.get('back') || '/';
 
 // ============================================================================
 // View mode
@@ -13,6 +14,8 @@ function showView(persona, chats) {
     document.getElementById('personaMeta').innerHTML = personaMetaHtml(persona);
     document.getElementById('personaDescription').textContent = persona.description;
 
+    document.querySelector('#viewMode .back-link').href = backUrl;
+
     const actions = document.getElementById('personaActions');
 
     const headerBtns = [
@@ -22,8 +25,8 @@ function showView(persona, chats) {
                 window.location.href = `/chat/${chat.id}`;
             } catch (e) { alert(e.message); }
         }},
-        { icon: '✏️', title: T.edit,   cls: '',          onClick: () => { window.location.href = `/persona/${personaId}?edit`; } },
-        { icon: '⧉',  title: T.remix,  cls: '',          onClick: () => { window.location.href = `/persona/${personaId}?remix`; } },
+        { icon: '✏️', title: T.edit,   cls: '',          onClick: () => { window.location.href = `/persona/${personaId}?edit&back=${backUrl}`; } },
+        { icon: '⧉',  title: T.remix,  cls: '',          onClick: () => { window.location.href = `/persona/${personaId}?remix&back=${backUrl}`; } },
         { icon: '🗑',  title: T.delete, cls: 'btn-danger', onClick: async () => {
             if (!confirm(`"${persona.name}" — ${T.deletePersonaConfirm}`)) return;
             try {
@@ -143,10 +146,10 @@ function showEditForm(persona) {
 
     document.getElementById('submitBtn').title = isCreate || isRemix ? T.create : T.save;
 
-    document.getElementById('editBackLink').href = isCreate ? '/' : `/persona/${personaId}`;
+    document.getElementById('editBackLink').href = isCreate ? '/' : backUrl;
     document.getElementById('cancelBtn').title = T.cancel;
     document.getElementById('cancelBtn').addEventListener('click', () => {
-        window.location.href = isCreate ? '/' : `/persona/${personaId}`;
+        window.location.href = isCreate ? '/' : backUrl;
     });
 
     document.getElementById('submitBtn').addEventListener('click', async () => {
@@ -174,7 +177,7 @@ function showEditForm(persona) {
                 window.location.href = `/persona/${newPersona.id}`;
             } else {
                 await apiCall('POST', `/personas/${personaId}`, { name, description, specialty: specialty || null });
-                window.location.href = `/persona/${personaId}`;
+                window.location.href = `/persona/${personaId}?back=${backUrl}`;
             }
         } catch (e) {
             errorEl.textContent = e.message;
