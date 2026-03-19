@@ -322,7 +322,7 @@ function renderUsers(users, groups, access) {
         section.className = 'admin-group collapsed';
         section.innerHTML = `<h3 class="admin-group-title">
                 <span class="admin-group-toggle">▶</span>
-                <a class="admin-group-name" href="/?#page=group&id=${encodeURIComponent(group)}">${escapeHtml(group)}</a>
+                <a class="admin-group-name" href="/#page=group&id=${encodeURIComponent(group)}">${escapeHtml(group)}</a>
                 <span class="admin-group-actions">
                     <button class="group-icon-btn add-one-btn" title="${T.ttAddUser}">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

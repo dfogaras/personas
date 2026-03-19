@@ -123,7 +123,7 @@ async def send_message(
 
     persona = chat.persona
     system_prompt = f"""
-Személyiségekkel játszunk egy iskolában gyerekekkel.
+Személyiségekkel játszunk egy iskolában kiskamaszokkal.
 A te neved {persona.name}. Rövid személyleírás rólad: "{persona.description}".
 Részlesebb leírásodat alul idézem.
 
