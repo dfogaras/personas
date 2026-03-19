@@ -93,7 +93,14 @@ function setupNav({ onNameClick } = {}) {
         window.location.href = '/login';
     });
 
-    if (user.group && user.group !== 'admin') {
+    if (user.group === 'admin') {
+        const a = document.createElement('a');
+        a.id = 'navGroupLink';
+        a.href = '/admin';
+        a.className = 'nav-logout-btn';
+        a.textContent = 'Admin';
+        navUser.insertBefore(a, logoutBtn);
+    } else if (user.group) {
         const a = document.createElement('a');
         a.id = 'navGroupLink';
         a.href = `/#page=group&id=${encodeURIComponent(user.group)}`;
