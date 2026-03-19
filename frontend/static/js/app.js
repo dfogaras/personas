@@ -14,13 +14,20 @@ function updateNav() {
     navUser.style.display = 'flex';
     const existing = document.getElementById('navGroupLink');
     if (existing) existing.remove();
-    if (user.group && user.group !== 'admin') {
+    const logoutBtn = document.getElementById('navLogoutBtn');
+    if (user.group === 'admin') {
+        const a = document.createElement('a');
+        a.id = 'navGroupLink';
+        a.href = '/admin';
+        a.className = 'nav-logout-btn';
+        a.textContent = 'Admin';
+        logoutBtn.parentElement.insertBefore(a, logoutBtn);
+    } else if (user.group) {
         const a = document.createElement('a');
         a.id = 'navGroupLink';
         a.href = `/#page=group&id=${encodeURIComponent(user.group)}`;
         a.className = 'nav-logout-btn';
         a.textContent = user.group + ' csoport';
-        const logoutBtn = document.getElementById('navLogoutBtn');
         logoutBtn.parentElement.insertBefore(a, logoutBtn);
     }
 }
