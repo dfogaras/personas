@@ -69,11 +69,30 @@ button, input, select, textarea {
     background: linear-gradient(135deg, var(--persona-color) 0%, var(--persona-dark) 100%);
     display: flex;
     align-items: center;
-    padding: 0 28px;
+    padding: 0 max(28px, calc((100% - 1400px) / 2));
     box-shadow: 0 3px 12px rgba(124, 58, 237, 0.35);
     position: sticky;
     top: 0;
     z-index: 100;
+}
+
+.top-nav::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image:
+        linear-gradient(rgba(255,255,255,0.45), rgba(255,255,255,0.45)),
+        linear-gradient(rgba(255,255,255,0.45), rgba(255,255,255,0.45)),
+        linear-gradient(rgba(255,255,255,0.45), rgba(255,255,255,0.45)),
+        linear-gradient(rgba(255,255,255,0.45), rgba(255,255,255,0.45));
+    background-size: 100% 2px, 100% 1px, 100% 1px, 100% 2px;
+    background-repeat: no-repeat;
+    background-position:
+        0 var(--nav-line-above, 9.5px),
+        0 var(--nav-line-cap,   21.5px),
+        0 var(--nav-line-mid,   33.5px),
+        0 var(--nav-line-base,  45.5px);
 }
 
 .nav-brand {
@@ -85,6 +104,9 @@ button, input, select, textarea {
     text-transform: lowercase;
     letter-spacing: 1px;
     text-shadow: 1px 2px 4px rgba(0,0,0,0.25);
+    align-self: flex-end;
+    line-height: 1;
+    padding-bottom: 12.5px;
 }
 
 .nav-links {
@@ -124,45 +146,38 @@ button, input, select, textarea {
 
 .nav-user {
     display: flex;
-    align-items: center;
+    align-items: flex-end;
     gap: 12px;
     margin-left: auto;
+    align-self: flex-end;
 }
 
-.nav-user-name {
-    background: rgba(255,255,255,0.15);
-    color: white;
-    border: 1px solid rgba(255,255,255,0.3);
-    border-radius: 8px;
-    padding: 5px 12px;
-    font-size: 15px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.15s;
-}
-
-.nav-user-name:hover {
-    background: rgba(255,255,255,0.28);
-}
-
+.nav-user-name,
 .nav-logout-btn {
-    display: inline-flex;
-    align-items: center;
-    line-height: normal;
-    background: rgba(255,255,255,0.15);
+    position: relative;
+    z-index: 1;
+    font-family: 'Pacifico', cursive;
+    font-size: 26px;
+    font-weight: 400;
+    line-height: 1;
     color: white;
-    text-decoration: none;
-    border: 1px solid rgba(255,255,255,0.3);
-    border-radius: 8px;
-    padding: 5px 12px;
-    font-size: 15px;
-    font-weight: 600;
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 10px 12.5px;
+    text-transform: lowercase;
+    letter-spacing: 1px;
+    text-shadow: 1px 2px 4px rgba(0,0,0,0.25);
     cursor: pointer;
-    transition: background 0.15s;
+    text-decoration: none;
+    display: inline-block;
+    transition: text-shadow 0.15s, box-shadow 0.15s;
 }
 
+.nav-user-name:hover,
 .nav-logout-btn:hover {
-    background: rgba(255,255,255,0.28);
+    text-shadow: 0 0 1px white, 0 0 3px rgba(255,255,255,0.6), 1px 2px 4px rgba(0,0,0,0.3);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.35);
 }
 
 [data-theme="chat"] .top-nav {

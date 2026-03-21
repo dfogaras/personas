@@ -187,6 +187,33 @@ function createChatItem(chat, { personaName = null, showPersonaTag = false } = {
 }
 
 // ============================================================================
+// Nav line calibration
+// ============================================================================
+
+function calibrateNavLines() {
+    const nav = document.querySelector('.top-nav');
+    const brand = document.querySelector('.nav-brand');
+    if (!nav || !brand) return;
+
+    // Drop a zero-height inline probe to find where the baseline actually lands
+    const probe = document.createElement('span');
+    probe.style.cssText = 'display:inline-block;width:0;height:0;vertical-align:baseline;';
+    brand.appendChild(probe);
+    const baseline = probe.getBoundingClientRect().top - nav.getBoundingClientRect().top;
+    brand.removeChild(probe);
+
+    const sp = 12; // spacing between lines (px)
+    nav.style.setProperty('--nav-line-base',  baseline + 'px');
+    nav.style.setProperty('--nav-line-mid',   (baseline - sp) + 'px');
+    nav.style.setProperty('--nav-line-cap',   (baseline - 2 * sp) + 'px');
+    nav.style.setProperty('--nav-line-above', (baseline - 3 * sp) + 'px');
+}
+
+// Run once fonts are loaded (Pacifico may not be ready on DOMContentLoaded)
+document.fonts.ready.then(calibrateNavLines);
+window.addEventListener('resize', calibrateNavLines);
+
+// ============================================================================
 // API
 // ============================================================================
 
