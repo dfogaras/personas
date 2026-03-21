@@ -1,14 +1,18 @@
 """Admin endpoints for user management."""
 
+import io
+import sqlite3
+import zipfile
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import Response
+from fastapi.responses import Response, StreamingResponse
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 import access
 from auth import require_admin
+from context import get_settings
 from messages import M
 from groups import GROUPS
 from database import get_db
@@ -117,3 +121,37 @@ async def set_group_access(
         raise HTTPException(status_code=404, detail=M["group_not_found"])
     access.set_enabled(group, body.enabled)
     return access.get_status()
+
+
+# ============================================================================
+# DB export
+# ============================================================================
+
+@router.get("/api/admin/db-export")
+async def export_db(_: User = Depends(require_admin)):
+
+    settings = get_settings()
+    db_url = settings.database.url
+    if not db_url.startswith("sqlite:///"):
+        raise HTTPException(status_code=400, detail="Only SQLite export is supported")
+    db_path = db_url.removeprefix("sqlite:///")
+
+    # Use SQLite's online backup API for a consistent snapshot
+    src = sqlite3.connect(db_path)
+    dst = sqlite3.connect(":memory:")
+    src.backup(dst)
+    src.close()
+    db_bytes = dst.serialize()
+    dst.close()
+
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr("personas.db", db_bytes)
+    buf.seek(0)
+
+    filename = f"personas-{datetime.now().strftime('%Y%m%d-%H%M%S')}.zip"
+    return StreamingResponse(
+        buf,
+        media_type="application/zip",
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
+    )

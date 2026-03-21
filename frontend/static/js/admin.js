@@ -397,6 +397,22 @@ async function init() {
         document.getElementById('usersTables').innerHTML = '';
         showError(e.message);
     }
+
+    document.getElementById('dbExportBtn').addEventListener('click', async () => {
+        const resp = await fetch('/api/admin/db-export', {
+            headers: { 'Authorization': `Bearer ${getToken()}` },
+        });
+        if (!resp.ok) return alert('Export failed');
+        const blob = await resp.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `personas-${new Date().toISOString().slice(0,10)}.zip`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    });
 }
 
 document.addEventListener('DOMContentLoaded', init);
