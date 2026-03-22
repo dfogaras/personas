@@ -12,7 +12,7 @@ from ai_service import generate_and_record
 from context import get_ai_service
 from schemas import (
     ChatCreate, ChatDetailResponse, ChatResponse,
-    FeedbackRequest, MessageRequest, MessageResponse,
+    MessageRequest, MessageResponse,
 )
 
 router = APIRouter(dependencies=[Depends(get_current_user)])
@@ -161,18 +161,3 @@ A személyleírásod a következő:
     return assistant_message
 
 
-@router.post("/api/chats/messages/{message_id}/feedback")
-async def submit_feedback(
-    message_id: int,
-    feedback: FeedbackRequest,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    message = db.query(Message).filter(Message.id == message_id).first()
-    if not message:
-        raise HTTPException(status_code=404, detail=M["message_not_found"])
-    check_owner_or_admin(message.chat, current_user, "not_your_chat")
-    message.liked = feedback.liked
-    db.commit()
-    db.refresh(message)
-    return {"id": message.id, "liked": message.liked}

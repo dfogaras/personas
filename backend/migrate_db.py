@@ -39,6 +39,7 @@ def cmd_migrate(engine):
     drop_columns = [
         ("users", "role"),
         ("chats", "user_name"),
+        ("messages", "liked"),
     ]
     drop_unique_indexes = [
         # personas.name no longer needs to be unique (users may create same-named personas)

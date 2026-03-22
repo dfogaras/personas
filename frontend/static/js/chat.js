@@ -22,45 +22,9 @@ function addMessageToUI(role, content, messageId = null) {
 
     message.appendChild(contentDiv);
 
-    if (role === 'assistant' && messageId) {
-        const actionsDiv = document.createElement('div');
-        actionsDiv.className = 'message-actions';
-
-        const likeBtn = document.createElement('button');
-        likeBtn.className = 'feedback-btn like-btn';
-        likeBtn.textContent = '👍';
-        likeBtn.addEventListener('click', () => submitFeedback(messageId, true));
-
-        const dislikeBtn = document.createElement('button');
-        dislikeBtn.className = 'feedback-btn dislike-btn';
-        dislikeBtn.textContent = '👎';
-        dislikeBtn.addEventListener('click', () => submitFeedback(messageId, false));
-
-        actionsDiv.appendChild(likeBtn);
-        actionsDiv.appendChild(dislikeBtn);
-        contentDiv.appendChild(actionsDiv);
-    }
-
     messagesList.appendChild(message);
     messagesList.scrollTop = messagesList.scrollHeight;
     return id;
-}
-
-async function submitFeedback(messageId, liked) {
-    try {
-        await apiCall('POST', `/chats/messages/${messageId}/feedback`, { liked });
-        const buttons = document.querySelectorAll(`[data-message-id="${messageId}"] .feedback-btn`);
-        buttons.forEach(btn => {
-            if ((liked && btn.classList.contains('like-btn')) ||
-                (!liked && btn.classList.contains('dislike-btn'))) {
-                btn.classList.add(liked ? 'liked' : 'disliked');
-            } else {
-                btn.classList.remove('liked', 'disliked');
-            }
-        });
-    } catch (e) {
-        alert(e.message);
-    }
 }
 
 // ============================================================================

@@ -74,7 +74,6 @@ class MessageResponse(BaseModel):
     content: str
     created_at: datetime
     chat_updated_at: Optional[datetime] = None
-    liked: Optional[bool] = None
     prompt_tokens: Optional[int] = None
     completion_tokens: Optional[int] = None
     total_tokens: Optional[int] = None
@@ -117,12 +116,6 @@ class MessageRequest(BaseModel):
     """Schema for sending a chat message."""
 
     message: str = Field(min_length=1, max_length=500)
-
-
-class FeedbackRequest(BaseModel):
-    """Schema for feedback on a message."""
-
-    liked: bool
 
 
 class UserAdminResponse(BaseModel):

@@ -112,7 +112,6 @@ class Message(Base):
     role = Column(String)  # "user" or "assistant"
     content = Column(Text)
     created_at = Column(DateTime, default=datetime.utcnow)
-    liked = Column(Boolean, nullable=True)  # None = no feedback, True = liked, False = disliked
     prompt_tokens = Column(Integer, nullable=True)
     completion_tokens = Column(Integer, nullable=True)
     total_tokens = Column(Integer, nullable=True)
