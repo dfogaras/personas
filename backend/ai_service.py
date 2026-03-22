@@ -32,7 +32,7 @@ class _AIService:
         self.max_tokens = settings.ai.max_tokens
         self.timeout = settings.ai.timeout
 
-    async def _generate(self, system_prompt: str, messages: list[dict]) -> AIResponse:
+    async def generate(self, system_prompt: str, messages: list[dict]) -> AIResponse:
         if not self.api_key:
             raise ValueError("OpenRouter API key not configured")
 
@@ -87,10 +87,6 @@ def _record(model: str, prompt_tokens: int, completion_tokens: int, db: Session)
 
 # ── Public API ────────────────────────────────────────────────────────────────
 
-def make_ai_service(settings: Settings) -> _AIService:
-    return _AIService(settings)
-
-
 _default_ai_service = _AIService(_get_settings())
 
 
@@ -105,7 +101,7 @@ async def generate_and_record(
     db: Session,
 ) -> AIResponse:
     """Generate an AI response and record token usage."""
-    response = await service._generate(system_prompt, messages)
+    response = await service.generate(system_prompt, messages)
     logger.info(
         f"AI response: model={response.model} "
         f"prompt={response.prompt_tokens} completion={response.completion_tokens}"
