@@ -111,6 +111,19 @@ function setupNav({ onNameClick } = {}) {
 }
 
 // ============================================================================
+// Chat helpers
+// ============================================================================
+
+async function startNewChat(personaId) {
+    try {
+        const chat = await apiCall('POST', '/chats', { persona_id: personaId });
+        window.location.href = `/chat/${chat.id}`;
+    } catch (e) {
+        alert(e.message);
+    }
+}
+
+// ============================================================================
 // Chat item component
 // ============================================================================
 

@@ -5,7 +5,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
 from ai_service import get_ai_service, init_ai_service
@@ -65,9 +65,14 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
 # Pages
 # ============================================================================
 
-@app.get("/", response_class=HTMLResponse)
+@app.get("/", response_class=RedirectResponse)
 async def root():
-    return read_frontend_file("index.html")
+    return RedirectResponse(url="/list")
+
+
+@app.get("/list", response_class=HTMLResponse)
+async def list_page():
+    return read_frontend_file("list.html")
 
 
 @app.get("/login", response_class=HTMLResponse)

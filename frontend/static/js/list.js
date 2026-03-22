@@ -1,5 +1,5 @@
 /**
- * AI Personas - Frontend Application
+ * AI Personas - List page (me / group / user)
  */
 
 // ============================================================================
@@ -116,14 +116,10 @@ async function showDashboardPage(title, personaQuery, chatQuery, showAddBtn = fa
 
     if (chats.length > 0) {
         document.getElementById('dashboardChatsHeading').style.display = 'block';
-        renderDashboardChats(chats, document.getElementById('dashboardChats'));
+        chats.forEach(chat => {
+            document.getElementById('dashboardChats').appendChild(createChatItem(chat, { showPersonaTag: true }));
+        });
     }
-}
-
-function renderDashboardChats(chats, container) {
-    chats.forEach(chat => {
-        container.appendChild(createChatItem(chat, { showPersonaTag: true }));
-    });
 }
 
 // ============================================================================
@@ -194,19 +190,6 @@ function renderPersonasList(personas, container, showAddBtn = false) {
         addCard.textContent = '+';
         addCard.addEventListener('click', () => { window.location.href = '/persona/new'; });
         container.appendChild(addCard);
-    }
-}
-
-// ============================================================================
-// Chat helpers
-// ============================================================================
-
-async function startNewChat(personaId) {
-    try {
-        const chat = await apiCall('POST', '/chats', { persona_id: personaId });
-        window.location.href = `/chat/${chat.id}`;
-    } catch (e) {
-        alert(e.message);
     }
 }
 

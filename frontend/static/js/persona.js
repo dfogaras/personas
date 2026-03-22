@@ -19,12 +19,7 @@ function showView(persona, chats) {
     const actions = document.getElementById('personaActions');
 
     const headerBtns = [
-        { icon: '💬', title: T.chat,   cls: '',          onClick: async () => {
-            try {
-                const chat = await apiCall('POST', '/chats', { persona_id: personaId });
-                window.location.href = `/chat/${chat.id}`;
-            } catch (e) { alert(e.message); }
-        }},
+        { icon: '💬', title: T.chat,  cls: '', onClick: () => startNewChat(personaId) },
         { icon: '✏️', title: T.edit,   cls: '',          onClick: () => { window.location.href = `/persona/${personaId}?edit&back=${backUrl}`; } },
         { icon: '⧉',  title: T.remix,  cls: '',          onClick: () => { window.location.href = `/persona/${personaId}?remix&back=${backUrl}`; } },
         { icon: '🗑',  title: T.delete, cls: 'btn-danger', onClick: async () => {
