@@ -15,7 +15,7 @@ from sqlalchemy.orm import Session
 
 import access
 from auth import require_admin
-from context import get_settings
+from settings_service import get_settings
 from messages import M
 from groups import GROUPS
 from database import get_db
@@ -135,6 +135,7 @@ async def get_usage(
     minutes: int = Query(60, ge=1, le=10080),
     _: User = Depends(require_admin),
     db: Session = Depends(get_db),
+    settings=Depends(get_settings),
 ):
     since = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(minutes=minutes)
 
@@ -144,8 +145,6 @@ async def get_usage(
         .group_by(TokenUsage.model)
         .all()
     )
-
-    settings = get_settings()
     pricing, credit_info = await asyncio.gather(
         price.get_prices(settings),
         price.get_credit_info(settings),
@@ -172,9 +171,7 @@ async def get_usage(
 # ============================================================================
 
 @router.get("/api/admin/db-export")
-async def export_db(_: User = Depends(require_admin)):
-
-    settings = get_settings()
+async def export_db(_: User = Depends(require_admin), settings=Depends(get_settings)):
     db_url = settings.database.url
     if not db_url.startswith("sqlite:///"):
         raise HTTPException(status_code=400, detail="Only SQLite export is supported")

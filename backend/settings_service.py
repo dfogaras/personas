@@ -1,11 +1,10 @@
-"""Shared application context: settings, AI service, and paths."""
+"""Settings singleton and related helpers."""
 
 import argparse
 import logging
 import os
 
-from ai_service import make_ai_service
-from config import load_settings
+from config import load_settings, Settings
 
 
 def _parse_args():
@@ -17,18 +16,16 @@ def _parse_args():
 logging.basicConfig(level=logging.DEBUG, format="%(asctime)s %(levelname)s %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
 
 _settings = load_settings(_parse_args().config)
-_ai_service = make_ai_service(_settings)
 _frontend_path = os.path.join(os.path.dirname(__file__), "..", "frontend")
 
 
-def get_settings():
+def get_settings() -> Settings:
     return _settings
 
-def get_ai_service():
-    return _ai_service
 
 def get_frontend_path(file_name: str = "") -> str:
     return os.path.join(_frontend_path, file_name) if file_name else _frontend_path
+
 
 def read_frontend_file(filename: str) -> str:
     with open(get_frontend_path(filename)) as f:

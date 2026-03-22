@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 import access
 from auth import create_token, get_current_user, hash_password, verify_password
 from messages import M
-from context import get_settings
+from settings_service import get_settings
 from database import get_db
 from models import AuthToken, User
 from schemas import ChangePasswordRequest, LoginRequest, TokenResponse, UserResponse
@@ -16,7 +16,7 @@ router = APIRouter()
 
 
 @router.post("/api/auth/login", response_model=TokenResponse)
-async def login(body: LoginRequest, db: Session = Depends(get_db)):
+async def login(body: LoginRequest, db: Session = Depends(get_db), settings=Depends(get_settings)):
     user = db.query(User).filter(User.email == body.email.strip().lower()).first()
     invalid = HTTPException(status_code=401, detail=M["invalid_credentials"])
     if not user:
@@ -33,7 +33,7 @@ async def login(body: LoginRequest, db: Session = Depends(get_db)):
     else:
         raise invalid
 
-    token = create_token(user.id, get_settings().auth.token_expire_hours, db)
+    token = create_token(user.id, settings.auth.token_expire_hours, db)
     return TokenResponse(
         token=token.token,
         user=UserResponse.model_validate(user),

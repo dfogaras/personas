@@ -8,8 +8,7 @@ from auth import get_current_user, check_owner_or_admin
 from messages import M
 from database import get_db
 from models import Chat, Message, Persona, User
-from ai_service import generate_and_record
-from context import get_ai_service
+from ai_service import AIService, generate_and_record, get_ai_service
 from schemas import (
     ChatCreate, ChatDetailResponse, ChatResponse,
     MessageRequest, MessageResponse,
@@ -95,6 +94,7 @@ async def send_message(
     req: MessageRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
+    ai_service: AIService = Depends(get_ai_service),
 ):
     chat = db.query(Chat).filter(Chat.id == chat_id).first()
     if not chat:
@@ -144,7 +144,7 @@ A személyleírásod a következő:
         for m in db.query(Message).filter(Message.chat_id == chat_id).all()
     ]
 
-    response = await generate_and_record(get_ai_service(), system_prompt, messages, db)
+    response = await generate_and_record(ai_service, system_prompt, messages, db)
 
     assistant_message = Message(
         chat_id=chat_id,

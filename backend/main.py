@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from context import get_frontend_path, get_settings, read_frontend_file
+from settings_service import get_frontend_path, get_settings, read_frontend_file
 from database import init_db
 from router_admin import router as admin_router
 from router_auth import router as auth_router

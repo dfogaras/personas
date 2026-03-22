@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from config import Settings
 from models import TokenUsage
+from settings_service import get_settings as _get_settings
 
 logger = logging.getLogger(__name__)
 
@@ -88,6 +89,13 @@ def _record(model: str, prompt_tokens: int, completion_tokens: int, db: Session)
 
 def make_ai_service(settings: Settings) -> _AIService:
     return _AIService(settings)
+
+
+_default_ai_service = _AIService(_get_settings())
+
+
+def get_ai_service() -> _AIService:
+    return _default_ai_service
 
 
 async def generate_and_record(
