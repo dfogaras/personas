@@ -9,7 +9,6 @@ from sqlalchemy.orm import Session
 
 from config import Settings
 from models import TokenUsage
-from settings_service import get_settings as _get_settings
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +30,10 @@ class _AIService:
         self.temperature = settings.ai.temperature
         self.max_tokens = settings.ai.max_tokens
         self.timeout = settings.ai.timeout
+        self._openrouter_session = aiohttp.ClientSession()
+
+    async def close(self):
+        await self._openrouter_session.close()
 
     async def generate(self, system_prompt: str, messages: list[dict]) -> AIResponse:
         if not self.api_key:
@@ -47,25 +50,24 @@ class _AIService:
             "max_tokens": self.max_tokens,
         }
 
-        async with aiohttp.ClientSession() as session:
-            async with session.post(
-                f"{self.base_url}/chat/completions",
-                json=payload,
-                headers=headers,
-                timeout=aiohttp.ClientTimeout(total=self.timeout),
-            ) as resp:
-                if resp.status != 200:
-                    error_text = await resp.text()
-                    raise Exception(f"OpenRouter API error: {error_text}")
-                data = await resp.json()
-                usage = data.get("usage", {})
-                return AIResponse(
-                    content=data["choices"][0]["message"]["content"],
-                    prompt_tokens=usage.get("prompt_tokens", 0),
-                    completion_tokens=usage.get("completion_tokens", 0),
-                    total_tokens=usage.get("total_tokens", 0),
-                    model=self.model,
-                )
+        async with self._openrouter_session.post(
+            f"{self.base_url}/chat/completions",
+            json=payload,
+            headers=headers,
+            timeout=aiohttp.ClientTimeout(total=self.timeout),
+        ) as resp:
+            if resp.status != 200:
+                error_text = await resp.text()
+                raise Exception(f"OpenRouter API error: {error_text}")
+            data = await resp.json()
+            usage = data.get("usage", {})
+            return AIResponse(
+                content=data["choices"][0]["message"]["content"],
+                prompt_tokens=usage.get("prompt_tokens", 0),
+                completion_tokens=usage.get("completion_tokens", 0),
+                total_tokens=usage.get("total_tokens", 0),
+                model=self.model,
+            )
 
 
 def _record(model: str, prompt_tokens: int, completion_tokens: int, db: Session) -> None:
@@ -87,7 +89,12 @@ def _record(model: str, prompt_tokens: int, completion_tokens: int, db: Session)
 
 # ── Public API ────────────────────────────────────────────────────────────────
 
-_default_ai_service = _AIService(_get_settings())
+_default_ai_service: _AIService | None = None
+
+
+def init_ai_service(settings: Settings) -> None:
+    global _default_ai_service
+    _default_ai_service = _AIService(settings)
 
 
 def get_ai_service() -> _AIService:

@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
+from ai_service import get_ai_service, init_ai_service
 from settings_service import get_frontend_path, get_settings, read_frontend_file
 from database import init_db
 from router_admin import router as admin_router
@@ -21,9 +22,11 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db(get_settings())
+    init_ai_service(get_settings())
     print("✓ Database initialized")
     print(f"✓ Application started on {get_settings().app.host}:{get_settings().app.port}")
     yield
+    await get_ai_service().close()
     print("✓ Application shutdown")
 
 
