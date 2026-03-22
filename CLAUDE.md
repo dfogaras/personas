@@ -46,15 +46,15 @@ On Railway, migration runs automatically at startup.
 
 ## Access control
 
-| Action | Admin | Regular user |
-|--------|-------|--------------|
-| Read personas | ✓ all | ✓ all |
-| Create persona | ✓ | ✓ (max 20) |
-| Edit / delete persona | ✓ any | own only |
-| Read chats | ✓ all | own only |
-| Create chat | ✓ | ✓ (with any persona) |
-| Delete chat | ✓ any | own only |
-| Manage users / groups | ✓ | ✗ |
+| Action                 | Admin | Regular user          |
+|------------------------|-------|-----------------------|
+| Read personas          | ✓ all | ✓ all                 |
+| Create persona         | ✓     | ✓ (max 20)            |
+| Edit / delete persona  | ✓ any | own only              |
+| Read chats             | ✓ all | own only              |
+| Create chat            | ✓     | ✓ (with any persona)  |
+| Delete chat            | ✓ any | own only              |
+| Manage users / groups  | ✓     | ✗                     |
 
 Resources with `user_id=null` are a legacy edge case — treated as editable by anyone.
 
@@ -62,7 +62,40 @@ Resources with `user_id=null` are a legacy edge case — treated as editable by 
 
 - Backend routers: `router_auth.py`, `router_chats.py`, `router_personas.py`, `router_admin.py`
 - Settings singleton in `settings_service.py`, AI service singleton initialized in lifespan (`main.py`)
-- Frontend: each page is a `<div id="page-*">` + a matching JS file; `common.js` has shared auth/fetch utilities
+- Frontend: each page is a separate HTML file + a matching JS file; `common.js` has shared auth/fetch utilities
+
+### Frontend pages
+
+Each page is `<name>.html` + `static/js/<name>.js`. `DOMContentLoaded` wires up DOM elements; `common.js` provides shared auth/fetch helpers.
+
+| Page            | Route                                                   | Notes                                                    |
+|-----------------|---------------------------------------------------------|----------------------------------------------------------|
+| List            | `/#page=me` · `/#page=group&id=X` · `/#page=user&id=X` | One page (`index.html` + `app.js`); title, API filter, and "add" button vary by route |
+| Persona         | `/persona/:id`                                          | View / edit (`?edit`) / remix (`?remix`)                 |
+| Chat            | `/chat/:id`                                             | Conversation with a persona                              |
+| Admin           | `/admin`                                                | Users, groups, usage stats                               |
+| Login           | `/login`                                                | Redirects away if already logged in                      |
+| Change password | `/change-password`                                      | Forced on first login                                    |
+
+All three List routes call the same `showDashboardPage(title, personaQuery, chatQuery, showAddBtn)` — no duplication.
+
+### UI components
+
+| Component        | JS function / Key classes                                      | Where used                          |
+|------------------|----------------------------------------------------------------|-------------------------------------|
+| Top nav          | `setupNav()` · `.top-nav`, `.nav-brand`, `.nav-user`           | All pages; teal variant on chat page (`data-theme="chat"`) |
+| Persona tile     | `renderPersonasList()` · `.persona-card`, `.persona-card-body`, `.persona-card-actions` | Dashboard, persona list |
+| "Add" tile       | `.persona-card-add`                                            | Myself dashboard                    |
+| Persona meta     | `personaMetaHtml()` · `.persona-meta-name`, `.persona-meta-specialty` | Persona tile, chat header    |
+| Chat item row    | `createChatItem()` · `.chat-item`, `.chat-tooltip`             | Dashboard, persona detail           |
+| Auth card        | `.auth-card`, `.auth-title`, `.auth-error`                     | Login, change-password              |
+| Create/edit form | `.create-form`, `.form-input`, `.btn-primary`                  | Persona edit/create                 |
+| Chat bubbles     | `.message.user`, `.message.assistant`                          | Chat page                           |
+| Modal            | `.modal-overlay`, `.modal`                                     | Admin page                          |
+
+`setupNav()`, `personaMetaHtml()`, and `createChatItem()` live in `common.js`; `renderPersonasList()` lives in `app.js`.
+
+Theme: violet (`--persona-color`) by default; teal (`--chat-color`) on `[data-theme="chat"]` pages.
 
 ## No tests
 
