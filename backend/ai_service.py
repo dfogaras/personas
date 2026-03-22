@@ -22,7 +22,7 @@ class AIResponse:
     model: str
 
 
-class _AIService:
+class AIService:
     def __init__(self, settings: Settings):
         self.api_key = settings.openrouter.api_key
         self.base_url = settings.openrouter.base_url
@@ -89,20 +89,20 @@ def _record(model: str, prompt_tokens: int, completion_tokens: int, db: Session)
 
 # ── Public API ────────────────────────────────────────────────────────────────
 
-_default_ai_service: _AIService | None = None
+_default_ai_service: AIService | None = None
 
 
 def init_ai_service(settings: Settings) -> None:
     global _default_ai_service
-    _default_ai_service = _AIService(settings)
+    _default_ai_service = AIService(settings)
 
 
-def get_ai_service() -> _AIService:
+def get_ai_service() -> AIService:
     return _default_ai_service
 
 
 async def generate_and_record(
-    service: _AIService,
+    service: AIService,
     system_prompt: str,
     messages: list[dict],
     db: Session,
