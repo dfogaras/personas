@@ -28,7 +28,15 @@
         </section>
         <section style="margin-top: 2rem;">
             <h2 class="admin-section-title">Általános</h2>
-            <button class="admin-btn save-btn" id="dbExportBtn">Adatbázis letöltése (.zip)</button>
+            <div class="general-row">
+                <span class="general-label">Biztonsági mentés</span>
+                <button class="admin-btn save-btn" id="dbExportBtn">Adatbázis letöltése (.zip)</button>
+            </div>
+            <div class="general-row">
+                <span class="general-label">OpenRouter kredit</span>
+                <div id="usageCredit" class="usage-credit"></div>
+            </div>
+            <div id="usageContent" style="margin-top: 0.75rem;"><p class="loading">Betöltés...</p></div>
         </section>
     </div>
 

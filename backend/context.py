@@ -4,7 +4,7 @@ import argparse
 import logging
 import os
 
-from ai_service import AIService
+from ai_service import make_ai_service
 from config import load_settings
 
 
@@ -17,7 +17,7 @@ def _parse_args():
 logging.basicConfig(level=logging.DEBUG, format="%(asctime)s %(levelname)s %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
 
 _settings = load_settings(_parse_args().config)
-_ai_service = AIService(_settings)
+_ai_service = make_ai_service(_settings)
 _frontend_path = os.path.join(os.path.dirname(__file__), "..", "frontend")
 
 

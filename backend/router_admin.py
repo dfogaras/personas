@@ -1,13 +1,16 @@
 """Admin endpoints for user management."""
 
+import asyncio
 import io
 import sqlite3
 import zipfile
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
+import price
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import Response, StreamingResponse
 from pydantic import BaseModel
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 import access
@@ -16,7 +19,7 @@ from context import get_settings
 from messages import M
 from groups import GROUPS
 from database import get_db
-from models import User
+from models import User, TokenUsage
 from schemas import UserAdminCreate, UserAdminResponse, UserAdminUpdate
 
 router = APIRouter()
@@ -124,6 +127,47 @@ async def set_group_access(
 
 
 # ============================================================================
+# Token usage
+# ============================================================================
+
+@router.get("/api/admin/usage")
+async def get_usage(
+    minutes: int = Query(60, ge=1, le=10080),
+    _: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    since = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(minutes=minutes)
+
+    rows = (
+        db.query(TokenUsage.model, func.sum(TokenUsage.prompt_tokens), func.sum(TokenUsage.completion_tokens))
+        .filter(TokenUsage.minute >= since)
+        .group_by(TokenUsage.model)
+        .all()
+    )
+
+    settings = get_settings()
+    pricing, credit_info = await asyncio.gather(
+        price.get_prices(settings),
+        price.get_credit_info(settings),
+    )
+
+    models_usage = []
+    for model, prompt_tok, completion_tok in rows:
+        p = pricing.get(model, {})
+        prompt_price = float(p.get("prompt", 0) or 0)
+        completion_price = float(p.get("completion", 0) or 0)
+        cost = prompt_tok * prompt_price + completion_tok * completion_price if p else None
+        models_usage.append({
+            "model": model,
+            "prompt_tokens": prompt_tok,
+            "completion_tokens": completion_tok,
+            "cost_usd": round(cost, 6) if cost is not None else None,
+        })
+
+    return {"minutes": minutes, "models": models_usage, "credit": credit_info}
+
+
+# ============================================================================
 # DB export
 # ============================================================================
 
@@ -149,7 +193,7 @@ async def export_db(_: User = Depends(require_admin)):
         zf.writestr("personas.db", db_bytes)
     buf.seek(0)
 
-    filename = f"personas-{datetime.now().strftime('%Y%m%d-%H%M%S')}.zip"
+    filename = "kincskeresoai-backup.zip"
     return StreamingResponse(
         buf,
         media_type="application/zip",

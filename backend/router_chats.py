@@ -1,4 +1,3 @@
-import logging
 from datetime import datetime, timezone
 from typing import List, Optional
 
@@ -7,15 +6,15 @@ from sqlalchemy.orm import Session, selectinload
 
 from auth import get_current_user, check_owner_or_admin
 from messages import M
-from context import get_ai_service
 from database import get_db
 from models import Chat, Message, Persona, User
+from ai_service import generate_and_record
+from context import get_ai_service
 from schemas import (
     ChatCreate, ChatDetailResponse, ChatResponse,
     FeedbackRequest, MessageRequest, MessageResponse,
 )
 
-logger = logging.getLogger(__name__)
 router = APIRouter(dependencies=[Depends(get_current_user)])
 
 
@@ -112,7 +111,6 @@ async def send_message(
     db.add(user_message)
     db.commit()
     db.refresh(user_message)
-    logger.info(f"DB write: user message id={user_message.id}")
 
 # Egy iskolai alkalmazásban működő AI-asszisztens vagy, amelyet általános iskolás diákok használnak. \
 # Mindig udvariasan, pozitívan és kornak megfelelően viselkedj. \
@@ -146,12 +144,7 @@ A személyleírásod a következő:
         for m in db.query(Message).filter(Message.chat_id == chat_id).all()
     ]
 
-    logger.info(f"AI request: persona={persona.name}, history_length={len(messages)}")
-    response = await get_ai_service().generate_response(system_prompt, messages)
-    logger.info(
-        f"AI response: prompt_tokens={response.prompt_tokens}, "
-        f"completion_tokens={response.completion_tokens}, total_tokens={response.total_tokens}"
-    )
+    response = await generate_and_record(get_ai_service(), system_prompt, messages, db)
 
     assistant_message = Message(
         chat_id=chat_id,
@@ -164,7 +157,6 @@ A személyleírásod a következő:
     db.add(assistant_message)
     db.commit()
     db.refresh(assistant_message)
-    logger.info(f"DB write: assistant message id={assistant_message.id}")
     assistant_message.chat_updated_at = chat.updated_at
     return assistant_message
 

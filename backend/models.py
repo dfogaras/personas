@@ -1,7 +1,7 @@
 """Database models for the application."""
 
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Boolean
+from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Boolean, UniqueConstraint
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 
@@ -118,3 +118,16 @@ class Message(Base):
     total_tokens = Column(Integer, nullable=True)
 
     chat = relationship("Chat", back_populates="messages")
+
+
+class TokenUsage(Base):
+    """Per-minute, per-model token usage counters."""
+
+    __tablename__ = "token_usage"
+    __table_args__ = (UniqueConstraint("minute", "model"),)
+
+    id = Column(Integer, primary_key=True, index=True)
+    minute = Column(DateTime, nullable=False, index=True)   # truncated to the minute (UTC)
+    model = Column(String, nullable=False)
+    prompt_tokens = Column(Integer, default=0)
+    completion_tokens = Column(Integer, default=0)

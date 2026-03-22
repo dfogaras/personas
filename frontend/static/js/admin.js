@@ -372,6 +372,90 @@ function renderUsers(users, groups, access) {
 }
 
 // ============================================================================
+// Usage
+// ============================================================================
+
+let _usageMinutes = 60;
+
+const _REFRESH_ICON = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>`;
+
+const _USAGE_OPTIONS = [[10,'Utolsó 10 perc'],[60,'Utolsó 1 óra'],[10080,'Utolsó 1 hét']];
+
+function _usageHead(minutes) {
+    const opts = _USAGE_OPTIONS.map(([v,l]) =>
+        `<option value="${v}"${v === minutes ? ' selected' : ''}>${l}</option>`).join('');
+    return `<th class="usage-th-title">
+        <div class="usage-th-inner">
+            <span>AI használat</span>
+            <div class="usage-controls">
+                <select id="usageMinutes" class="admin-input" style="width:auto">${opts}</select>
+                <button id="usageRefreshBtn" class="usage-refresh-btn" title="Frissítés">${_REFRESH_ICON}</button>
+            </div>
+        </div>
+    </th>`;
+}
+
+async function loadUsage() {
+    const el = document.getElementById('usageContent');
+    el.innerHTML = `<table class="admin-table usage-table"><thead><tr>${_usageHead(_usageMinutes)}<th class="usage-num">Prompt</th><th class="usage-num">Válasz</th><th class="usage-num">Költség</th></tr></thead><tbody><tr><td colspan="4" class="loading">Betöltés...</td></tr></tbody></table>`;
+    try {
+        const data = await apiCall('GET', `/admin/usage?minutes=${_usageMinutes}`);
+        el.innerHTML = renderUsage(data);
+    } catch (e) {
+        el.innerHTML = `<table class="admin-table usage-table"><thead><tr>${_usageHead(_usageMinutes)}<th class="usage-num">Prompt</th><th class="usage-num">Válasz</th><th class="usage-num">Költség</th></tr></thead><tbody><tr><td colspan="4" class="auth-error">${escapeHtml(e.message)}</td></tr></tbody></table>`;
+    }
+}
+
+function renderUsage(data) {
+    const { models, credit } = data;
+
+    const creditEl = document.getElementById('usageCredit');
+    if (credit) {
+        const used      = credit.usage != null ? `$${Number(credit.usage).toFixed(4)}` : '—';
+        const limit     = credit.limit != null ? `$${Number(credit.limit).toFixed(2)}` : '∞';
+        const remaining = (credit.limit != null && credit.usage != null)
+            ? `$${(credit.limit - credit.usage).toFixed(4)}` : '—';
+        creditEl.innerHTML =
+            `<span>Felhasznált: <strong>${used}</strong></span>` +
+            `<span>Limit: <strong>${limit}</strong></span>` +
+            `<span>Maradék: <strong>${remaining}</strong></span>`;
+    } else {
+        creditEl.innerHTML = '';
+    }
+
+    const head = _usageHead(_usageMinutes);
+    const cols = `<th class="usage-num">Prompt</th><th class="usage-num">Válasz</th><th class="usage-num">Költség</th>`;
+
+    if (!models || models.length === 0) {
+        return `<table class="admin-table usage-table"><thead><tr>${head}${cols}</tr></thead><tbody><tr><td colspan="4" style="color:var(--text-muted)">Nincs adat ebben az időszakban.</td></tr></tbody></table>`;
+    }
+
+    const totalPrompt = models.reduce((s, r) => s + r.prompt_tokens, 0);
+    const totalCompletion = models.reduce((s, r) => s + r.completion_tokens, 0);
+    const totalCost = models.every(r => r.cost_usd != null)
+        ? models.reduce((s, r) => s + r.cost_usd, 0) : null;
+
+    const rows = models.map(r => `
+        <tr>
+            <td class="usage-model">${escapeHtml(r.model)}</td>
+            <td class="usage-num">${r.prompt_tokens.toLocaleString()}</td>
+            <td class="usage-num">${r.completion_tokens.toLocaleString()}</td>
+            <td class="usage-num">${r.cost_usd != null ? '$' + r.cost_usd.toFixed(5) : '—'}</td>
+        </tr>`).join('');
+
+    return `<table class="admin-table usage-table">
+        <thead><tr>${head}${cols}</tr></thead>
+        <tbody>${rows}</tbody>
+        <tfoot><tr class="usage-total">
+            <td>Összesen</td>
+            <td class="usage-num">${totalPrompt.toLocaleString()}</td>
+            <td class="usage-num">${totalCompletion.toLocaleString()}</td>
+            <td class="usage-num">${totalCost != null ? '$' + totalCost.toFixed(5) : '—'}</td>
+        </tr></tfoot>
+    </table>`;
+}
+
+// ============================================================================
 // Init
 // ============================================================================
 
@@ -398,6 +482,10 @@ async function init() {
         showError(e.message);
     }
 
+    loadUsage();
+    document.addEventListener('click', e => { if (e.target.closest('#usageRefreshBtn')) loadUsage(); });
+    document.addEventListener('change', e => { if (e.target.id === 'usageMinutes') { _usageMinutes = +e.target.value; loadUsage(); } });
+
     document.getElementById('dbExportBtn').addEventListener('click', async () => {
         const resp = await fetch('/api/admin/db-export', {
             headers: { 'Authorization': `Bearer ${getToken()}` },
@@ -407,7 +495,14 @@ async function init() {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `personas-${new Date().toISOString().slice(0,10)}.zip`;
+        const now = new Date();
+        const ts = now.getFullYear().toString()
+            + String(now.getMonth()+1).padStart(2,'0')
+            + String(now.getDate()).padStart(2,'0') + '-'
+            + String(now.getHours()).padStart(2,'0')
+            + String(now.getMinutes()).padStart(2,'0')
+            + String(now.getSeconds()).padStart(2,'0');
+        a.download = `kincskeresoai-backup-${ts}.zip`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
