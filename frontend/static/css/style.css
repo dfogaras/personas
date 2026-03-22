@@ -5,17 +5,17 @@
    ============================================================================ */
 
 :root {
-    /* Persona pages — violet */
-    --persona-color: #7c3aed;
-    --persona-dark: #5b21b6;
-    --persona-light: #ede9fe;
-    --persona-shadow: #a78bfa;
+    /* List pages — dark blue */
+    --persona-color: #1d4ed8;
+    --persona-dark: #1e3a8a;
+    --persona-light: #dbeafe;
+    --persona-shadow: #93c5fd;
 
-    /* Chat pages — teal */
-    --chat-color: #0891b2;
-    --chat-dark: #0e7490;
-    --chat-light: #cffafe;
-    --chat-shadow: #67e8f9;
+    /* Chat pages — dark green */
+    --chat-color: #16a34a;
+    --chat-dark: #166534;
+    --chat-light: #dcfce7;
+    --chat-shadow: #86efac;
 
     /* User message bubble — warm orange */
     --user-color: #ea580c;
@@ -35,6 +35,14 @@
     --radius-md: 16px;
     --radius-lg: 20px;
     --transition: all 0.18s ease;
+}
+
+/* Persona detail pages — purple */
+[data-theme="persona"] {
+    --persona-color: #7c3aed;
+    --persona-dark: #5b21b6;
+    --persona-light: #ede9fe;
+    --persona-shadow: #a78bfa;
 }
 
 /* ============================================================================
@@ -180,9 +188,13 @@ button, input, select, textarea {
     box-shadow: inset 0 0 0 1px rgba(255,255,255,0.35);
 }
 
+[data-theme="persona"] .top-nav {
+    box-shadow: 0 3px 12px rgba(124, 58, 237, 0.35);
+}
+
 [data-theme="chat"] .top-nav {
     background: linear-gradient(135deg, var(--chat-color) 0%, var(--chat-dark) 100%);
-    box-shadow: 0 3px 12px rgba(8, 145, 178, 0.35);
+    box-shadow: 0 3px 12px rgba(22, 163, 74, 0.35);
 }
 
 /* ============================================================================
@@ -238,7 +250,7 @@ button, input, select, textarea {
 .persona-card {
     background: white;
     border-radius: var(--radius-md);
-    box-shadow: 4px 8px 20px rgba(124, 58, 237, 0.18), 1px 2px 5px rgba(124, 58, 237, 0.1);
+    box-shadow: 4px 8px 20px rgba(29, 78, 216, 0.18), 1px 2px 5px rgba(29, 78, 216, 0.1);
     transition: transform 0.15s ease, box-shadow 0.15s ease;
     display: flex;
     flex-direction: column;
@@ -248,7 +260,7 @@ button, input, select, textarea {
 
 .persona-card:hover {
     transform: translateY(-3px);
-    box-shadow: 6px 14px 32px rgba(124, 58, 237, 0.24), 2px 4px 8px rgba(124, 58, 237, 0.12);
+    box-shadow: 6px 14px 32px rgba(29, 78, 216, 0.24), 2px 4px 8px rgba(29, 78, 216, 0.12);
 }
 
 .persona-card-body {
@@ -327,7 +339,7 @@ button, input, select, textarea {
     color: var(--persona-color);
     border-color: var(--persona-color);
     background: var(--persona-light);
-    box-shadow: 0 6px 20px rgba(124, 58, 237, 0.15);
+    box-shadow: 0 6px 20px rgba(29, 78, 216, 0.15);
 }
 
 /* ============================================================================
@@ -337,7 +349,7 @@ button, input, select, textarea {
 .create-form {
     background: white;
     border-radius: var(--radius-md);
-    box-shadow: 0 4px 0 var(--persona-shadow), 0 8px 24px rgba(124, 58, 237, 0.1);
+    box-shadow: 0 4px 0 var(--persona-shadow), 0 8px 24px rgba(29, 78, 216, 0.1);
     padding: 28px;
     margin-top: 8px;
 }
@@ -368,7 +380,7 @@ button, input, select, textarea {
 .form-input:focus {
     outline: none;
     border-color: var(--persona-color);
-    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.12);
+    box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.12);
 }
 
 .form-input.input-error {
@@ -629,7 +641,7 @@ button, input, select, textarea {
     background: white;
     border-radius: var(--radius-sm);
     border-left: 3px solid #c4b5fd;
-    box-shadow: 0 2px 8px rgba(124, 58, 237, 0.07);
+    box-shadow: 0 2px 8px rgba(29, 78, 216, 0.07);
     margin-bottom: 8px;
     transition: var(--transition);
     cursor: pointer;
@@ -637,7 +649,7 @@ button, input, select, textarea {
 
 .chat-item:hover {
     border-left-color: #7c3aed;
-    box-shadow: 0 4px 16px rgba(124, 58, 237, 0.15);
+    box-shadow: 0 4px 16px rgba(29, 78, 216, 0.15);
     transform: translateX(3px);
     z-index: 10;
 }
@@ -774,7 +786,7 @@ button, input, select, textarea {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    box-shadow: 0 2px 8px rgba(8, 145, 178, 0.1);
+    box-shadow: 0 2px 8px rgba(22, 163, 74, 0.1);
     flex-shrink: 0;
 }
 
@@ -802,7 +814,7 @@ button, input, select, textarea {
     background: linear-gradient(135deg, var(--chat-color) 0%, var(--chat-dark) 100%);
     padding: 6px 14px;
     border-radius: 20px 20px 5px 20px;
-    box-shadow: 0 3px 0 var(--chat-dark), 0 6px 16px rgba(8, 145, 178, 0.35);
+    box-shadow: 0 3px 0 var(--chat-dark), 0 6px 16px rgba(22, 163, 74, 0.35);
 }
 
 .user-name-display #chatUserName {
@@ -875,8 +887,8 @@ button, input, select, textarea {
 .persona-description {
     padding: 14px 24px;
     background: var(--chat-light);
-    border-bottom: 2px solid rgba(8, 145, 178, 0.2);
-    box-shadow: 0 4px 10px rgba(8, 145, 178, 0.12);
+    border-bottom: 2px solid rgba(22, 163, 74, 0.2);
+    box-shadow: 0 4px 10px rgba(22, 163, 74, 0.12);
     font-size: 14px;
     color: var(--chat-dark);
     font-style: italic;
@@ -925,7 +937,7 @@ button, input, select, textarea {
     background: linear-gradient(135deg, var(--chat-color) 0%, var(--chat-dark) 100%);
     color: white;
     border-radius: var(--radius-lg) var(--radius-lg) 5px var(--radius-lg);
-    box-shadow: 0 3px 0 var(--chat-dark), 0 6px 18px rgba(8, 145, 178, 0.25);
+    box-shadow: 0 3px 0 var(--chat-dark), 0 6px 18px rgba(22, 163, 74, 0.25);
 }
 
 .message.assistant .message-content {
@@ -966,7 +978,7 @@ button, input, select, textarea {
 .chat-input-area {
     padding: 16px 24px;
     background: white;
-    border-top: 2px solid rgba(8, 145, 178, 0.12);
+    border-top: 2px solid rgba(22, 163, 74, 0.12);
     flex-shrink: 0;
 }
 
@@ -989,7 +1001,7 @@ button, input, select, textarea {
     outline: none;
     border-color: var(--chat-color);
     background: white;
-    box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.12);
+    box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.12);
 }
 
 .send-btn {
@@ -1062,7 +1074,7 @@ button, input, select, textarea {
     border-radius: 20px;
     padding: 40px 36px;
     width: 100%;
-    box-shadow: 4px 8px 24px rgba(124, 58, 237, 0.14), 1px 2px 6px rgba(124, 58, 237, 0.08);
+    box-shadow: 4px 8px 24px rgba(29, 78, 216, 0.14), 1px 2px 6px rgba(29, 78, 216, 0.08);
     display: flex;
     flex-direction: column;
     gap: 16px;
