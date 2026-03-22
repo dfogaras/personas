@@ -61,7 +61,7 @@ class Persona(Base):
     description = Column(Text)
     specialty = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
 
     chats = relationship("Chat", back_populates="persona")
     user = relationship("User")
@@ -76,7 +76,7 @@ class Chat(Base):
     persona_id = Column(Integer, ForeignKey("personas.id"))
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
 
     preview_text = Column(String, nullable=True)
 

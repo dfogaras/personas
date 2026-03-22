@@ -41,6 +41,21 @@ def cmd_migrate(engine):
         ("chats", "user_name"),
         ("messages", "liked"),
     ]
+    null_user_cleanup = [
+        # Remove legacy rows that have no owner, in dependency order
+        "DELETE FROM messages WHERE chat_id IN (SELECT id FROM chats WHERE user_id IS NULL)",
+        "DELETE FROM chats WHERE user_id IS NULL",
+        "DELETE FROM messages WHERE chat_id IN (SELECT id FROM chats WHERE persona_id IN (SELECT id FROM personas WHERE user_id IS NULL))",
+        "DELETE FROM chats WHERE persona_id IN (SELECT id FROM personas WHERE user_id IS NULL)",
+        "DELETE FROM personas WHERE user_id IS NULL",
+    ]
+    with engine.connect() as conn:
+        for stmt in null_user_cleanup:
+            result = conn.execute(text(stmt))
+            conn.commit()
+            if result.rowcount:
+                print(f"✓ Cleaned up {result.rowcount} rows: {stmt[:60]}…")
+
     drop_unique_indexes = [
         # personas.name no longer needs to be unique (users may create same-named personas)
         ("DROP INDEX IF EXISTS ix_personas_name", "CREATE INDEX IF NOT EXISTS ix_personas_name ON personas (name)"),

@@ -59,7 +59,7 @@ class PersonaResponse(PersonaBase):
 
     id: int
     created_at: datetime
-    user_id: Optional[int] = None
+    user_id: int
     user: Optional[UserResponse] = None
 
     class Config:
@@ -93,7 +93,7 @@ class ChatResponse(BaseModel):
 
     id: int
     persona_id: int
-    user_id: Optional[int] = None
+    user_id: int
     user: Optional[UserResponse] = None
     persona: Optional[PersonaResponse] = None
     created_at: datetime
