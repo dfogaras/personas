@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from auth import get_current_user, check_owner_or_admin
 from messages import M
 from database import get_db
-from models import Persona, User
+from models import Group, Persona, User
 from schemas import PersonaCreate, PersonaResponse
 
 logger = logging.getLogger(__name__)
@@ -29,7 +29,7 @@ async def list_personas(
     if user_id is not None:
         q = q.filter(Persona.user_id == user_id)
     if group is not None:
-        q = q.join(User, Persona.user_id == User.id).filter(User.group == group)
+        q = q.join(User, Persona.user_id == User.id).join(Group, User.group_id == Group.id).filter(Group.name == group)
     return q.all()
 
 
