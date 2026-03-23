@@ -103,7 +103,7 @@ function setupNav({ onNameClick } = {}) {
     } else if (user.group) {
         const a = document.createElement('a');
         a.id = 'navGroupLink';
-        a.href = `/#page=group&id=${encodeURIComponent(user.group)}`;
+        a.href = `/#page=group&id=${user.group_id}`;
         a.className = 'nav-logout-btn';
         a.textContent = user.group + ' csoport';
         navUser.insertBefore(a, logoutBtn);

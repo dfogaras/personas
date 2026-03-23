@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session, selectinload
 from auth import get_current_user, check_owner_or_admin
 from messages import M
 from database import get_db
-from models import Chat, Message, Persona, User
+from models import Chat, Group, Message, Persona, User
 from ai_service import AIService, generate_and_record, get_ai_service
 from schemas import (
     ChatCreate, ChatDetailResponse, ChatResponse,
@@ -25,7 +25,7 @@ router = APIRouter(dependencies=[Depends(get_current_user)])
 async def list_chats(
     persona_id: Optional[int] = Query(None),
     user_id: Optional[int] = Query(None),
-    group: Optional[str] = Query(None),
+    group_id: Optional[int] = Query(None),
     limit: Optional[int] = Query(None),
     db: Session = Depends(get_db),
 ):
@@ -38,8 +38,8 @@ async def list_chats(
         q = q.filter(Chat.persona_id == persona_id)
     if user_id is not None:
         q = q.filter(Chat.user_id == user_id)
-    if group is not None:
-        q = q.join(User, Chat.user_id == User.id).filter(User.group == group)
+    if group_id is not None:
+        q = q.join(User, Chat.user_id == User.id).filter(User.group_id == group_id)
     q = q.order_by(Chat.updated_at.desc())
     if limit is not None:
         q = q.limit(limit)

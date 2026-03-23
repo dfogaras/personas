@@ -306,7 +306,7 @@ function renderUsers(users, groups, access) {
     _currentAccess = access;
 
     const byGroup = {};
-    for (const g of groups) byGroup[g] = [];
+    for (const g of groups) byGroup[g.name] = [];
     for (const u of users) {
         if (byGroup[u.group] !== undefined) byGroup[u.group].push(u);
     }
@@ -315,14 +315,14 @@ function renderUsers(users, groups, access) {
     container.innerHTML = '';
 
     for (const group of groups) {
-        const enabled = access[group] ?? false;
-        const isAdmin = group === 'admin';
+        const enabled = access[group.name] ?? false;
+        const isAdmin = group.name === 'admin';
 
         const section = document.createElement('div');
         section.className = 'admin-group collapsed';
         section.innerHTML = `<h3 class="admin-group-title">
                 <span class="admin-group-toggle">▶</span>
-                <a class="admin-group-name" href="/#page=group&id=${encodeURIComponent(group)}">${escapeHtml(group)}</a>
+                <a class="admin-group-name" href="/#page=group&id=${group.id}">${escapeHtml(group.name)}</a>
                 <span class="admin-group-actions">
                     <button class="group-icon-btn add-one-btn" title="${T.ttAddUser}">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -353,7 +353,7 @@ function renderUsers(users, groups, access) {
             accessBtn.addEventListener('click', async (e) => {
                 e.stopPropagation();
                 try {
-                    const newAccess = await apiCall('PATCH', `/admin/access/${group}`, { enabled: !enabled });
+                    const newAccess = await apiCall('PATCH', `/admin/access/${group.name}`, { enabled: !enabled });
                     renderUsers(_currentUsers, _currentGroups, newAccess);
                 } catch (err) { showError(err.message); }
             });
@@ -363,10 +363,10 @@ function renderUsers(users, groups, access) {
         title.addEventListener('click', e => {
             if (!e.target.closest('button') && !e.target.closest('a')) section.classList.toggle('collapsed');
         });
-        section.querySelector('.add-one-btn').addEventListener('click',  () => openAddModal(group));
-        section.querySelector('.add-bulk-btn').addEventListener('click', () => openBulkModal(group));
+        section.querySelector('.add-one-btn').addEventListener('click',  () => openAddModal(group.name));
+        section.querySelector('.add-bulk-btn').addEventListener('click', () => openBulkModal(group.name));
         const tbody = section.querySelector('tbody');
-        for (const user of byGroup[group]) tbody.appendChild(renderUserRow(user));
+        for (const user of byGroup[group.name]) tbody.appendChild(renderUserRow(user));
         container.appendChild(section);
     }
 }

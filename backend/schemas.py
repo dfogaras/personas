@@ -12,6 +12,7 @@ class UserResponse(BaseModel):
     email: str
     name: str
     group: Optional[str] = None
+    group_id: Optional[int] = None
     created_at: datetime
 
     class Config:

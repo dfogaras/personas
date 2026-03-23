@@ -19,17 +19,22 @@ router = APIRouter(dependencies=[Depends(get_current_user)])
 # Personas API
 # ============================================================================
 
+@router.get("/api/groups")
+async def list_groups(db: Session = Depends(get_db)):
+    return [{"id": g.id, "name": g.name} for g in db.query(Group).order_by(Group.id).all()]
+
+
 @router.get("/api/personas", response_model=list[PersonaResponse])
 async def list_personas(
-    group: Optional[str] = Query(None),
+    group_id: Optional[int] = Query(None),
     user_id: Optional[int] = Query(None),
     db: Session = Depends(get_db),
 ):
     q = db.query(Persona)
     if user_id is not None:
         q = q.filter(Persona.user_id == user_id)
-    if group is not None:
-        q = q.join(User, Persona.user_id == User.id).join(Group, User.group_id == Group.id).filter(Group.name == group)
+    if group_id is not None:
+        q = q.join(User, Persona.user_id == User.id).filter(User.group_id == group_id)
     return q.all()
 
 

@@ -25,7 +25,7 @@ function updateNav() {
     } else if (user.group) {
         const a = document.createElement('a');
         a.id = 'navGroupLink';
-        a.href = `/#page=group&id=${encodeURIComponent(user.group)}`;
+        a.href = `/#page=group&id=${user.group_id}`;
         a.className = 'nav-logout-btn';
         a.textContent = user.group + ' csoport';
         logoutBtn.parentElement.insertBefore(a, logoutBtn);
@@ -91,9 +91,11 @@ async function showMePage() {
     await showDashboardPage('Saját personáim', `user_id=${user.id}`, `user_id=${user.id}`, true);
 }
 
-async function showGroupPage(group) {
-    const label = group + ' csoport';
-    await showDashboardPage(label, `group=${encodeURIComponent(group)}`, `group=${encodeURIComponent(group)}`);
+async function showGroupPage(groupId) {
+    const groups = await apiCall('GET', '/groups');
+    const group = groups.find(g => g.id === parseInt(groupId));
+    const label = group ? group.name + ' csoport' : 'Csoport';
+    await showDashboardPage(label, `group_id=${groupId}`, `group_id=${groupId}`);
 }
 
 async function showUserPage(userId) {

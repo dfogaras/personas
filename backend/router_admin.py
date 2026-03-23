@@ -35,9 +35,9 @@ def _find_group_by_name(db: Session, name: str) -> Group:
     return g
 
 
-@router.get("/api/admin/groups", response_model=list[str])
+@router.get("/api/admin/groups")
 async def admin_list_groups(_: User = Depends(require_admin), db: Session = Depends(get_db)):
-    return [g.name for g in db.query(Group).order_by(Group.id).all()]
+    return [{"id": g.id, "name": g.name} for g in db.query(Group).order_by(Group.id).all()]
 
 
 @router.get("/api/admin/users", response_model=list[UserAdminResponse])
