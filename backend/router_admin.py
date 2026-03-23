@@ -17,22 +17,33 @@ import access
 from auth import require_admin
 from settings_service import get_settings
 from messages import M
-from groups import GROUPS
 from database import get_db
-from models import User, TokenUsage
+from models import Group, User, TokenUsage
 from schemas import UserAdminCreate, UserAdminResponse, UserAdminUpdate
 
 router = APIRouter()
 
 
+def _all_group_names(db: Session) -> list[str]:
+    return [g.name for g in db.query(Group).order_by(Group.id).all()]
+
+
+def _find_group_by_name(db: Session, name: str) -> Group:
+    g = db.query(Group).filter(Group.name == name).first()
+    if not g:
+        all_names = _all_group_names(db)
+        raise HTTPException(status_code=400, detail=f"{M['invalid_group']}: {', '.join(all_names)}")
+    return g
+
+
 @router.get("/api/admin/groups", response_model=list[str])
-async def admin_list_groups(_: User = Depends(require_admin)):
-    return GROUPS
+async def admin_list_groups(_: User = Depends(require_admin), db: Session = Depends(get_db)):
+    return [g.name for g in db.query(Group).order_by(Group.id).all()]
 
 
 @router.get("/api/admin/users", response_model=list[UserAdminResponse])
 async def admin_list_users(db: Session = Depends(get_db), admin: User = Depends(require_admin)):
-    users = db.query(User).order_by(User.group, User.name).all()
+    users = db.query(User).join(User.group_rel).order_by(Group.name, User.name).all()
     return [UserAdminResponse.model_validate(u) for u in users]
 
 
@@ -42,14 +53,13 @@ async def admin_create_user(
     db: Session = Depends(get_db),
     admin: User = Depends(require_admin),
 ):
-    if body.group not in GROUPS:
-        raise HTTPException(status_code=400, detail=f"{M['invalid_group']}: {', '.join(GROUPS)}")
+    group_obj = _find_group_by_name(db, body.group)
     if db.query(User).filter(User.email == body.email).first():
         raise HTTPException(status_code=400, detail=M["email_exists"])
     u = User(
         email=body.email,
         name=body.name,
-        group=body.group,
+        group_id=group_obj.id,
         initial_password=body.initial_password,
         initial_password_created_at=datetime.now(timezone.utc) if body.initial_password else None,
     )
@@ -70,9 +80,7 @@ async def admin_update_user(
     if not u:
         raise HTTPException(status_code=404, detail=M["user_not_found"])
     if body.group is not None:
-        if body.group not in GROUPS:
-            raise HTTPException(status_code=400, detail=f"{M['invalid_group']}: {', '.join(GROUPS)}")
-        u.group = body.group
+        u.group_id = _find_group_by_name(db, body.group).id
     if body.email is not None:
         if db.query(User).filter(User.email == body.email, User.id != user_id).first():
             raise HTTPException(status_code=400, detail=M["email_exists"])
@@ -119,9 +127,9 @@ async def set_group_access(
     group: str,
     body: _AccessUpdate,
     _: User = Depends(require_admin),
+    db: Session = Depends(get_db),
 ):
-    if group not in GROUPS:
-        raise HTTPException(status_code=404, detail=M["group_not_found"])
+    _find_group_by_name(db, group)
     access.set_enabled(group, body.enabled)
     return access.get_status()
 

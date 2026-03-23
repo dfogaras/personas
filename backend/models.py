@@ -8,6 +8,17 @@ from sqlalchemy.orm import relationship
 Base = declarative_base()
 
 
+class Group(Base):
+    """User group (e.g. admin, 6B, 6C)."""
+
+    __tablename__ = "groups"
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String, unique=True, nullable=False)
+
+    users = relationship("User", back_populates="group_rel")
+
+
 class User(Base):
     """Authenticated user."""
 
@@ -16,13 +27,18 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, index=True, nullable=False)
     name = Column(String, nullable=False)
-    group = Column(String, nullable=True)
+    group_id = Column(Integer, ForeignKey("groups.id"), nullable=True)
     password_hash = Column(String, nullable=True)
     initial_password = Column(String, nullable=True)
     initial_password_created_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
+    group_rel = relationship("Group", back_populates="users")
     auth_tokens = relationship("AuthToken", back_populates="user", cascade="all, delete-orphan")
+
+    @property
+    def group(self) -> str | None:
+        return self.group_rel.name if self.group_rel else None
 
 
 class AuthCode(Base):

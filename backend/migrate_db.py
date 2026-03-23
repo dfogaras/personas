@@ -23,18 +23,40 @@ def _engine(settings):
     )
 
 
+DEFAULT_GROUPS = [
+    (1, "admin"),
+    (2, "6B"),
+    (3, "6C"),
+    (4, "7B"),
+    (5, "7C"),
+]
+
+
 def cmd_migrate(engine):
     """Create all tables and add any missing columns."""
     Base.metadata.create_all(bind=engine)
     print("✓ Tables created / verified")
 
     inspector = inspect(engine)
+
+    # Seed default groups
+    with engine.connect() as conn:
+        for gid, name in DEFAULT_GROUPS:
+            exists = conn.execute(text("SELECT id FROM groups WHERE id = :id"), {"id": gid}).first()
+            if not exists:
+                conn.execute(text("INSERT INTO groups (id, name) VALUES (:id, :name)"), {"id": gid, "name": name})
+                conn.commit()
+                print(f"✓ Seeded group {gid}: {name}")
+            else:
+                print(f"  Group {gid} ({name}) already exists")
+
     add_columns = [
         ("personas", "user_id", "INTEGER REFERENCES users(id)"),
         ("chats", "user_id", "INTEGER REFERENCES users(id)"),
         ("users", "password_hash", "TEXT"),
         ("users", "initial_password", "TEXT"),
         ("users", "initial_password_created_at", "DATETIME"),
+        ("users", "group_id", "INTEGER REFERENCES groups(id)"),
     ]
     drop_columns = [
         ("users", "role"),
@@ -69,6 +91,14 @@ def cmd_migrate(engine):
                 print(f"✓ Added {table}.{column}")
             else:
                 print(f"  {table}.{column} already exists")
+
+        # Populate group_id from the legacy group string column (one-time migration)
+        user_cols = {col["name"] for col in inspector.get_columns("users")}
+        if "group" in user_cols:
+            conn.execute(text('UPDATE users SET group_id = (SELECT id FROM groups WHERE groups.name = users."group") WHERE group_id IS NULL'))
+            conn.commit()
+            print("✓ Populated users.group_id from group names")
+
         for table, column in drop_columns:
             existing = {col["name"] for col in inspector.get_columns(table)}
             if column in existing:
@@ -77,6 +107,16 @@ def cmd_migrate(engine):
                 print(f"✓ Dropped {table}.{column}")
             else:
                 print(f"  {table}.{column} already absent")
+
+        # Drop legacy string group column after group_id is populated
+        user_cols = {col["name"] for col in inspector.get_columns("users")}
+        if "group" in user_cols:
+            conn.execute(text('ALTER TABLE users DROP COLUMN "group"'))
+            conn.commit()
+            print("✓ Dropped users.group (replaced by group_id)")
+        else:
+            print("  users.group already absent")
+
         for drop_sql, create_sql in drop_unique_indexes:
             conn.execute(text(drop_sql))
             conn.execute(text(create_sql))
@@ -86,25 +126,37 @@ def cmd_migrate(engine):
 
 def cmd_add_user(engine, email, name, group, initial_password):
     with engine.connect() as conn:
+        group_id = None
+        if group:
+            row = conn.execute(text("SELECT id FROM groups WHERE name = :name"), {"name": group}).first()
+            if not row:
+                print(f"✗ Unknown group: {group!r}. Run 'migrate' first to seed groups.")
+                return
+            group_id = row[0]
+
         existing = conn.execute(text("SELECT id FROM users WHERE email = :email"), {"email": email}).first()
         if existing:
             conn.execute(text("DELETE FROM users WHERE email = :email"), {"email": email})
             print(f"  Replaced existing user <{email}>")
         conn.execute(
             text(
-                'INSERT INTO users (email, name, "group", initial_password, created_at)'
-                " VALUES (:email, :name, :group, :initial_password, CURRENT_TIMESTAMP)"
+                "INSERT INTO users (email, name, group_id, initial_password, created_at)"
+                " VALUES (:email, :name, :group_id, :initial_password, CURRENT_TIMESTAMP)"
             ),
-            {"email": email, "name": name, "group": group, "initial_password": initial_password},
+            {"email": email, "name": name, "group_id": group_id, "initial_password": initial_password},
         )
         conn.commit()
-    parts = [f"group={group}" if group else "", f"initial_password=***" if initial_password else ""]
+    parts = [f"group={group}" if group else "", "initial_password=***" if initial_password else ""]
     print(f"✓ Created user {name!r} <{email}>" + (f"  ({', '.join(p for p in parts if p)})" if any(parts) else ""))
 
 
 def cmd_list_users(engine):
     with engine.connect() as conn:
-        rows = conn.execute(text("SELECT id, email, name, \"group\" FROM users ORDER BY id")).fetchall()
+        rows = conn.execute(text(
+            "SELECT u.id, u.email, u.name, g.name "
+            "FROM users u LEFT JOIN groups g ON g.id = u.group_id "
+            "ORDER BY u.id"
+        )).fetchall()
     if not rows:
         print("No users found.")
         return
