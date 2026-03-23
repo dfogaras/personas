@@ -2,7 +2,7 @@
 
 ## Concept
 
-A **lesson** is a scoped session assigned to one group. It replaces the existing group enable/disable toggle: a group can log in only when they have an active lesson.
+A **lesson** is a scoped session assigned to one group. The existing `groups.access_enabled` toggle remains for simple on/off; lessons add a richer layer on top: a group can optionally be restricted to log in only when they have an active lesson.
 
 Admins create lessons, configure them, and activate/deactivate them. The same lesson can be activated and deactivated multiple times. To reuse a lesson for a different group, the admin copies it — copying carries over pinned personas but skips user-created content.
 
@@ -11,11 +11,14 @@ Admins create lessons, configure them, and activate/deactivate them. The same le
 ## Schema
 
 ```
+groups
+  + access_enabled         -- replaces the old runtime toggle; persists across restarts
+
 lessons
   id, name, description
   settings (JSON)          -- feature overrides (max_personas, max_messages, etc.)
-  group                    -- single assigned group ("6B", "6C", "7B", "7C")
-  is_active                -- replaces group enable/disable toggle
+  group_id → groups.id     -- single assigned group
+  is_active
   created_by, created_at
 
 lesson_personas            -- many-to-many junction
@@ -83,8 +86,8 @@ When an admin copies a lesson to a new group:
 
 | Area | Change |
 |------|--------|
-| Login (`router_auth.py`) | Check for active lesson instead of group enabled flag |
-| `settings_service.py` | Remove runtime group toggle; active lesson state lives in DB |
+| Login (`router_auth.py`) | Check for active lesson instead of `groups.access_enabled` |
+| `settings_service.py` | Active lesson state lives in DB (runtime toggle already removed) |
 | List pages | Filter personas/chats by resolved active lesson |
 | Admin page | Replace group toggles with lesson management UI |
 | Persona creation | Add `lesson_personas` row for the active lesson |
