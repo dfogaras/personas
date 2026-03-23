@@ -4,7 +4,6 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import Response
 from sqlalchemy.orm import Session
 
-import access
 from auth import create_token, get_current_user, hash_password, verify_password
 from messages import M
 from settings_service import get_settings
@@ -22,7 +21,7 @@ async def login(body: LoginRequest, db: Session = Depends(get_db), settings=Depe
     if not user:
         raise invalid
 
-    if not access.is_enabled(user.group):
+    if not user.group_rel or not user.group_rel.access_enabled:
         raise HTTPException(status_code=403, detail=M["group_disabled"])
 
     must_change = False

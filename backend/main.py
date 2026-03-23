@@ -8,11 +8,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
-import access
 from ai_service import get_ai_service, init_ai_service
 from settings_service import get_frontend_path, get_settings, read_frontend_file
-from database import init_db, get_db
-from models import Group
+from database import init_db
 from router_admin import router as admin_router
 from router_auth import router as auth_router
 from router_chats import router as chats_router
@@ -25,12 +23,6 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: FastAPI):
     init_db(get_settings())
     init_ai_service(get_settings())
-    db = next(get_db())
-    try:
-        group_names = [g.name for g in db.query(Group).order_by(Group.id).all()]
-        access.init(group_names)
-    finally:
-        db.close()
     print("✓ Database initialized")
     print(f"✓ Application started on {get_settings().app.host}:{get_settings().app.port}")
     yield

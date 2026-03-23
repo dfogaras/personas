@@ -15,6 +15,7 @@ class Group(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String, unique=True, nullable=False)
+    access_enabled = Column(Boolean, default=True, nullable=False)
 
     users = relationship("User", back_populates="group_rel")
 

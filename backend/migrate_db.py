@@ -57,6 +57,7 @@ def cmd_migrate(engine):
         ("users", "initial_password", "TEXT"),
         ("users", "initial_password_created_at", "DATETIME"),
         ("users", "group_id", "INTEGER REFERENCES groups(id)"),
+        ("groups", "access_enabled", "BOOLEAN NOT NULL DEFAULT 0"),
     ]
     drop_columns = [
         ("users", "role"),
@@ -89,6 +90,10 @@ def cmd_migrate(engine):
                 conn.execute(text(f'ALTER TABLE "{table}" ADD COLUMN "{column}" {col_def}'))
                 conn.commit()
                 print(f"✓ Added {table}.{column}")
+                if (table, column) == ("groups", "access_enabled"):
+                    conn.execute(text("UPDATE groups SET access_enabled = 1"))
+                    conn.commit()
+                    print("✓ Set all groups access_enabled = 1")
             else:
                 print(f"  {table}.{column} already exists")
 

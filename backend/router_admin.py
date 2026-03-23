@@ -13,7 +13,6 @@ from pydantic import BaseModel
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-import access
 from auth import require_admin
 from settings_service import get_settings
 from messages import M
@@ -118,8 +117,8 @@ class _AccessUpdate(BaseModel):
 
 
 @router.get("/api/admin/access", response_model=dict[str, bool])
-async def get_access(_: User = Depends(require_admin)):
-    return access.get_status()
+async def get_access(_: User = Depends(require_admin), db: Session = Depends(get_db)):
+    return {g.name: g.access_enabled for g in db.query(Group).order_by(Group.id).all()}
 
 
 @router.patch("/api/admin/access/{group}", response_model=dict[str, bool])
@@ -129,9 +128,11 @@ async def set_group_access(
     _: User = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
-    _find_group_by_name(db, group)
-    access.set_enabled(group, body.enabled)
-    return access.get_status()
+    g = _find_group_by_name(db, group)
+    if g.name != "admin":
+        g.access_enabled = body.enabled
+        db.commit()
+    return {g.name: g.access_enabled for g in db.query(Group).order_by(Group.id).all()}
 
 
 # ============================================================================
