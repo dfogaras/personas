@@ -22,6 +22,11 @@ lessons
 lesson_settings              -- 1:1 with lessons; one row created alongside each lesson
   lesson_id → lessons.id (PK)
   max_messages_per_chat  INTEGER NOT NULL DEFAULT 60
+  ai_model               TEXT    NOT NULL DEFAULT 'google/gemini-2.5-flash-lite'
+  ai_temperature         REAL    NOT NULL DEFAULT 1.0
+  can_create_persona     BOOLEAN NOT NULL DEFAULT true
+  can_switch_lesson      BOOLEAN NOT NULL DEFAULT false -- future: allow students to switch to another lesson assigned to their group
+  -- future: persona_creation_nudge TEXT -- hint shown on the persona creation form
 
 lesson_groups                -- which groups have access to this lesson
   lesson_id → lessons.id
@@ -56,12 +61,16 @@ If `active_lesson_id` is null, fall back to `groups.active_lesson_id`. The overr
 
 ---
 
-## Visibility rules
+## Lesson scope
 
-| Who | Sees |
-|-----|------|
-| Group member | Lessons for their group; personas/chats scoped to the selected lesson |
-| Admin | All lessons across all groups |
+The active lesson affects two things on the backend:
+
+1. **List filtering** — the user/group persona and chat lists are filtered to the active lesson.
+2. **Creation** — new personas are linked to the active lesson (`lesson_personas`); new chats get `lesson_id` set.
+3. **Chat behaviour** — `lesson_settings` overrides apply: `max_messages_per_chat`, AI model, temperature, etc.
+4. **UI** — `can_create_persona` hides/shows the add-persona button.
+
+Individual resource endpoints (`GET /personas/:id`, `GET /chats/:id`) are not lesson-scoped. A user who knows a direct URL can still reach it.
 
 ---
 
@@ -96,12 +105,26 @@ One active lesson per group is DB-enforced by the FK (a group has exactly one `a
 
 ---
 
+## Access control
+
+Lesson administration is admin-only. Regular users have no write access to lessons.
+
+| Action | Admin | Regular user |
+|--------|-------|--------------|
+| Create / edit / delete lesson | ✓ | ✗ |
+| Copy lesson | ✓ | ✗ |
+| Assign groups to lesson | ✓ | ✗ |
+| Activate / deactivate lesson | ✓ | ✗ |
+| View lesson content (filtered list) | ✓ | ✓ |
+| Switch to another lesson | ✓ | future: if `can_switch_lesson=true` on the active lesson |
+
+---
+
 ## What changes in existing code
 
 | Area | Change |
 |------|--------|
-| `settings_service.py` | Active lesson state lives in DB |
-| List pages | Filter personas/chats by `users.active_lesson_id` |
-| Admin page | Lesson management UI (create, edit, copy, assign group) |
+| List endpoints | Filter personas/chats by resolved active lesson |
 | Persona creation | Add `lesson_personas` row for the active lesson |
 | Chat creation | Set `lesson_id` on the new chat |
+| Admin page | Lesson management UI (create, edit, copy, assign groups) |
