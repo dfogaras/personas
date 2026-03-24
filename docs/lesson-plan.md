@@ -2,7 +2,7 @@
 
 ## Concept
 
-A **lesson** is a scoped workspace assigned to one group. Admins create and configure lessons, then assign them to a group. Users pick which of their group's lessons to work in. The same lesson can be reused across multiple sessions. To reuse a lesson for a different group, the admin copies it — copying carries over pinned personas but skips user-created content.
+A **lesson** is a scoped workspace that can be assigned to one or more groups. Admins create and configure lessons, then assign groups to them. Users see the lessons their group has access to. The typical case is one lesson per group, but two groups can share a lesson to see and interact with each other's work. To reuse a lesson independently for another group, the admin copies it — copying carries over pinned personas but skips unpinned ones and chats.
 
 Activation is a lightweight focus feature layered on top: when a lesson is marked active, group members are restricted to that lesson only. See [Activation](#activation) below.
 
@@ -17,12 +17,16 @@ groups
 
 lessons
   id, name, description
-  group_id (nullable FK → groups.id)  -- null while lesson is a draft
   created_by, created_at
 
 lesson_settings              -- 1:1 with lessons; one row created alongside each lesson
   lesson_id → lessons.id (PK)
   max_messages_per_chat  INTEGER NOT NULL DEFAULT 60
+
+lesson_groups                -- which groups have access to this lesson
+  lesson_id → lessons.id
+  group_id  → groups.id
+  PRIMARY KEY (lesson_id, group_id)
 
 lesson_personas              -- many-to-many junction
   lesson_id → lessons.id
@@ -36,7 +40,7 @@ users
   + active_lesson_id (nullable FK → lessons.id)   -- lesson the user is currently working in
 ```
 
-`lesson_settings` will grow as new overrides are added (e.g. `max_personas`, `allow_chat_export`). Adding a setting is a single `ALTER TABLE … ADD COLUMN … DEFAULT …` — no JSON parsing, no migration of existing rows.
+`lesson_settings` is 1:1 with lessons and holds all configuration. New settings are added as columns with defaults — no JSON parsing, no migration of existing rows. `lessons` stays focused on identity and lifecycle fields.
 
 ---
 
@@ -48,9 +52,7 @@ user.active_lesson_id
   → null: use groups.active_lesson_id for the user's group
 ```
 
-For regular users `active_lesson_id` is always null — their lesson is determined entirely by their group. The override exists for admins, who can switch into any group's context, and potentially for edge-case student exceptions later.
-
-Regular users see only lessons where `group_id = user.group_id`. Admins see all lessons across all groups.
+If `active_lesson_id` is null, fall back to `groups.active_lesson_id`. The override is primarily for admins, who can join any lesson regardless of group.
 
 ---
 
@@ -79,10 +81,10 @@ Personas marked `is_pinned=true` in `lesson_personas` are displayed first in the
 ## Copy logic
 
 When an admin copies a lesson:
-1. New `lessons` row — same name/description, `group_id=null`
-2. New `lesson_settings` row — copied from the source lesson's settings
+1. New `lessons` row — same name/description, no `lesson_groups` rows yet
+2. New `lesson_settings` row — copied from the source lesson
 3. Copy `lesson_personas` rows where `is_pinned=true` only
-4. User-created personas (`is_pinned=false`) and chats are left with the original lesson
+4. Unpinned personas and chats are left with the original lesson
 
 ---
 
