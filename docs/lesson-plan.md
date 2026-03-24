@@ -2,9 +2,9 @@
 
 ## Concept
 
-A **lesson** is a scoped session assigned to one group. The existing `groups.access_enabled` toggle remains for simple on/off; lessons add a richer layer on top: a group can optionally be restricted to log in only when they have an active lesson.
+A **lesson** is a scoped workspace assigned to one group. Admins create and configure lessons, then assign them to a group. Users pick which of their group's lessons to work in. The same lesson can be reused across multiple sessions. To reuse a lesson for a different group, the admin copies it — copying carries over pinned personas but skips user-created content.
 
-Admins create lessons, configure them, and activate/deactivate them. The same lesson can be activated and deactivated multiple times. To reuse a lesson for a different group, the admin copies it — copying carries over pinned personas but skips user-created content.
+Activation is a lightweight focus feature layered on top: when a lesson is marked active, group members are restricted to that lesson only. See [Activation](#activation) below.
 
 ---
 
@@ -12,42 +12,45 @@ Admins create lessons, configure them, and activate/deactivate them. The same le
 
 ```
 groups
-  + access_enabled         -- replaces the old runtime toggle; persists across restarts
+  + access_enabled           -- runtime on/off toggle; persists across restarts
+  + active_lesson_id (nullable FK → lessons.id)  -- which lesson the group is currently on
 
 lessons
   id, name, description
-  settings (JSON)          -- feature overrides (max_personas, max_messages, etc.)
-  group_id → groups.id     -- single assigned group
-  is_active
+  group_id (nullable FK → groups.id)  -- null while lesson is a draft
   created_by, created_at
 
-lesson_personas            -- many-to-many junction
+lesson_settings              -- 1:1 with lessons; one row created alongside each lesson
+  lesson_id → lessons.id (PK)
+  max_messages_per_chat  INTEGER NOT NULL DEFAULT 60
+
+lesson_personas              -- many-to-many junction
   lesson_id → lessons.id
   persona_id → personas.id
-  is_pinned                -- pinned personas display first; copied when lesson is duplicated
+  is_pinned                  -- pinned personas display first; copied when lesson is duplicated
 
 chats
   + lesson_id (nullable FK → lessons.id)   -- null = pre-lesson legacy data
 
 users
-  + active_lesson_id (nullable FK → lessons.id)   -- admin context override
+  + active_lesson_id (nullable FK → lessons.id)   -- lesson the user is currently working in
 ```
+
+`lesson_settings` will grow as new overrides are added (e.g. `max_personas`, `allow_chat_export`). Adding a setting is a single `ALTER TABLE … ADD COLUMN … DEFAULT …` — no JSON parsing, no migration of existing rows.
 
 ---
 
-## Active lesson resolution
+## Lesson resolution
 
 ```
 user.active_lesson_id
-  → set:  use this lesson (admin explicitly joined it)
-  → null: look up group's active lesson
-            → found: use it (normal user flow)
-            → none:  deny login
+  → set:  use this lesson  (admin jumping into a group's context, or one-off override)
+  → null: use groups.active_lesson_id for the user's group
 ```
 
-Regular users never have `active_lesson_id` set — they always follow the group path. Admins set it when they switch into a lesson's context.
+For regular users `active_lesson_id` is always null — their lesson is determined entirely by their group. The override exists for admins, who can switch into any group's context, and potentially for edge-case student exceptions later.
 
-When an admin deactivates a lesson, their `active_lesson_id` is **not** cleared automatically — they stay in context until they actively switch away. Deactivation only affects group member login.
+Regular users see only lessons where `group_id = user.group_id`. Admins see all lessons across all groups.
 
 ---
 
@@ -55,8 +58,8 @@ When an admin deactivates a lesson, their `active_lesson_id` is **not** cleared 
 
 | Who | Sees |
 |-----|------|
-| Group member | Only personas/chats linked to their group's active lesson |
-| Admin | Content scoped to their `active_lesson_id` (or group fallback) |
+| Group member | Lessons for their group; personas/chats scoped to the selected lesson |
+| Admin | All lessons across all groups |
 
 ---
 
@@ -69,16 +72,25 @@ When an admin deactivates a lesson, their `active_lesson_id` is **not** cleared 
 
 ## Pinned personas
 
-Personas marked `is_pinned=true` in `lesson_personas` are displayed first in the list. Admins pin personas by switching into a group's lesson and creating/marking them there.
+Personas marked `is_pinned=true` in `lesson_personas` are displayed first in the list. Admins pin personas when setting up a lesson.
 
 ---
 
 ## Copy logic
 
-When an admin copies a lesson to a new group:
-1. New `lessons` row — same settings/name, new group, `is_active=false`
-2. Copy `lesson_personas` rows where `is_pinned=true` only
-3. User-created personas (`is_pinned=false`) and chats are left with the original lesson
+When an admin copies a lesson:
+1. New `lessons` row — same name/description, `group_id=null`
+2. New `lesson_settings` row — copied from the source lesson's settings
+3. Copy `lesson_personas` rows where `is_pinned=true` only
+4. User-created personas (`is_pinned=false`) and chats are left with the original lesson
+
+---
+
+## Activation
+
+Setting `groups.active_lesson_id` is activation. It both assigns the lesson to the group and focuses students on it — they cannot see or switch to other lessons while one is active. Clearing it deactivates the lesson.
+
+One active lesson per group is DB-enforced by the FK (a group has exactly one `active_lesson_id` at a time).
 
 ---
 
@@ -86,9 +98,8 @@ When an admin copies a lesson to a new group:
 
 | Area | Change |
 |------|--------|
-| Login (`router_auth.py`) | Check for active lesson instead of `groups.access_enabled` |
-| `settings_service.py` | Active lesson state lives in DB (runtime toggle already removed) |
-| List pages | Filter personas/chats by resolved active lesson |
-| Admin page | Replace group toggles with lesson management UI |
+| `settings_service.py` | Active lesson state lives in DB |
+| List pages | Filter personas/chats by `users.active_lesson_id` |
+| Admin page | Lesson management UI (create, edit, copy, assign group) |
 | Persona creation | Add `lesson_personas` row for the active lesson |
 | Chat creation | Set `lesson_id` on the new chat |
