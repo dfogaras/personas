@@ -8,7 +8,8 @@ from sqlalchemy.orm import Session
 from auth import get_current_user, check_owner_or_admin
 from messages import M
 from database import get_db
-from models import Group, Persona, User
+from models import Group, LessonPersona, Persona, User
+from router_lessons import resolve_active_lesson, resolve_list_scope
 from schemas import PersonaCreate, PersonaResponse
 
 logger = logging.getLogger(__name__)
@@ -31,10 +32,18 @@ async def list_personas(
     db: Session = Depends(get_db),
 ):
     q = db.query(Persona)
+
     if user_id is not None:
         q = q.filter(Persona.user_id == user_id)
-    if group_id is not None:
-        q = q.join(User, Persona.user_id == User.id).filter(User.group_id == group_id)
+
+    lesson_id, fallback_gid = resolve_list_scope(group_id, user_id, db)
+    if lesson_id:
+        q = q.join(LessonPersona, Persona.id == LessonPersona.persona_id).filter(
+            LessonPersona.lesson_id == lesson_id
+        )
+    elif fallback_gid:
+        q = q.join(User, Persona.user_id == User.id).filter(User.group_id == fallback_gid)
+
     return q.all()
 
 
@@ -48,6 +57,10 @@ async def create_persona(
         raise HTTPException(status_code=400, detail=M["too_many_personas"])
     db_persona = Persona(**persona.model_dump(), user_id=current_user.id)
     db.add(db_persona)
+    db.flush()
+    lesson = resolve_active_lesson(current_user, db)
+    if lesson:
+        db.add(LessonPersona(lesson_id=lesson.id, persona_id=db_persona.id, is_pinned=False))
     db.commit()
     db.refresh(db_persona)
     return db_persona

@@ -7,8 +7,9 @@ from sqlalchemy.orm import Session, selectinload
 from auth import get_current_user, check_owner_or_admin
 from messages import M
 from database import get_db
-from models import Chat, Group, Message, Persona, User
+from models import Chat, Message, Persona, User
 from ai_service import AIService, generate_and_record, get_ai_service
+from router_lessons import resolve_active_lesson, resolve_lesson_settings, resolve_list_scope
 from schemas import (
     ChatCreate, ChatDetailResponse, ChatResponse,
     MessageRequest, MessageResponse,
@@ -38,8 +39,13 @@ async def list_chats(
         q = q.filter(Chat.persona_id == persona_id)
     if user_id is not None:
         q = q.filter(Chat.user_id == user_id)
-    if group_id is not None:
-        q = q.join(User, Chat.user_id == User.id).filter(User.group_id == group_id)
+
+    lesson_id, fallback_gid = resolve_list_scope(group_id, user_id, db)
+    if lesson_id:
+        q = q.filter(Chat.lesson_id == lesson_id)
+    elif fallback_gid:
+        q = q.join(User, Chat.user_id == User.id).filter(User.group_id == fallback_gid)
+
     q = q.order_by(Chat.updated_at.desc())
     if limit is not None:
         q = q.limit(limit)
@@ -54,7 +60,8 @@ async def create_chat(
 ):
     if not db.query(Persona).filter(Persona.id == chat.persona_id).first():
         raise HTTPException(status_code=404, detail=M["persona_not_found"])
-    db_chat = Chat(**chat.model_dump(), user_id=current_user.id)
+    lesson = resolve_active_lesson(current_user, db)
+    db_chat = Chat(**chat.model_dump(), user_id=current_user.id, lesson_id=lesson.id if lesson else None)
     db.add(db_chat)
     db.commit()
     db.refresh(db_chat)
@@ -101,7 +108,8 @@ async def send_message(
         raise HTTPException(status_code=404, detail=M["chat_not_found"])
     check_owner_or_admin(chat, current_user, "not_your_chat")
 
-    if db.query(Message).filter(Message.chat_id == chat_id).count() >= 60:
+    settings = resolve_lesson_settings(current_user, db)
+    if db.query(Message).filter(Message.chat_id == chat_id).count() >= settings.chat_max_messages:
         raise HTTPException(status_code=400, detail=M["too_many_messages"])
 
     chat.updated_at = datetime.now(timezone.utc).replace(tzinfo=None)

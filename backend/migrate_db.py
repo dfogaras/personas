@@ -58,6 +58,10 @@ def cmd_migrate(engine):
         ("users", "initial_password_created_at", "DATETIME"),
         ("users", "group_id", "INTEGER REFERENCES groups(id)"),
         ("groups", "access_enabled", "BOOLEAN NOT NULL DEFAULT 0"),
+        # lessons feature
+        ("groups", "active_lesson_id", "INTEGER REFERENCES lessons(id)"),
+        ("users", "active_lesson_id", "INTEGER REFERENCES lessons(id)"),
+        ("chats", "lesson_id", "INTEGER REFERENCES lessons(id)"),
     ]
     drop_columns = [
         ("users", "role"),

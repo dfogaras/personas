@@ -149,3 +149,38 @@ class UserAdminUpdate(BaseModel):
     name: Optional[str] = None
     group: Optional[str] = None
     initial_password: Optional[str] = None
+
+
+# ============================================================================
+# Lessons
+# ============================================================================
+
+class LessonSettingsResponse(BaseModel):
+    chat_max_messages: int
+
+
+class LessonUserResponse(BaseModel):
+    """Lesson context for regular users: name + settings only."""
+
+    id: int
+    name: str
+    settings: LessonSettingsResponse
+
+
+class LessonGroupInfo(BaseModel):
+    id: int
+    name: str
+
+
+class LessonPersonaInfo(BaseModel):
+    persona_id: int
+    is_pinned: bool
+
+
+class LessonAdminResponse(LessonUserResponse):
+    """Full lesson detail for admin views."""
+
+    created_by: Optional[int]
+    created_at: datetime
+    groups: List[LessonGroupInfo]
+    personas: List[LessonPersonaInfo]

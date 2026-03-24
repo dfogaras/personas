@@ -1,0 +1,330 @@
+"""Lesson management endpoints."""
+
+from datetime import datetime
+
+from fastapi import APIRouter, Depends, HTTPException, Response
+from pydantic import BaseModel
+from sqlalchemy.orm import Session
+
+from auth import get_current_user, require_admin
+from database import get_db
+from models import Group, Lesson, LessonGroup, LessonPersona, LessonSettings, LESSON_SETTINGS_DEFAULTS, Persona, User
+from schemas import LessonAdminResponse, LessonGroupInfo, LessonPersonaInfo, LessonSettingsResponse, LessonUserResponse
+
+router = APIRouter()
+
+
+# ============================================================================
+# Helpers
+# ============================================================================
+
+def _get_lesson_or_404(lesson_id: int, db: Session) -> Lesson:
+    lesson = db.query(Lesson).filter(Lesson.id == lesson_id).first()
+    if not lesson:
+        raise HTTPException(status_code=404, detail="Lesson not found")
+    return lesson
+
+
+def resolve_list_scope(
+    group_id: int | None,
+    user_id: int | None,
+    db: Session,
+) -> tuple[int | None, int | None]:
+    """Resolve lesson and group filters for list endpoints.
+
+    Returns (lesson_id, fallback_group_id). Caller should filter by lesson_id
+    if set, otherwise by fallback_group_id (group membership join).
+    """
+    if group_id is not None:
+        group = db.query(Group).filter(Group.id == group_id).first()
+        if group and group.active_lesson_id:
+            return group.active_lesson_id, None
+        return None, group_id
+    if user_id is not None:
+        user = db.query(User).filter(User.id == user_id).first()
+        if user:
+            lesson = resolve_active_lesson(user, db)
+            if lesson:
+                return lesson.id, None
+    return None, None
+
+
+def resolve_active_lesson(user: User, db: Session) -> Lesson | None:
+    """Return the lesson the user is currently working in, or None."""
+    lid = user.active_lesson_id or (user.group_rel.active_lesson_id if user.group_rel else None)
+    if not lid:
+        return None
+    return db.query(Lesson).filter(Lesson.id == lid).first()
+
+
+def resolve_lesson_settings(user: User, db: Session) -> LessonSettings:
+    """Return lesson settings for the user's active lesson, or defaults if none."""
+    lesson = resolve_active_lesson(user, db)
+    if lesson and lesson.settings:
+        return lesson.settings
+    return LessonSettings(**LESSON_SETTINGS_DEFAULTS)
+
+
+def _settings_response(lesson: Lesson) -> LessonSettingsResponse:
+    if lesson.settings:
+        return LessonSettingsResponse(chat_max_messages=lesson.settings.chat_max_messages)
+    return LessonSettingsResponse(**LESSON_SETTINGS_DEFAULTS)
+
+
+def _admin_response(lesson: Lesson) -> LessonAdminResponse:
+    return LessonAdminResponse(
+        id=lesson.id,
+        name=lesson.name,
+        created_by=lesson.created_by,
+        created_at=lesson.created_at,
+        settings=_settings_response(lesson),
+        groups=[LessonGroupInfo(id=lg.group_id, name=lg.group.name) for lg in lesson.groups],
+        personas=[LessonPersonaInfo(persona_id=lp.persona_id, is_pinned=lp.is_pinned) for lp in lesson.personas],
+    )
+
+
+# ============================================================================
+# Pydantic bodies
+# ============================================================================
+
+class LessonCreate(BaseModel):
+    name: str
+
+
+class LessonUpdate(BaseModel):
+    name: str | None = None
+
+
+class LessonSettingsUpdate(BaseModel):
+    chat_max_messages: int
+
+
+class LessonGroupsUpdate(BaseModel):
+    group_ids: list[int]
+
+
+class LessonPersonaUpdate(BaseModel):
+    is_pinned: bool = False
+
+
+class ActiveLessonUpdate(BaseModel):
+    lesson_id: int | None  # null = deactivate
+
+
+# ============================================================================
+# Admin — lesson CRUD
+# ============================================================================
+
+@router.get("/api/admin/lessons", response_model=list[LessonAdminResponse])
+async def admin_list_lessons(_: User = Depends(require_admin), db: Session = Depends(get_db)):
+    lessons = db.query(Lesson).order_by(Lesson.created_at.desc()).all()
+    return [_admin_response(l) for l in lessons]
+
+
+@router.post("/api/admin/lessons", response_model=LessonAdminResponse, status_code=201)
+async def admin_create_lesson(
+    body: LessonCreate,
+    admin: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    lesson = Lesson(name=body.name, created_by=admin.id)
+    db.add(lesson)
+    db.flush()
+    db.add(LessonSettings(lesson_id=lesson.id))
+    db.commit()
+    db.refresh(lesson)
+    return _admin_response(lesson)
+
+
+@router.get("/api/admin/lessons/{lesson_id}", response_model=LessonAdminResponse)
+async def admin_get_lesson(
+    lesson_id: int,
+    _: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    return _admin_response(_get_lesson_or_404(lesson_id, db))
+
+
+@router.put("/api/admin/lessons/{lesson_id}", response_model=LessonAdminResponse)
+async def admin_update_lesson(
+    lesson_id: int,
+    body: LessonUpdate,
+    _: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    lesson = _get_lesson_or_404(lesson_id, db)
+    if body.name is not None:
+        lesson.name = body.name
+    db.commit()
+    db.refresh(lesson)
+    return _admin_response(lesson)
+
+
+@router.delete("/api/admin/lessons/{lesson_id}", status_code=204)
+async def admin_delete_lesson(
+    lesson_id: int,
+    _: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    lesson = _get_lesson_or_404(lesson_id, db)
+    # Clear active_lesson_id on groups/users that point here
+    db.query(Group).filter(Group.active_lesson_id == lesson_id).update({"active_lesson_id": None})
+    db.query(User).filter(User.active_lesson_id == lesson_id).update({"active_lesson_id": None})
+    db.delete(lesson)
+    db.commit()
+    return Response(status_code=204)
+
+
+@router.post("/api/admin/lessons/{lesson_id}/copy", response_model=LessonAdminResponse, status_code=201)
+async def admin_copy_lesson(
+    lesson_id: int,
+    admin: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    src = _get_lesson_or_404(lesson_id, db)
+    copy = Lesson(name=src.name, created_by=admin.id)
+    db.add(copy)
+    db.flush()
+    # Copy settings
+    src_max = src.settings.chat_max_messages if src.settings else LESSON_SETTINGS_DEFAULTS["chat_max_messages"]
+    db.add(LessonSettings(lesson_id=copy.id, chat_max_messages=src_max))
+    # Copy only pinned personas
+    for lp in src.personas:
+        if lp.is_pinned:
+            db.add(LessonPersona(lesson_id=copy.id, persona_id=lp.persona_id, is_pinned=True))
+    db.commit()
+    db.refresh(copy)
+    return _admin_response(copy)
+
+
+# ============================================================================
+# Admin — lesson settings
+# ============================================================================
+
+@router.put("/api/admin/lessons/{lesson_id}/settings", response_model=LessonAdminResponse)
+async def admin_update_lesson_settings(
+    lesson_id: int,
+    body: LessonSettingsUpdate,
+    _: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    lesson = _get_lesson_or_404(lesson_id, db)
+    if not lesson.settings:
+        db.add(LessonSettings(lesson_id=lesson.id, chat_max_messages=body.chat_max_messages))
+    else:
+        lesson.settings.chat_max_messages = body.chat_max_messages
+    db.commit()
+    db.refresh(lesson)
+    return _admin_response(lesson)
+
+
+# ============================================================================
+# Admin — group assignment
+# ============================================================================
+
+@router.put("/api/admin/lessons/{lesson_id}/groups", response_model=LessonAdminResponse)
+async def admin_set_lesson_groups(
+    lesson_id: int,
+    body: LessonGroupsUpdate,
+    _: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    lesson = _get_lesson_or_404(lesson_id, db)
+    # Validate group ids
+    valid_ids = {g.id for g in db.query(Group).all()}
+    for gid in body.group_ids:
+        if gid not in valid_ids:
+            raise HTTPException(status_code=400, detail=f"Group {gid} not found")
+    # Replace all
+    for lg in lesson.groups:
+        db.delete(lg)
+    db.flush()
+    for gid in body.group_ids:
+        db.add(LessonGroup(lesson_id=lesson.id, group_id=gid))
+    db.commit()
+    db.refresh(lesson)
+    return _admin_response(lesson)
+
+
+# ============================================================================
+# Admin — persona management
+# ============================================================================
+
+@router.put("/api/admin/lessons/{lesson_id}/personas/{persona_id}", response_model=LessonAdminResponse)
+async def admin_set_lesson_persona(
+    lesson_id: int,
+    persona_id: int,
+    body: LessonPersonaUpdate,
+    _: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    _get_lesson_or_404(lesson_id, db)
+    if not db.query(Persona).filter(Persona.id == persona_id).first():
+        raise HTTPException(status_code=404, detail="Persona not found")
+    lp = db.query(LessonPersona).filter(
+        LessonPersona.lesson_id == lesson_id, LessonPersona.persona_id == persona_id
+    ).first()
+    if lp:
+        lp.is_pinned = body.is_pinned
+    else:
+        db.add(LessonPersona(lesson_id=lesson_id, persona_id=persona_id, is_pinned=body.is_pinned))
+    db.commit()
+    lesson = _get_lesson_or_404(lesson_id, db)
+    return _admin_response(lesson)
+
+
+@router.delete("/api/admin/lessons/{lesson_id}/personas/{persona_id}", status_code=204)
+async def admin_remove_lesson_persona(
+    lesson_id: int,
+    persona_id: int,
+    _: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    lp = db.query(LessonPersona).filter(
+        LessonPersona.lesson_id == lesson_id, LessonPersona.persona_id == persona_id
+    ).first()
+    if lp:
+        db.delete(lp)
+        db.commit()
+    return Response(status_code=204)
+
+
+# ============================================================================
+# Admin — group activation
+# ============================================================================
+
+@router.patch("/api/admin/groups/{group_id}/active-lesson")
+async def admin_set_group_active_lesson(
+    group_id: int,
+    body: ActiveLessonUpdate,
+    _: User = Depends(require_admin),
+    db: Session = Depends(get_db),
+):
+    group = db.query(Group).filter(Group.id == group_id).first()
+    if not group:
+        raise HTTPException(status_code=404, detail="Group not found")
+    if body.lesson_id is not None:
+        _get_lesson_or_404(body.lesson_id, db)
+    group.active_lesson_id = body.lesson_id
+    db.commit()
+    db.refresh(group)
+    return {"group_id": group.id, "name": group.name, "active_lesson_id": group.active_lesson_id}
+
+
+# ============================================================================
+# Current user — active lesson context
+# ============================================================================
+
+@router.get("/api/me/lesson", response_model=LessonUserResponse | None)
+async def get_my_lesson(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    lesson = resolve_active_lesson(current_user, db)
+    if not lesson:
+        return None
+    return LessonUserResponse(
+        id=lesson.id,
+        name=lesson.name,
+        settings=_settings_response(lesson),
+    )

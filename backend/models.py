@@ -16,8 +16,10 @@ class Group(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String, unique=True, nullable=False)
     access_enabled = Column(Boolean, default=True, nullable=False)
+    active_lesson_id = Column(Integer, ForeignKey("lessons.id", use_alter=True, name="fk_group_active_lesson"), nullable=True)
 
     users = relationship("User", back_populates="group_rel")
+    active_lesson = relationship("Lesson", foreign_keys=[active_lesson_id])
 
 
 class User(Base):
@@ -29,12 +31,14 @@ class User(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     name = Column(String, nullable=False)
     group_id = Column(Integer, ForeignKey("groups.id"), nullable=True)
+    active_lesson_id = Column(Integer, ForeignKey("lessons.id", use_alter=True, name="fk_user_active_lesson"), nullable=True)
     password_hash = Column(String, nullable=True)
     initial_password = Column(String, nullable=True)
     initial_password_created_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     group_rel = relationship("Group", back_populates="users")
+    active_lesson = relationship("Lesson", foreign_keys=[active_lesson_id])
     auth_tokens = relationship("AuthToken", back_populates="user", cascade="all, delete-orphan")
 
     @property
@@ -91,6 +95,7 @@ class Chat(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     persona_id = Column(Integer, ForeignKey("personas.id"))
+    lesson_id = Column(Integer, ForeignKey("lessons.id"), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
@@ -147,3 +152,63 @@ class TokenUsage(Base):
     model = Column(String, nullable=False)
     prompt_tokens = Column(Integer, default=0)
     completion_tokens = Column(Integer, default=0)
+
+
+class Lesson(Base):
+    """A scoped workspace assigned to one or more groups."""
+
+    __tablename__ = "lessons"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    created_by = Column(Integer, ForeignKey("users.id"), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    settings = relationship("LessonSettings", uselist=False, back_populates="lesson", cascade="all, delete-orphan")
+    groups = relationship("LessonGroup", back_populates="lesson", cascade="all, delete-orphan")
+    personas = relationship("LessonPersona", back_populates="lesson", cascade="all, delete-orphan")
+
+
+LESSON_SETTINGS_DEFAULTS = {
+    "chat_max_messages": 60,
+}
+
+
+class LessonSettings(Base):
+    """Per-lesson configuration (1:1 with Lesson)."""
+
+    __tablename__ = "lesson_settings"
+
+    lesson_id = Column(Integer, ForeignKey("lessons.id"), primary_key=True)
+    chat_max_messages = Column(Integer, nullable=False, default=LESSON_SETTINGS_DEFAULTS["chat_max_messages"])
+
+    lesson = relationship("Lesson", back_populates="settings")
+
+
+class LessonGroup(Base):
+    """Which groups have access to a lesson."""
+
+    __tablename__ = "lesson_groups"
+    __table_args__ = (UniqueConstraint("lesson_id", "group_id"),)
+
+    id = Column(Integer, primary_key=True)
+    lesson_id = Column(Integer, ForeignKey("lessons.id"), nullable=False)
+    group_id = Column(Integer, ForeignKey("groups.id"), nullable=False)
+
+    lesson = relationship("Lesson", back_populates="lesson_groups")
+    group = relationship("Group")
+
+
+class LessonPersona(Base):
+    """Many-to-many between lessons and personas, with pinning."""
+
+    __tablename__ = "lesson_personas"
+    __table_args__ = (UniqueConstraint("lesson_id", "persona_id"),)
+
+    id = Column(Integer, primary_key=True)
+    lesson_id = Column(Integer, ForeignKey("lessons.id"), nullable=False)
+    persona_id = Column(Integer, ForeignKey("personas.id"), nullable=False)
+    is_pinned = Column(Boolean, nullable=False, default=False)
+
+    lesson = relationship("Lesson", back_populates="lesson_personas")
+    persona = relationship("Persona")

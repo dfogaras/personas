@@ -14,6 +14,7 @@ from database import init_db
 from router_admin import router as admin_router
 from router_auth import router as auth_router
 from router_chats import router as chats_router
+from router_lessons import router as lessons_router
 from router_personas import router as personas_router
 
 logger = logging.getLogger(__name__)
@@ -47,6 +48,7 @@ def create_app() -> FastAPI:
     app.mount("/static", StaticFiles(directory=get_frontend_path("static")), name="static")
     app.include_router(auth_router)
     app.include_router(admin_router)
+    app.include_router(lessons_router)
     app.include_router(personas_router)
     app.include_router(chats_router)
     return app
