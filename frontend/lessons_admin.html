@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Órák — kincskereso.ai</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎭</text></svg>">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/admin.css">
+</head>
+<body>
+    <nav class="top-nav">
+        <a href="/" class="nav-brand">kincskereso.ai</a>
+        <div class="nav-lesson" id="navLesson" style="display:none"></div>
+        <div class="nav-user" id="navUser" style="display:none">
+            <span class="nav-user-name" id="navUserName"></span>
+            <button class="nav-logout-btn" id="navLogoutBtn">Kijelentkezés</button>
+        </div>
+    </nav>
+
+    <div class="page-content admin-content">
+        <a href="/admin" class="back-link">← Adminisztráció</a>
+        <div class="lessons-header">
+            <h1>Órák</h1>
+            <button class="admin-btn save-btn" id="newLessonBtn">+ Új óra</button>
+        </div>
+        <div class="auth-error" id="lessonsError" style="display:none"></div>
+        <div id="lessonsList"><p class="loading">Betöltés...</p></div>
+    </div>
+
+    <!-- Create lesson modal -->
+    <div id="createModal" class="modal-overlay" style="display:none">
+        <div class="modal">
+            <h2 class="modal-title" id="createModalTitle">Új óra létrehozása</h2>
+            <div class="modal-field">
+                <label class="modal-label">Név</label>
+                <input id="newLessonName" class="admin-input" placeholder="pl. Matematika — 6B">
+            </div>
+            <div class="auth-error" id="createError" style="display:none"></div>
+            <div class="modal-actions">
+                <button id="createSubmitBtn" class="admin-btn save-btn">Létrehozás</button>
+                <button id="createCancelBtn" class="admin-btn cancel-btn">Mégse</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/i18n.js"></script>
+    <script src="/static/js/common.js"></script>
+    <script src="/static/js/lessons_admin.js"></script>
+</body>
+</html>

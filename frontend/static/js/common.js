@@ -108,6 +108,16 @@ function setupNav({ onNameClick } = {}) {
         a.textContent = user.group + ' csoport';
         navUser.insertBefore(a, logoutBtn);
     }
+
+    const navLesson = document.getElementById('navLesson');
+    if (navLesson) {
+        apiCall('GET', '/me/lesson').then(lesson => {
+            if (lesson) {
+                navLesson.textContent = lesson.name;
+                navLesson.style.display = '';
+            }
+        }).catch(() => {});
+    }
 }
 
 // ============================================================================

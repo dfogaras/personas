@@ -470,6 +470,13 @@ async function init() {
         window.location.href = '/login';
     });
 
+    const navLesson = document.getElementById('navLesson');
+    if (navLesson) {
+        apiCall('GET', '/me/lesson').then(lesson => {
+            if (lesson) { navLesson.textContent = lesson.name; navLesson.style.display = ''; }
+        }).catch(() => {});
+    }
+
     try {
         const [groups, users, access] = await Promise.all([
             apiCall('GET', '/admin/groups'),

@@ -11,6 +11,7 @@
 <body>
     <nav class="top-nav">
         <a href="/" class="nav-brand">kincskereso.ai</a>
+        <div class="nav-lesson" id="navLesson" style="display:none"></div>
         <div class="nav-user" id="navUser" style="display:none">
             <span class="nav-user-name" id="navUserName"></span>
             <button class="nav-logout-btn" id="navLogoutBtn">Kijelentkezés</button>
@@ -25,6 +26,13 @@
         <section>
             <h2 class="admin-section-title">Felhasználók</h2>
             <div id="usersTables"><p class="loading">Betöltés...</p></div>
+        </section>
+        <section style="margin-top: 2rem;">
+            <h2 class="admin-section-title">Órák</h2>
+            <div class="general-row">
+                <span class="general-label">Órarendszer</span>
+                <a href="/lessons-admin" class="admin-btn save-btn" style="text-decoration:none">Órák kezelése →</a>
+            </div>
         </section>
         <section style="margin-top: 2rem;">
             <h2 class="admin-section-title">Általános</h2>

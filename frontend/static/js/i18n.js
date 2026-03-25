@@ -86,4 +86,16 @@ const T = {
 
     // Errors — login
     errLoginFailed:        'Hibás e-mail cím vagy jelszó',
+
+    // Lessons admin
+    lessonsTitle:          'Órák',
+    newLesson:             'Új óra',
+    lessonNamePlaceholder: 'pl. Matematika — 6B',
+    joinLesson:            'Belépés',
+    leaveLesson:           'Kilépés',
+    remixLesson:           'Másolat',
+    deleteLessonConfirm:   'Biztosan törlöd ezt az órát?',
+    noLessons:             'Nincsenek órák. Hozz létre egyet!',
+    lessonCreate:          'Létrehozás',
+    lessonNewTitle:        'Új óra létrehozása',
 };

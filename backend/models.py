@@ -195,7 +195,7 @@ class LessonGroup(Base):
     lesson_id = Column(Integer, ForeignKey("lessons.id"), nullable=False)
     group_id = Column(Integer, ForeignKey("groups.id"), nullable=False)
 
-    lesson = relationship("Lesson", back_populates="lesson_groups")
+    lesson = relationship("Lesson", back_populates="groups")
     group = relationship("Group")
 
 
@@ -210,5 +210,5 @@ class LessonPersona(Base):
     persona_id = Column(Integer, ForeignKey("personas.id"), nullable=False)
     is_pinned = Column(Boolean, nullable=False, default=False)
 
-    lesson = relationship("Lesson", back_populates="lesson_personas")
+    lesson = relationship("Lesson", back_populates="personas")
     persona = relationship("Persona")

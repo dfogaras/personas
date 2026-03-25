@@ -102,6 +102,11 @@ async def admin_page():
     return read_frontend_file("admin.html")
 
 
+@app.get("/lessons-admin", response_class=HTMLResponse)
+async def lessons_admin_page():
+    return read_frontend_file("lessons_admin.html")
+
+
 @app.get("/chat/{chat_id}", response_class=HTMLResponse)
 async def chat_page(chat_id: int):
     return read_frontend_file("chat.html")

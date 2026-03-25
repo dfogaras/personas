@@ -315,6 +315,27 @@ async def admin_set_group_active_lesson(
 # Current user — active lesson context
 # ============================================================================
 
+@router.patch("/api/me/active-lesson", response_model=LessonUserResponse | None)
+async def set_my_active_lesson(
+    body: ActiveLessonUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    if body.lesson_id is not None:
+        _get_lesson_or_404(body.lesson_id, db)
+    current_user.active_lesson_id = body.lesson_id
+    db.commit()
+    db.refresh(current_user)
+    lesson = resolve_active_lesson(current_user, db)
+    if not lesson:
+        return None
+    return LessonUserResponse(
+        id=lesson.id,
+        name=lesson.name,
+        settings=_settings_response(lesson),
+    )
+
+
 @router.get("/api/me/lesson", response_model=LessonUserResponse | None)
 async def get_my_lesson(
     current_user: User = Depends(get_current_user),

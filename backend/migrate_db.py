@@ -68,6 +68,9 @@ def cmd_migrate(engine):
         ("chats", "user_name"),
         ("messages", "liked"),
     ]
+    rename_columns = [
+        ("lesson_settings", "max_messages_per_chat", "chat_max_messages"),
+    ]
     null_user_cleanup = [
         # Remove legacy rows that have no owner, in dependency order
         "DELETE FROM messages WHERE chat_id IN (SELECT id FROM chats WHERE user_id IS NULL)",
@@ -125,6 +128,15 @@ def cmd_migrate(engine):
             print("✓ Dropped users.group (replaced by group_id)")
         else:
             print("  users.group already absent")
+
+        for table, old_col, new_col in rename_columns:
+            existing = {col["name"] for col in inspector.get_columns(table)}
+            if old_col in existing:
+                conn.execute(text(f'ALTER TABLE "{table}" RENAME COLUMN "{old_col}" TO "{new_col}"'))
+                conn.commit()
+                print(f"✓ Renamed {table}.{old_col} → {new_col}")
+            else:
+                print(f"  {table}.{old_col} already renamed or absent")
 
         for drop_sql, create_sql in drop_unique_indexes:
             conn.execute(text(drop_sql))

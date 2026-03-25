@@ -152,6 +152,27 @@ button, input, select, textarea {
     margin-right: 6px;
 }
 
+.nav-lesson {
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    transform: translateX(-50%);
+    font-family: 'Pacifico', cursive;
+    font-size: 26px;
+    font-weight: 400;
+    color: white;
+    text-transform: lowercase;
+    letter-spacing: 1px;
+    text-shadow: 1px 2px 4px rgba(0,0,0,0.25);
+    white-space: nowrap;
+    pointer-events: none;
+    max-width: 36%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1;
+    padding-bottom: 12.5px;
+}
+
 .nav-user {
     display: flex;
     align-items: flex-end;
