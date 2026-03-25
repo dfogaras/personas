@@ -3,13 +3,13 @@ import logging
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from auth import get_current_user, check_owner_or_admin
 from messages import M
 from database import get_db
 from models import Group, LessonPersona, Persona, User
-from router_lessons import resolve_active_lesson, resolve_list_scope
+from router_lessons import resolve_active_lesson
 from schemas import PersonaCreate, PersonaResponse
 
 logger = logging.getLogger(__name__)
@@ -27,22 +27,33 @@ async def list_groups(db: Session = Depends(get_db)):
 
 @router.get("/api/personas", response_model=list[PersonaResponse])
 async def list_personas(
-    group_id: Optional[int] = Query(None),
-    user_id: Optional[int] = Query(None),
+    for_group_id: Optional[int] = Query(None, alias="group_id"),
+    for_user_id: Optional[int] = Query(None, alias="user_id"),
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
-    q = db.query(Persona)
+    no_params = for_group_id is None and for_user_id is None
+    if no_params:
+        for_user_id = current_user.id
 
-    if user_id is not None:
-        q = q.filter(Persona.user_id == user_id)
+    q = db.query(Persona).options(selectinload(Persona.user))
+    if for_user_id is not None:
+        q = q.filter(Persona.user_id == for_user_id)
 
-    lesson_id, fallback_gid = resolve_list_scope(group_id, user_id, db)
-    if lesson_id:
+    my_lesson = resolve_active_lesson(current_user, db)
+
+    if for_group_id is not None:
+        for_group_lesson_id = db.query(Group.active_lesson_id).filter(Group.id == for_group_id).scalar()
+        if my_lesson is None or for_group_lesson_id is None:
+            q = q.join(User, Persona.user_id == User.id).filter(User.group_id == for_group_id)
+        elif for_group_lesson_id != my_lesson.id:
+            return []
+        # else: lessons match — lesson filter below replaces group filter intentionally
+
+    if my_lesson:
         q = q.join(LessonPersona, Persona.id == LessonPersona.persona_id).filter(
-            LessonPersona.lesson_id == lesson_id
+            LessonPersona.lesson_id == my_lesson.id
         )
-    elif fallback_gid:
-        q = q.join(User, Persona.user_id == User.id).filter(User.group_id == fallback_gid)
 
     return q.all()
 

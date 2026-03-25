@@ -25,29 +25,6 @@ def _get_lesson_or_404(lesson_id: int, db: Session) -> Lesson:
     return lesson
 
 
-def resolve_list_scope(
-    group_id: int | None,
-    user_id: int | None,
-    db: Session,
-) -> tuple[int | None, int | None]:
-    """Resolve lesson and group filters for list endpoints.
-
-    Returns (lesson_id, fallback_group_id). Caller should filter by lesson_id
-    if set, otherwise by fallback_group_id (group membership join).
-    """
-    if group_id is not None:
-        group = db.query(Group).filter(Group.id == group_id).first()
-        if group and group.active_lesson_id:
-            return group.active_lesson_id, None
-        return None, group_id
-    if user_id is not None:
-        user = db.query(User).filter(User.id == user_id).first()
-        if user:
-            lesson = resolve_active_lesson(user, db)
-            if lesson:
-                return lesson.id, None
-    return None, None
-
 
 def resolve_active_lesson(user: User, db: Session) -> Lesson | None:
     """Return the lesson the user is currently working in, or None."""
