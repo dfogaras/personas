@@ -319,6 +319,94 @@
     width: 640px;
 }
 
+.model-select {
+    position: relative;
+}
+
+.model-select-trigger {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    text-align: left;
+}
+
+.model-select-caret {
+    font-size: 10px;
+    color: var(--gray-400);
+    margin-left: 8px;
+    flex-shrink: 0;
+}
+
+.model-select-menu {
+    display: none;
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: white;
+    border: 2px solid var(--persona-color);
+    border-radius: 8px;
+    overflow: visible;
+    z-index: 20;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+}
+
+.model-select-menu.open {
+    display: block;
+}
+
+.model-select-option {
+    position: relative;
+    padding: 9px 12px;
+    font-size: 15px;
+    cursor: pointer;
+    color: var(--gray-700);
+}
+
+.model-select-option:first-child {
+    border-radius: 6px 6px 0 0;
+}
+
+.model-select-option:last-child {
+    border-radius: 0 0 6px 6px;
+}
+
+.model-select-option:hover {
+    background: var(--gray-100);
+}
+
+.model-select-option.selected {
+    font-weight: 600;
+    color: var(--persona-color);
+}
+
+.model-select-option::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    left: calc(100% + 8px);
+    top: 50%;
+    transform: translateY(-50%);
+    background: var(--gray-700);
+    color: white;
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 1.4;
+    white-space: normal;
+    width: 220px;
+    padding: 7px 10px;
+    border-radius: 6px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s;
+    z-index: 30;
+}
+
+.model-select-option:hover::after {
+    opacity: 1;
+}
+
 .modal-title {
     font-size: 20px;
     font-weight: 700;

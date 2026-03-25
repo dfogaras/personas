@@ -58,15 +58,33 @@
             <div class="modal-row">
                 <div class="modal-field">
                     <label class="modal-label">AI modell</label>
-                    <select id="lessonAiModel" class="admin-input">
-                        <option value="google/gemini-2.5-flash-lite">Gemini 2.5 Flash Lite</option>
-                        <option value="google/gemini-2.5-flash">Gemini 2.5 Flash</option>
-                        <option value="google/gemini-2.5-pro">Gemini 2.5 Pro</option>
-                        <option value="openai/gpt-4.1-mini">GPT-4.1 Mini</option>
-                        <option value="openai/gpt-4.1">GPT-4.1</option>
-                        <option value="anthropic/claude-haiku-4-5">Claude Haiku 4.5</option>
-                        <option value="anthropic/claude-sonnet-4-5">Claude Sonnet 4.5</option>
-                    </select>
+                    <div class="model-select" id="lessonAiModelSelect">
+                        <button type="button" class="model-select-trigger admin-input" id="lessonAiModelTrigger">
+                            <span id="lessonAiModelLabel">Gemini 2.5 Flash Lite</span>
+                            <span class="model-select-caret">▾</span>
+                        </button>
+                        <div class="model-select-menu" id="lessonAiModelMenu">
+                            <div class="model-select-option" data-value="google/gemini-2.5-flash-lite"
+                                data-tooltip="Leggyorsabb és legolcsóbb. Egyszerű feladatokra elegendő, de gyengébb minőség.">Gemini 2.5 Flash Lite</div>
+                            <div class="model-select-option" data-value="google/gemini-2.5-flash"
+                                data-tooltip="Gyors és megbízható. Ajánlott alapértelmezett — jó egyensúly ár és minőség között.">Gemini 2.5 Flash</div>
+                            <div class="model-select-option" data-value="google/gemini-2.5-pro"
+                                data-tooltip="A Gemini legjobb minősége. Összetett, kreatív feladatokhoz — lassabb és drágább.">Gemini 2.5 Pro</div>
+                            <div class="model-select-option" data-value="openai/gpt-4.1-nano"
+                                data-tooltip="A legolcsóbb OpenAI modell. Nagy mennyiségű, egyszerű feladatokhoz.">GPT-4.1 Nano</div>
+                            <div class="model-select-option" data-value="openai/gpt-4.1-mini"
+                                data-tooltip="Gyors és olcsó OpenAI modell. Jó minőség alapfeladatokhoz.">GPT-4.1 Mini</div>
+                            <div class="model-select-option" data-value="openai/gpt-4.1"
+                                data-tooltip="Az OpenAI egyik legerősebb modellje. Kiváló minőség, de drágább.">GPT-4.1</div>
+                            <div class="model-select-option" data-value="anthropic/claude-haiku-4.5"
+                                data-tooltip="Gyors és olcsó Anthropic modell. Hőmérséklet max. 1.">Claude Haiku 4.5</div>
+                            <div class="model-select-option" data-value="anthropic/claude-sonnet-4.5"
+                                data-tooltip="Erős Anthropic modell. Hőmérséklet max. 1.">Claude Sonnet 4.5</div>
+                            <div class="model-select-option" data-value="anthropic/claude-sonnet-4.6"
+                                data-tooltip="Az Anthropic legújabb Sonnet modellje. Legjobb minőség a listában. Hőmérséklet max. 1.">Claude Sonnet 4.6</div>
+                        </div>
+                    </div>
+                    <input type="hidden" id="lessonAiModel" value="google/gemini-2.5-flash-lite">
                 </div>
                 <div class="modal-field">
                     <label class="modal-label">AI hőmérséklet <span class="modal-label-info" data-tooltip="0 = kiszámítható, szó szerint követi az utasításokat. 1 = kreatív és változatos.">ⓘ</span></label>

@@ -210,6 +210,40 @@ async function deleteLesson(lessonId) {
 }
 
 // ============================================================================
+// Custom model dropdown
+// ============================================================================
+
+function setModelSelect(value) {
+    const hidden = document.getElementById('lessonAiModel');
+    const label  = document.getElementById('lessonAiModelLabel');
+    const option = document.querySelector(`#lessonAiModelMenu [data-value="${value}"]`);
+    hidden.value = value;
+    label.textContent = option ? option.textContent : value;
+    document.querySelectorAll('#lessonAiModelMenu .model-select-option').forEach(el => {
+        el.classList.toggle('selected', el.dataset.value === value);
+    });
+}
+
+function initModelSelect() {
+    const trigger = document.getElementById('lessonAiModelTrigger');
+    const menu    = document.getElementById('lessonAiModelMenu');
+
+    trigger.addEventListener('click', e => {
+        e.stopPropagation();
+        menu.classList.toggle('open');
+    });
+
+    menu.querySelectorAll('.model-select-option').forEach(opt => {
+        opt.addEventListener('click', () => {
+            setModelSelect(opt.dataset.value);
+            menu.classList.remove('open');
+        });
+    });
+
+    document.addEventListener('click', () => menu.classList.remove('open'));
+}
+
+// ============================================================================
 // Lesson modal (create / edit / remix)
 // ============================================================================
 
@@ -224,9 +258,7 @@ function openLessonModal(lesson = null) {
     document.getElementById('lessonName').value            = lesson?.name ?? '';
     document.getElementById('lessonMaxMessages').value     = s.chat_max_messages ?? 60;
     document.getElementById('lessonMaxPersonas').value     = s.max_personas_per_user ?? 20;
-    const modelSelect = document.getElementById('lessonAiModel');
-    modelSelect.value = s.ai_model ?? 'google/gemini-2.5-flash-lite';
-    if (!modelSelect.value) modelSelect.value = 'google/gemini-2.5-flash-lite';
+    setModelSelect(s.ai_model ?? 'google/gemini-2.5-flash-lite');
     document.getElementById('lessonAiTemperature').value   = s.ai_temperature ?? 1.0;
     document.getElementById('lessonSystemPrompt').value    = s.persona_system_prompt_template ?? DEFAULT_SYSTEM_PROMPT;
 
@@ -299,6 +331,7 @@ async function init() {
 
     setupNav();
 
+    initModelSelect();
     document.getElementById('newLessonBtn').addEventListener('click', () => openLessonModal());
     document.getElementById('lessonCancelBtn').addEventListener('click', closeLessonModal);
     document.getElementById('lessonSubmitBtn').addEventListener('click', submitLessonModal);
