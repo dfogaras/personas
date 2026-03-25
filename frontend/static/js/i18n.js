@@ -98,4 +98,5 @@ const T = {
     noLessons:             'Nincsenek órák. Hozz létre egyet!',
     lessonCreate:          'Létrehozás',
     lessonNewTitle:        'Új óra létrehozása',
+    editLesson:            'Óra szerkesztése',
 };

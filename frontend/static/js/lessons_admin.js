@@ -1,6 +1,24 @@
+const DEFAULT_SYSTEM_PROMPT = `Személyiségekkel játszunk egy iskolában kiskamaszokkal.
+A te neved {name}. Rövid személyleírás rólad: "{description}".
+Részlesebb leírásodat alul idézem.
+
+Mindig {name}-ként viselkedj, ne lépj ki ebből a szerepből.
+Kicsit túlozd is el a személyiséged, hogy egyértelmű legyen, hogy egy játékos karakter vagy.
+Hülyéskedni, idegesnek lenni, érzelmeskedni nyugodtan lehet.
+
+Általában röviden válaszolj: néhány mondat elegendő.
+Csak akkor írj hosszabban, ha a kérdés valóban részletes magyarázatot igényel.
+Csak olyat írj, ami egy 13 éves diák számára nem káros. Durván agresszív vagy szexuális tartalmú dolgokat ne írj!
+
+A személyleírásod a következő:
+---
+{description}
+---`;
+
 let _lessons = [];
 let _allGroups = [];
 let _myActiveLessonId = null;
+let _modalLesson = null; // null = create mode, lesson object = edit mode
 
 function escapeHtml(str) {
     return String(str ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -21,8 +39,6 @@ function _svg(paths) {
 }
 const ICON_EDIT   = _svg('<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>');
 const ICON_DELETE = _svg('<polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>');
-const ICON_SAVE   = _svg('<polyline points="20 6 9 17 4 12"/>');
-const ICON_CANCEL = _svg('<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>');
 const ICON_REMIX  = _svg('<rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>');
 
 // ============================================================================
@@ -90,30 +106,7 @@ function renderLessonRow(lesson) {
         groupsEl.appendChild(chip);
     }
 
-    const settingsEl = document.createElement('div');
-    settingsEl.className = 'lesson-item-settings';
-    const maxVal = lesson.settings?.chat_max_messages ?? 60;
-    settingsEl.innerHTML = `<label class="lesson-settings-label">max üzenetek:</label>`;
-    const maxInput = document.createElement('input');
-    maxInput.type = 'number';
-    maxInput.className = 'lesson-max-input admin-input';
-    maxInput.value = maxVal;
-    maxInput.min = 1;
-    maxInput.max = 999;
-    const saveMax = async () => {
-        const val = parseInt(maxInput.value, 10);
-        if (!val || val < 1) return;
-        try {
-            const updated = await apiCall('PUT', `/admin/lessons/${lesson.id}/settings`, { chat_max_messages: val });
-            const idx = _lessons.findIndex(l => l.id === lesson.id);
-            if (idx !== -1) _lessons[idx] = updated;
-        } catch (e) { showError(e.message); maxInput.value = maxVal; }
-    };
-    maxInput.addEventListener('change', saveMax);
-    maxInput.addEventListener('keydown', e => { if (e.key === 'Enter') { maxInput.blur(); } });
-    settingsEl.appendChild(maxInput);
-
-    info.append(nameRow, groupsEl, settingsEl);
+    info.append(nameRow, groupsEl);
 
     // Right: time + actions
     const right = document.createElement('div');
@@ -121,7 +114,7 @@ function renderLessonRow(lesson) {
 
     const timeEl = document.createElement('span');
     timeEl.className = 'lesson-item-time';
-    timeEl.textContent = prettyTime(lesson.created_at);
+    timeEl.innerHTML = `${prettyTime(lesson.created_at)} <span class="lesson-item-id">(${lesson.id})</span>`;
 
     const actions = document.createElement('div');
     actions.className = 'lesson-item-actions';
@@ -135,7 +128,7 @@ function renderLessonRow(lesson) {
     editBtn.className = 'table-icon-btn edit-btn';
     editBtn.title = T.ttEdit;
     editBtn.innerHTML = ICON_EDIT;
-    editBtn.addEventListener('click', () => startEditName(row, lesson));
+    editBtn.addEventListener('click', () => openLessonModal(lesson));
 
     const remixBtn = document.createElement('button');
     remixBtn.className = 'table-icon-btn';
@@ -178,63 +171,12 @@ async function toggleGroup(lessonId, groupId, isCurrentlyAssigned) {
 function toggleJoin(lessonId, isCurrentlyActive) {
     const target = isCurrentlyActive ? null : lessonId;
     if (target === null) {
-        // Leave: no navigation needed, just clear inline
         apiCall('PATCH', '/me/active-lesson', { lesson_id: null })
             .then(() => { _myActiveLessonId = null; syncNavLesson(); renderLessons(); })
             .catch(e => showError(e.message));
     } else {
         window.location.href = `/lessons-admin?join=${target}`;
     }
-}
-
-// ============================================================================
-// Inline name edit
-// ============================================================================
-
-function startEditName(row, lesson) {
-    const nameEl = row.querySelector('.lesson-item-name');
-    const input = document.createElement('input');
-    input.className = 'lesson-name-input admin-input';
-    input.value = lesson.name;
-    nameEl.replaceWith(input);
-    input.focus();
-    input.select();
-
-    const actions = row.querySelector('.lesson-item-actions');
-    actions.innerHTML = '';
-
-    const saveBtn = document.createElement('button');
-    saveBtn.className = 'table-icon-btn save-btn';
-    saveBtn.title = T.ttSave;
-    saveBtn.innerHTML = ICON_SAVE;
-
-    const cancelBtn = document.createElement('button');
-    cancelBtn.className = 'table-icon-btn cancel-btn';
-    cancelBtn.title = T.ttCancel;
-    cancelBtn.innerHTML = ICON_CANCEL;
-
-    async function doSave() {
-        const name = input.value.trim();
-        if (!name) return;
-        try {
-            const updated = await apiCall('PUT', `/admin/lessons/${lesson.id}`, { name });
-            const idx = _lessons.findIndex(l => l.id === lesson.id);
-            if (idx !== -1) _lessons[idx] = updated;
-            syncNavLesson();
-            renderLessons();
-        } catch (e) {
-            showError(e.message);
-        }
-    }
-
-    saveBtn.addEventListener('click', doSave);
-    cancelBtn.addEventListener('click', renderLessons);
-    input.addEventListener('keydown', e => {
-        if (e.key === 'Enter') doSave();
-        if (e.key === 'Escape') renderLessons();
-    });
-
-    actions.append(saveBtn, cancelBtn);
 }
 
 // ============================================================================
@@ -246,6 +188,7 @@ async function remixLesson(lessonId) {
         const copy = await apiCall('POST', `/admin/lessons/${lessonId}/copy`);
         _lessons.unshift(copy);
         renderLessons();
+        openLessonModal(copy);
     } catch (e) {
         showError(e.message);
     }
@@ -267,19 +210,82 @@ async function deleteLesson(lessonId) {
 }
 
 // ============================================================================
-// Create modal
+// Lesson modal (create / edit / remix)
 // ============================================================================
 
-function openCreateModal() {
-    document.getElementById('newLessonName').value = '';
-    document.getElementById('createError').style.display = 'none';
-    document.getElementById('createSubmitBtn').disabled = false;
-    document.getElementById('createModal').style.display = 'flex';
-    document.getElementById('newLessonName').focus();
+function openLessonModal(lesson = null) {
+    _modalLesson = lesson;
+
+    const isEdit = lesson !== null;
+    document.getElementById('lessonModalTitle').textContent = isEdit ? T.editLesson : T.lessonNewTitle;
+    document.getElementById('lessonSubmitBtn').textContent  = isEdit ? T.save : T.create;
+
+    const s = lesson?.settings ?? {};
+    document.getElementById('lessonName').value            = lesson?.name ?? '';
+    document.getElementById('lessonMaxMessages').value     = s.chat_max_messages ?? 60;
+    document.getElementById('lessonMaxPersonas').value     = s.max_personas_per_user ?? 20;
+    const modelSelect = document.getElementById('lessonAiModel');
+    modelSelect.value = s.ai_model ?? 'google/gemini-2.5-flash-lite';
+    if (!modelSelect.value) modelSelect.value = 'google/gemini-2.5-flash-lite';
+    document.getElementById('lessonAiTemperature').value   = s.ai_temperature ?? 1.0;
+    document.getElementById('lessonSystemPrompt').value    = s.persona_system_prompt_template ?? DEFAULT_SYSTEM_PROMPT;
+
+    document.getElementById('lessonModalError').style.display = 'none';
+    document.getElementById('lessonSubmitBtn').disabled = false;
+    document.getElementById('lessonModal').style.display = 'flex';
+    document.getElementById('lessonName').focus();
 }
 
-function closeCreateModal() {
-    document.getElementById('createModal').style.display = 'none';
+function closeLessonModal() {
+    document.getElementById('lessonModal').style.display = 'none';
+    _modalLesson = null;
+}
+
+async function submitLessonModal() {
+    const name     = document.getElementById('lessonName').value.trim();
+    const errorEl  = document.getElementById('lessonModalError');
+
+    if (!name) {
+        errorEl.textContent = T.errNameRequired;
+        errorEl.style.display = 'block';
+        return;
+    }
+
+    document.getElementById('lessonSubmitBtn').disabled = true;
+    errorEl.style.display = 'none';
+
+    // Collect all settings fields (backend will only persist what it knows about)
+    const settings = {
+        chat_max_messages:              parseInt(document.getElementById('lessonMaxMessages').value, 10) || 60,
+        max_personas_per_user:          parseInt(document.getElementById('lessonMaxPersonas').value, 10) || 20,
+        ai_model:                       document.getElementById('lessonAiModel').value || null,
+        ai_temperature:                 parseFloat(document.getElementById('lessonAiTemperature').value) || null,
+        persona_system_prompt_template: document.getElementById('lessonSystemPrompt').value || null,
+    };
+
+    try {
+        if (_modalLesson) {
+            // Edit mode: update name then settings
+            const updated = await apiCall('PUT', `/admin/lessons/${_modalLesson.id}`, { name });
+            const withSettings = await apiCall('PUT', `/admin/lessons/${_modalLesson.id}/settings`, settings);
+            updated.settings = withSettings.settings ?? settings;
+            const idx = _lessons.findIndex(l => l.id === _modalLesson.id);
+            if (idx !== -1) _lessons[idx] = updated;
+            syncNavLesson();
+        } else {
+            // Create mode
+            const lesson = await apiCall('POST', '/admin/lessons', { name });
+            await apiCall('PUT', `/admin/lessons/${lesson.id}/settings`, settings);
+            lesson.settings = settings;
+            _lessons.unshift(lesson);
+        }
+        closeLessonModal();
+        renderLessons();
+    } catch (e) {
+        errorEl.textContent = e.message;
+        errorEl.style.display = 'block';
+        document.getElementById('lessonSubmitBtn').disabled = false;
+    }
 }
 
 // ============================================================================
@@ -293,36 +299,15 @@ async function init() {
 
     setupNav();
 
-    document.getElementById('newLessonBtn').addEventListener('click', openCreateModal);
-    document.getElementById('createCancelBtn').addEventListener('click', closeCreateModal);
-    document.getElementById('createModal').addEventListener('click', e => {
-        if (e.target === document.getElementById('createModal')) closeCreateModal();
+    document.getElementById('newLessonBtn').addEventListener('click', () => openLessonModal());
+    document.getElementById('lessonCancelBtn').addEventListener('click', closeLessonModal);
+    document.getElementById('lessonSubmitBtn').addEventListener('click', submitLessonModal);
+    document.getElementById('lessonModal').addEventListener('click', e => {
+        if (e.target === document.getElementById('lessonModal')) closeLessonModal();
     });
-
-    document.getElementById('createSubmitBtn').addEventListener('click', async () => {
-        const name = document.getElementById('newLessonName').value.trim();
-        const errorEl = document.getElementById('createError');
-        if (!name) {
-            errorEl.textContent = T.errNameRequired;
-            errorEl.style.display = 'block';
-            return;
-        }
-        document.getElementById('createSubmitBtn').disabled = true;
-        errorEl.style.display = 'none';
-        try {
-            const lesson = await apiCall('POST', '/admin/lessons', { name });
-            _lessons.unshift(lesson);
-            closeCreateModal();
-            renderLessons();
-        } catch (e) {
-            errorEl.textContent = e.message;
-            errorEl.style.display = 'block';
-            document.getElementById('createSubmitBtn').disabled = false;
-        }
-    });
-
-    document.getElementById('newLessonName').addEventListener('keydown', e => {
-        if (e.key === 'Enter') document.getElementById('createSubmitBtn').click();
+    document.getElementById('lessonName').addEventListener('keydown', e => {
+        if (e.key === 'Enter') submitLessonModal();
+        if (e.key === 'Escape') closeLessonModal();
     });
 
     // Handle ?join=<id> — set active lesson then clean URL
