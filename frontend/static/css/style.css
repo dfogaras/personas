@@ -684,6 +684,7 @@ button, input, select, textarea {
     background: var(--persona-light);
     border-radius: var(--radius-md);
     padding: 20px 24px;
+    white-space: pre-wrap;
 }
 
 /* ============================================================================
