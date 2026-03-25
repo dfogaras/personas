@@ -1,5 +1,5 @@
 const DEFAULT_SYSTEM_PROMPT = `Személyiségekkel játszunk egy iskolában kiskamaszokkal.
-A te neved {name}. Rövid személyleírás rólad: "{description}".
+A te neved {name}. Rövid személyleírás rólad: "{short}".
 Részlesebb leírásodat alul idézem.
 
 Mindig {name}-ként viselkedj, ne lépj ki ebből a szerepből.
@@ -12,7 +12,7 @@ Csak olyat írj, ami egy 13 éves diák számára nem káros. Durván agresszív
 
 A személyleírásod a következő:
 ---
-{description}
+{long}
 ---`;
 
 let _lessons = [];
@@ -286,13 +286,30 @@ async function submitLessonModal() {
     document.getElementById('lessonSubmitBtn').disabled = true;
     errorEl.style.display = 'none';
 
-    // Collect all settings fields (backend will only persist what it knows about)
+    const tempVal = parseFloat(document.getElementById('lessonAiTemperature').value);
+    if (isNaN(tempVal) || tempVal < 0 || tempVal > 2) {
+        errorEl.textContent = T.errRequiredFields;
+        errorEl.style.display = 'block';
+        document.getElementById('lessonSubmitBtn').disabled = false;
+        return;
+    }
+    const promptVal = document.getElementById('lessonSystemPrompt').value.trim() || DEFAULT_SYSTEM_PROMPT;
+    document.getElementById('lessonSystemPrompt').value = promptVal;
+    const knownVars = ['{name}', '{short}', '{long}'];
+    const strippedPrompt = knownVars.reduce((s, v) => s.replaceAll(v, ''), promptVal);
+    if (!knownVars.every(v => promptVal.includes(v)) || /[{}]/.test(strippedPrompt)) {
+        errorEl.textContent = T.errPromptVariables;
+        errorEl.style.display = 'block';
+        document.getElementById('lessonSubmitBtn').disabled = false;
+        return;
+    }
+
     const settings = {
         chat_max_messages:              parseInt(document.getElementById('lessonMaxMessages').value, 10) || 60,
         max_personas_per_user:          parseInt(document.getElementById('lessonMaxPersonas').value, 10) || 20,
-        ai_model:                       document.getElementById('lessonAiModel').value || null,
-        ai_temperature:                 parseFloat(document.getElementById('lessonAiTemperature').value) || null,
-        persona_system_prompt_template: document.getElementById('lessonSystemPrompt').value || null,
+        ai_model:                       document.getElementById('lessonAiModel').value || 'google/gemini-2.5-flash-lite',
+        ai_temperature:                 tempVal,
+        persona_system_prompt_template: document.getElementById('lessonSystemPrompt').value.trim(),
     };
 
     try {

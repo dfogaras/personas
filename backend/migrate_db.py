@@ -13,7 +13,7 @@ import sys
 from sqlalchemy import create_engine, inspect, text
 
 from config import load_settings
-from models import Base
+from models import Base, DEFAULT_PERSONA_SYSTEM_PROMPT
 
 
 def _engine(settings):
@@ -62,6 +62,11 @@ def cmd_migrate(engine):
         ("groups", "active_lesson_id", "INTEGER REFERENCES lessons(id)"),
         ("users", "active_lesson_id", "INTEGER REFERENCES lessons(id)"),
         ("chats", "lesson_id", "INTEGER REFERENCES lessons(id)"),
+        # lesson_settings new fields
+        ("lesson_settings", "max_personas_per_user", "INTEGER NOT NULL DEFAULT 20"),
+        ("lesson_settings", "ai_model", "TEXT NOT NULL DEFAULT 'google/gemini-2.5-flash-lite'"),
+        ("lesson_settings", "ai_temperature", "REAL NOT NULL DEFAULT 1.0"),
+        ("lesson_settings", "persona_system_prompt_template", "TEXT"),  # backfilled below
     ]
     drop_columns = [
         ("users", "role"),
@@ -103,6 +108,15 @@ def cmd_migrate(engine):
                     print("✓ Set all groups access_enabled = 1")
             else:
                 print(f"  {table}.{column} already exists")
+
+        # Backfill persona_system_prompt_template for existing lesson_settings rows
+        result = conn.execute(
+            text("UPDATE lesson_settings SET persona_system_prompt_template = :v WHERE persona_system_prompt_template IS NULL"),
+            {"v": DEFAULT_PERSONA_SYSTEM_PROMPT},
+        )
+        conn.commit()
+        if result.rowcount:
+            print(f"✓ Backfilled persona_system_prompt_template on {result.rowcount} lesson_settings row(s)")
 
         # Populate group_id from the legacy group string column (one-time migration)
         user_cols = {col["name"] for col in inspector.get_columns("users")}

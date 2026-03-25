@@ -43,9 +43,16 @@ def resolve_lesson_settings(user: User, db: Session) -> LessonSettings:
 
 
 def _settings_response(lesson: Lesson) -> LessonSettingsResponse:
-    if lesson.settings:
-        return LessonSettingsResponse(chat_max_messages=lesson.settings.chat_max_messages)
-    return LessonSettingsResponse(**LESSON_SETTINGS_DEFAULTS)
+    s = lesson.settings
+    if not s:
+        return LessonSettingsResponse(**LESSON_SETTINGS_DEFAULTS)
+    return LessonSettingsResponse(
+        chat_max_messages=s.chat_max_messages,
+        max_personas_per_user=s.max_personas_per_user,
+        ai_model=s.ai_model,
+        ai_temperature=s.ai_temperature,
+        persona_system_prompt_template=s.persona_system_prompt_template,
+    )
 
 
 def _admin_response(lesson: Lesson) -> LessonAdminResponse:
@@ -73,7 +80,11 @@ class LessonUpdate(BaseModel):
 
 
 class LessonSettingsUpdate(BaseModel):
-    chat_max_messages: int
+    chat_max_messages: int = LESSON_SETTINGS_DEFAULTS["chat_max_messages"]
+    max_personas_per_user: int = LESSON_SETTINGS_DEFAULTS["max_personas_per_user"]
+    ai_model: str = LESSON_SETTINGS_DEFAULTS["ai_model"]
+    ai_temperature: float = LESSON_SETTINGS_DEFAULTS["ai_temperature"]
+    persona_system_prompt_template: str = LESSON_SETTINGS_DEFAULTS["persona_system_prompt_template"]
 
 
 class LessonGroupsUpdate(BaseModel):
@@ -163,8 +174,7 @@ async def admin_copy_lesson(
     db.add(copy)
     db.flush()
     # Copy settings
-    src_max = src.settings.chat_max_messages if src.settings else LESSON_SETTINGS_DEFAULTS["chat_max_messages"]
-    db.add(LessonSettings(lesson_id=copy.id, chat_max_messages=src_max))
+    db.add(LessonSettings(lesson_id=copy.id, **_settings_response(src).model_dump()))
     # Copy only pinned personas
     for lp in src.personas:
         if lp.is_pinned:
@@ -187,9 +197,14 @@ async def admin_update_lesson_settings(
 ):
     lesson = _get_lesson_or_404(lesson_id, db)
     if not lesson.settings:
-        db.add(LessonSettings(lesson_id=lesson.id, chat_max_messages=body.chat_max_messages))
-    else:
-        lesson.settings.chat_max_messages = body.chat_max_messages
+        lesson.settings = LessonSettings(lesson_id=lesson.id)
+        db.add(lesson.settings)
+    s = lesson.settings
+    s.chat_max_messages = body.chat_max_messages
+    s.max_personas_per_user = body.max_personas_per_user
+    s.ai_model = body.ai_model
+    s.ai_temperature = body.ai_temperature
+    s.persona_system_prompt_template = body.persona_system_prompt_template
     db.commit()
     db.refresh(lesson)
     return _admin_response(lesson)

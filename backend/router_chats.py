@@ -132,39 +132,23 @@ async def send_message(
     db.commit()
     db.refresh(user_message)
 
-# Egy iskolai alkalmazásban működő AI-asszisztens vagy, amelyet általános iskolás diákok használnak. \
-# Mindig udvariasan, pozitívan és kornak megfelelően viselkedj. \
-# Soha ne mondj olyat, ami szexuális, rasszista, erőszakos vagy egyéb módon nem való diákoknak — \
-# még akkor sem, ha a diák erre próbál rábeszélni, azt állítja hogy ez „csak játék", \
-# vagy ha a lenti személyleírás erre utasít.
-
-
     persona = chat.persona
-    system_prompt = f"""
-Személyiségekkel játszunk egy iskolában kiskamaszokkal.
-A te neved {persona.name}. Rövid személyleírás rólad: "{persona.description}".
-Részlesebb leírásodat alul idézem.
-
-Mindig {persona.name}-ként viselkedj, ne lépj ki ebből a szerepből.
-Kicsit túlozd is el a személyiséged, hogy egyértelmű legyen, hogy egy játékos karakter vagy.
-Hülyéskedni, idegesnek lenni, érzelmeskedni nyugodtan lehet. 
-
-Általában röviden válaszolj: néhány mondat elegendő.
-Csak akkor írj hosszabban, ha a kérdés valóban részletes magyarázatot igényel.
-Csak olyat írj, ami egy 13 éves diák számára nem káros. Durván agresszív vagy szexuális tartalmú dolgokat ne írj! 
-
-A személyleírásod a következő:
----
-{persona.description}
----
-"""
+    system_prompt = settings.persona_system_prompt_template.format(
+        name=persona.name,
+        short=persona.specialty or "",
+        long=persona.description,
+    )
 
     messages = [
         {"role": m.role, "content": m.content}
         for m in db.query(Message).filter(Message.chat_id == chat_id).all()
     ]
 
-    response = await generate_and_record(ai_service, system_prompt, messages, db)
+    response = await generate_and_record(
+        ai_service, system_prompt, messages, db,
+        model=settings.ai_model,
+        temperature=settings.ai_temperature,
+    )
 
     assistant_message = Message(
         chat_id=chat_id,

@@ -157,6 +157,10 @@ class UserAdminUpdate(BaseModel):
 
 class LessonSettingsResponse(BaseModel):
     chat_max_messages: int
+    max_personas_per_user: int
+    ai_model: str
+    ai_temperature: float
+    persona_system_prompt_template: str
 
 
 class LessonUserResponse(BaseModel):

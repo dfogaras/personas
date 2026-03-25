@@ -99,4 +99,5 @@ const T = {
     lessonCreate:          'Létrehozás',
     lessonNewTitle:        'Új óra létrehozása',
     editLesson:            'Óra szerkesztése',
+    errPromptVariables:    'A sablonnak tartalmaznia kell: {name}, {short}, {long} — és más kapcsos zárójel nem szerepelhet benne.',
 };

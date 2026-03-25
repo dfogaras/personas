@@ -24,37 +24,51 @@ class AIResponse:
 
 class AIService:
     def __init__(self, settings: Settings):
-        self.api_key = settings.openrouter.api_key
-        self.base_url = settings.openrouter.base_url
-        self.model = settings.openrouter.model
-        self.temperature = settings.ai.temperature
-        self.max_tokens = settings.ai.max_tokens
-        self.timeout = settings.ai.timeout
+        self._api_key = settings.openrouter.api_key
+        self._base_url = settings.openrouter.base_url
+        self._default_model = settings.openrouter.model
+        self._default_temperature = settings.ai.temperature
+        self._default_max_tokens = settings.ai.max_tokens
+        self._default_timeout = settings.ai.timeout
         self._openrouter_session = aiohttp.ClientSession()
 
     async def close(self):
         await self._openrouter_session.close()
 
-    async def generate(self, system_prompt: str, messages: list[dict]) -> AIResponse:
-        if not self.api_key:
+    async def generate(
+        self,
+        system_prompt: str,
+        messages: list[dict],
+        model: str | None = None,
+        temperature: float | None = None,
+    ) -> AIResponse:
+        if not self._api_key:
             raise ValueError("OpenRouter API key not configured")
 
+        effective_model = model or self._default_model
+        effective_temperature = temperature if temperature is not None else self._default_temperature
+
+        logger.info(
+            f"AI request: model={effective_model} temperature={effective_temperature}\n"
+            f"system_prompt:\n{system_prompt}"
+        )
+
         headers = {
-            "Authorization": f"Bearer {self.api_key}",
+            "Authorization": f"Bearer {self._api_key}",
             "Content-Type": "application/json",
         }
         payload = {
-            "model": self.model,
+            "model": effective_model,
             "messages": [{"role": "system", "content": system_prompt}, *messages],
-            "temperature": self.temperature,
-            "max_tokens": self.max_tokens,
+            "temperature": effective_temperature,
+            "max_tokens": self._default_max_tokens,
         }
 
         async with self._openrouter_session.post(
-            f"{self.base_url}/chat/completions",
+            f"{self._base_url}/chat/completions",
             json=payload,
             headers=headers,
-            timeout=aiohttp.ClientTimeout(total=self.timeout),
+            timeout=aiohttp.ClientTimeout(total=self._default_timeout),
         ) as resp:
             if resp.status != 200:
                 error_text = await resp.text()
@@ -66,7 +80,7 @@ class AIService:
                 prompt_tokens=usage.get("prompt_tokens", 0),
                 completion_tokens=usage.get("completion_tokens", 0),
                 total_tokens=usage.get("total_tokens", 0),
-                model=self.model,
+                model=effective_model,
             )
 
 
@@ -106,9 +120,11 @@ async def generate_and_record(
     system_prompt: str,
     messages: list[dict],
     db: Session,
+    model: str | None = None,
+    temperature: float | None = None,
 ) -> AIResponse:
     """Generate an AI response and record token usage."""
-    response = await service.generate(system_prompt, messages)
+    response = await service.generate(system_prompt, messages, model=model, temperature=temperature)
     logger.info(
         f"AI response: model={response.model} "
         f"prompt={response.prompt_tokens} completion={response.completion_tokens}"

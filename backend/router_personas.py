@@ -9,7 +9,7 @@ from auth import get_current_user, check_owner_or_admin
 from messages import M
 from database import get_db
 from models import Group, LessonPersona, Persona, User
-from router_lessons import resolve_active_lesson
+from router_lessons import resolve_active_lesson, resolve_lesson_settings
 from schemas import PersonaCreate, PersonaResponse
 
 logger = logging.getLogger(__name__)
@@ -64,7 +64,8 @@ async def create_persona(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    if db.query(Persona).filter(Persona.user_id == current_user.id).count() >= 20:
+    settings = resolve_lesson_settings(current_user, db)
+    if db.query(Persona).filter(Persona.user_id == current_user.id).count() >= settings.max_personas_per_user:
         raise HTTPException(status_code=400, detail=M["too_many_personas"])
     db_persona = Persona(**persona.model_dump(), user_id=current_user.id)
     db.add(db_persona)

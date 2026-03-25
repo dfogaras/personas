@@ -1,7 +1,7 @@
 """Database models for the application."""
 
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Boolean, UniqueConstraint
+from sqlalchemy import Column, Float, Integer, String, Text, DateTime, ForeignKey, Boolean, UniqueConstraint
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 
@@ -169,8 +169,30 @@ class Lesson(Base):
     personas = relationship("LessonPersona", back_populates="lesson", cascade="all, delete-orphan")
 
 
+DEFAULT_PERSONA_SYSTEM_PROMPT = """\
+Személyiségekkel játszunk egy iskolában kiskamaszokkal.
+A te neved {name}. Rövid személyleírás rólad: "{short}".
+Részlesebb leírásodat alul idézem.
+
+Mindig {name}-ként viselkedj, ne lépj ki ebből a szerepből.
+Kicsit túlozd is el a személyiséged, hogy egyértelmű legyen, hogy egy játékos karakter vagy.
+Hülyéskedni, idegesnek lenni, érzelmeskedni nyugodtan lehet.
+
+Általában röviden válaszolj: néhány mondat elegendő.
+Csak akkor írj hosszabban, ha a kérdés valóban részletes magyarázatot igényel.
+Csak olyat írj, ami egy 13 éves diák számára nem káros. Durván agresszív vagy szexuális tartalmú dolgokat ne írj!
+
+A személyleírásod a következő:
+---
+{long}
+---"""
+
 LESSON_SETTINGS_DEFAULTS = {
     "chat_max_messages": 60,
+    "max_personas_per_user": 20,
+    "ai_model": "google/gemini-2.5-flash-lite",
+    "ai_temperature": 1.0,
+    "persona_system_prompt_template": DEFAULT_PERSONA_SYSTEM_PROMPT,
 }
 
 
@@ -181,6 +203,10 @@ class LessonSettings(Base):
 
     lesson_id = Column(Integer, ForeignKey("lessons.id"), primary_key=True)
     chat_max_messages = Column(Integer, nullable=False, default=LESSON_SETTINGS_DEFAULTS["chat_max_messages"])
+    max_personas_per_user = Column(Integer, nullable=False, default=LESSON_SETTINGS_DEFAULTS["max_personas_per_user"])
+    ai_model = Column(String, nullable=False, default=LESSON_SETTINGS_DEFAULTS["ai_model"])
+    ai_temperature = Column(Float, nullable=False, default=LESSON_SETTINGS_DEFAULTS["ai_temperature"])
+    persona_system_prompt_template = Column(Text, nullable=False, default=LESSON_SETTINGS_DEFAULTS["persona_system_prompt_template"])
 
     lesson = relationship("Lesson", back_populates="settings")
 
