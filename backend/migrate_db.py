@@ -158,6 +158,45 @@ def cmd_migrate(engine):
             conn.commit()
             print(f"✓ Re-indexed: {drop_sql}")
 
+        # One-off: assign group personas/chats to lessons 1-4 (6B→1, 6C→2, 7B→3, 7C→4)
+        # Only runs if no personas are yet assigned to any lesson.
+        any_lesson_persona = conn.execute(text("SELECT 1 FROM lesson_personas LIMIT 1")).first()
+        if not any_lesson_persona:
+            group_lesson_map = [("6B", 1), ("6C", 2), ("7B", 3), ("7C", 4)]
+            for group_name, lesson_id in group_lesson_map:
+                group_row = conn.execute(text("SELECT id FROM groups WHERE name = :n"), {"n": group_name}).first()
+                lesson_row = conn.execute(text("SELECT id FROM lessons WHERE id = :id"), {"id": lesson_id}).first()
+                if not group_row or not lesson_row:
+                    print(f"  Skipping {group_name}→lesson {lesson_id}: group or lesson missing")
+                    continue
+                group_id = group_row[0]
+                # Insert personas created by users in this group into lesson_personas
+                persona_rows = conn.execute(
+                    text("SELECT p.id FROM personas p JOIN users u ON u.id = p.user_id WHERE u.group_id = :gid"),
+                    {"gid": group_id},
+                ).fetchall()
+                inserted = 0
+                for (persona_id,) in persona_rows:
+                    already = conn.execute(
+                        text("SELECT 1 FROM lesson_personas WHERE lesson_id = :lid AND persona_id = :pid"),
+                        {"lid": lesson_id, "pid": persona_id},
+                    ).first()
+                    if not already:
+                        conn.execute(
+                            text("INSERT INTO lesson_personas (lesson_id, persona_id, is_pinned) VALUES (:lid, :pid, 0)"),
+                            {"lid": lesson_id, "pid": persona_id},
+                        )
+                        inserted += 1
+                # Assign chats owned by users in this group to the lesson
+                chat_result = conn.execute(
+                    text("UPDATE chats SET lesson_id = :lid WHERE user_id IN (SELECT id FROM users WHERE group_id = :gid) AND lesson_id IS NULL"),
+                    {"lid": lesson_id, "gid": group_id},
+                )
+                conn.commit()
+                print(f"✓ {group_name}→lesson {lesson_id}: {inserted} persona(s) linked, {chat_result.rowcount} chat(s) assigned")
+        else:
+            print("  Lesson-persona assignment already present, skipping one-off migration")
+
 
 def cmd_add_user(engine, email, name, group, initial_password):
     with engine.connect() as conn:
