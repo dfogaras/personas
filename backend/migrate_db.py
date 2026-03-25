@@ -44,7 +44,7 @@ def cmd_migrate(engine):
         for gid, name in DEFAULT_GROUPS:
             exists = conn.execute(text("SELECT id FROM groups WHERE id = :id"), {"id": gid}).first()
             if not exists:
-                conn.execute(text("INSERT INTO groups (id, name) VALUES (:id, :name)"), {"id": gid, "name": name})
+                conn.execute(text("INSERT INTO groups (id, name, access_enabled) VALUES (:id, :name, 1)"), {"id": gid, "name": name})
                 conn.commit()
                 print(f"✓ Seeded group {gid}: {name}")
             else:
