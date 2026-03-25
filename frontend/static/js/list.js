@@ -3,36 +3,6 @@
  */
 
 // ============================================================================
-// Auth state
-// ============================================================================
-
-function updateNav() {
-    const user = getUser();
-    const navUser = document.getElementById('navUser');
-    if (!user) { navUser.style.display = 'none'; return; }
-    document.getElementById('navUserName').textContent = user.name || user.email;
-    navUser.style.display = 'flex';
-    const existing = document.getElementById('navGroupLink');
-    if (existing) existing.remove();
-    const logoutBtn = document.getElementById('navLogoutBtn');
-    if (user.group === 'admin') {
-        const a = document.createElement('a');
-        a.id = 'navGroupLink';
-        a.href = '/admin';
-        a.className = 'nav-logout-btn';
-        a.textContent = 'Admin';
-        logoutBtn.parentElement.insertBefore(a, logoutBtn);
-    } else if (user.group) {
-        const a = document.createElement('a');
-        a.id = 'navGroupLink';
-        a.href = `/#page=group&id=${user.group_id}`;
-        a.className = 'nav-logout-btn';
-        a.textContent = user.group + ' csoport';
-        logoutBtn.parentElement.insertBefore(a, logoutBtn);
-    }
-}
-
-// ============================================================================
 // Routing
 // ============================================================================
 
@@ -62,7 +32,6 @@ async function route() {
     }
 
     document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
-    updateNav();
 
     if (page === 'me') {
         await showMePage();
@@ -88,22 +57,24 @@ async function route() {
 
 async function showMePage() {
     const user = getUser();
-    await showDashboardPage('Saját personáim', `user_id=${user.id}`, `user_id=${user.id}`, true);
+    setNavLabel(user.name || user.email);
+    await showDashboardPage(`user_id=${user.id}`, `user_id=${user.id}`, true);
 }
 
 async function showGroupPage(groupId) {
     const groups = await apiCall('GET', '/groups');
     const group = groups.find(g => g.id === parseInt(groupId));
-    const label = group ? group.name + ' csoport' : 'Csoport';
-    await showDashboardPage(label, `group_id=${groupId}`, `group_id=${groupId}`);
+    setNavLabel(group ? group.name + ' csoport' : 'Csoport');
+    await showDashboardPage(`group_id=${groupId}`, `group_id=${groupId}`);
 }
 
 async function showUserPage(userId) {
-    await showDashboardPage('Felhasználó', `user_id=${userId}`, `user_id=${userId}`);
+    setNavLabel('…');
+    const personas = await showDashboardPage(`user_id=${userId}`, `user_id=${userId}`);
+    setNavLabel(personas[0]?.user?.name || 'Felhasználó');
 }
 
-async function showDashboardPage(title, personaQuery, chatQuery, showAddBtn = false) {
-    document.getElementById('dashboardTitle').textContent = title;
+async function showDashboardPage(personaQuery, chatQuery, showAddBtn = false) {
     document.getElementById('page-dashboard').style.display = 'block';
     document.getElementById('dashboardPersonas').innerHTML = '';
     document.getElementById('dashboardChats').innerHTML = '';
@@ -122,6 +93,8 @@ async function showDashboardPage(title, personaQuery, chatQuery, showAddBtn = fa
             document.getElementById('dashboardChats').appendChild(createChatItem(chat, { showPersonaTag: true }));
         });
     }
+
+    return personas;
 }
 
 // ============================================================================
@@ -200,7 +173,7 @@ function renderPersonasList(personas, container, showAddBtn = false) {
 // ============================================================================
 
 async function init() {
-    setupNav({ onNameClick: () => navigate({ page: 'me' }) });
+    setupNav();
     window.addEventListener('hashchange', route);
 
     if (!getToken()) {

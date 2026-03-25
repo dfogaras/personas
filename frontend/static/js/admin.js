@@ -463,19 +463,7 @@ async function init() {
     const user = getUser();
     if (!user) { redirectToLogin(); return; }
 
-    document.getElementById('navUserName').textContent = user.name || user.email;
-    document.getElementById('navUser').style.display = 'flex';
-    document.getElementById('navLogoutBtn').addEventListener('click', () => {
-        clearAuth();
-        window.location.href = '/login';
-    });
-
-    const navLesson = document.getElementById('navLesson');
-    if (navLesson) {
-        apiCall('GET', '/me/lesson').then(lesson => {
-            if (lesson) { navLesson.textContent = lesson.name; navLesson.style.display = ''; }
-        }).catch(() => {});
-    }
+    setupNav();
 
     try {
         const [groups, users, access] = await Promise.all([

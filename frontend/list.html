@@ -12,19 +12,22 @@
         <a href="#page=me" class="nav-brand">kincskereso.ai</a>
         <div class="nav-links" id="navLinks"></div>
         <div class="nav-lesson" id="navLesson" style="display:none"></div>
-        <div class="nav-user" id="navUser" style="display:none">
-            <button class="nav-user-name" id="navUserName"></button>
-            <button class="nav-logout-btn" id="navLogoutBtn">Kijelentkezés</button>
+        <div class="nav-dropdown" id="navDropdown" style="display:none">
+            <button class="nav-dropdown-trigger" id="navDropdownTrigger">
+                <span id="navContextLabel"></span><span class="nav-dropdown-caret">▾</span>
+            </button>
+            <div class="nav-dropdown-menu" id="navDropdownMenu">
+                <a class="nav-dropdown-item" id="navMyPage" href="/#page=me"></a>
+                <a class="nav-dropdown-item" id="navGroupPage" href="/" style="display:none"></a>
+                <button class="nav-dropdown-item nav-dropdown-logout" id="navLogoutBtn">Kijelentkezés</button>
+            </div>
         </div>
     </nav>
 
     <!-- Dashboard page (me / group / user) -->
     <div id="page-dashboard" class="page" style="display:none">
         <div class="page-content">
-            <div class="page-header">
-                <h1 id="dashboardTitle"></h1>
-            </div>
-            <div id="dashboardPersonas" class="personas-grid"></div>
+    <div id="dashboardPersonas" class="personas-grid"></div>
             <h2 id="dashboardChatsHeading" class="section-heading" style="display:none">Legutóbbi csevegések</h2>
             <div id="dashboardChats"></div>
         </div>

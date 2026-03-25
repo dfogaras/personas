@@ -12,9 +12,15 @@
         <a href="/" class="nav-brand">kincskereso.ai</a>
         <div class="nav-links" id="navLinks"></div>
         <div class="nav-lesson" id="navLesson" style="display:none"></div>
-        <div class="nav-user" id="navUser" style="display:none">
-            <button class="nav-user-name" id="navUserName"></button>
-            <button class="nav-logout-btn" id="navLogoutBtn">Kijelentkezés</button>
+        <div class="nav-dropdown" id="navDropdown" style="display:none">
+            <button class="nav-dropdown-trigger" id="navDropdownTrigger">
+                <span id="navContextLabel"></span><span class="nav-dropdown-caret">▾</span>
+            </button>
+            <div class="nav-dropdown-menu" id="navDropdownMenu">
+                <a class="nav-dropdown-item" id="navMyPage" href="/#page=me"></a>
+                <a class="nav-dropdown-item" id="navGroupPage" href="/" style="display:none"></a>
+                <button class="nav-dropdown-item nav-dropdown-logout" id="navLogoutBtn">Kijelentkezés</button>
+            </div>
         </div>
     </nav>
 
@@ -53,8 +59,8 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <script src="/static/js/i18n.js?v=4"></script>
-    <script src="/static/js/common.js?v=4"></script>
-    <script src="/static/js/persona.js?v=7"></script>
+    <script src="/static/js/i18n.js?v=10"></script>
+    <script src="/static/js/common.js?v=10"></script>
+    <script src="/static/js/persona.js?v=10"></script>
 </body>
 </html>

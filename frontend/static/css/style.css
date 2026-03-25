@@ -173,18 +173,16 @@ button, input, select, textarea {
     padding-bottom: 12.5px;
 }
 
-.nav-user {
-    display: flex;
-    align-items: flex-end;
-    gap: 12px;
+.nav-dropdown {
+    position: relative;
     margin-left: auto;
     align-self: flex-end;
 }
 
-.nav-user-name,
-.nav-logout-btn {
-    position: relative;
-    z-index: 1;
+.nav-dropdown-trigger {
+    display: flex;
+    align-items: baseline;
+    gap: 5px;
     font-family: 'Pacifico', cursive;
     font-size: 26px;
     font-weight: 400;
@@ -198,15 +196,67 @@ button, input, select, textarea {
     letter-spacing: 1px;
     text-shadow: 1px 2px 4px rgba(0,0,0,0.25);
     cursor: pointer;
-    text-decoration: none;
-    display: inline-block;
     transition: text-shadow 0.15s, box-shadow 0.15s;
 }
 
-.nav-user-name:hover,
-.nav-logout-btn:hover {
+.nav-dropdown-trigger:hover {
     text-shadow: 0 0 1px white, 0 0 3px rgba(255,255,255,0.6), 1px 2px 4px rgba(0,0,0,0.3);
     box-shadow: inset 0 0 0 1px rgba(255,255,255,0.35);
+}
+
+.nav-dropdown-caret {
+    font-family: sans-serif;
+    font-size: 13px;
+    opacity: 0.75;
+    transition: transform 0.15s;
+    letter-spacing: 0;
+}
+
+.nav-dropdown.open .nav-dropdown-caret {
+    transform: rotate(180deg);
+}
+
+.nav-dropdown-menu {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: calc(100% + 4px);
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    min-width: 170px;
+    overflow: hidden;
+    z-index: 200;
+}
+
+.nav-dropdown.open .nav-dropdown-menu {
+    display: block;
+}
+
+.nav-dropdown-item {
+    display: block;
+    width: 100%;
+    padding: 11px 16px;
+    color: var(--gray-700);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+    background: none;
+    border: none;
+    text-align: left;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.nav-dropdown-item:hover {
+    background: var(--gray-50);
+    color: var(--gray-900);
+}
+
+.nav-dropdown-logout {
+    border-top: 1px solid var(--gray-100);
+    color: var(--gray-400);
+    font-weight: 500;
 }
 
 [data-theme="persona"] .top-nav {

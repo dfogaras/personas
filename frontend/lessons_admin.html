@@ -12,9 +12,15 @@
     <nav class="top-nav">
         <a href="/" class="nav-brand">kincskereso.ai</a>
         <div class="nav-lesson" id="navLesson" style="display:none"></div>
-        <div class="nav-user" id="navUser" style="display:none">
-            <span class="nav-user-name" id="navUserName"></span>
-            <button class="nav-logout-btn" id="navLogoutBtn">Kijelentkezés</button>
+        <div class="nav-dropdown" id="navDropdown" style="display:none">
+            <button class="nav-dropdown-trigger" id="navDropdownTrigger">
+                <span id="navContextLabel"></span><span class="nav-dropdown-caret">▾</span>
+            </button>
+            <div class="nav-dropdown-menu" id="navDropdownMenu">
+                <a class="nav-dropdown-item" id="navMyPage" href="/#page=me"></a>
+                <a class="nav-dropdown-item" id="navGroupPage" href="/" style="display:none"></a>
+                <button class="nav-dropdown-item nav-dropdown-logout" id="navLogoutBtn">Kijelentkezés</button>
+            </div>
         </div>
     </nav>
 

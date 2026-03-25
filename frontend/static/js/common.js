@@ -75,40 +75,43 @@ function personaMetaHtml(persona) {
 // Nav setup (shared across all pages)
 // ============================================================================
 
-function setupNav({ onNameClick } = {}) {
+function setNavLabel(label) {
+    const el = document.getElementById('navContextLabel');
+    if (el) el.textContent = label;
+}
+
+function setupNav() {
     const user = getUser();
-    const navUser = document.getElementById('navUser');
-    if (!navUser) return;
+    const navDropdown = document.getElementById('navDropdown');
+    if (!navDropdown) return;
 
-    if (!user) { navUser.style.display = 'none'; return; }
+    if (!user) { navDropdown.style.display = 'none'; return; }
 
-    const nameBtn = document.getElementById('navUserName');
-    nameBtn.textContent = user.name || user.email;
-    nameBtn.addEventListener('click', onNameClick ?? (() => { window.location.href = '/'; }));
-    navUser.style.display = 'flex';
+    // "My page" link
+    const navMyPage = document.getElementById('navMyPage');
+    navMyPage.textContent = user.name || user.email;
 
-    const logoutBtn = document.getElementById('navLogoutBtn');
-    logoutBtn.addEventListener('click', () => {
+    // Group / admin link
+    const navGroupPage = document.getElementById('navGroupPage');
+    if (user.group === 'admin') {
+        navGroupPage.textContent = 'Admin';
+        navGroupPage.href = '/admin';
+        navGroupPage.style.display = '';
+    } else if (user.group) {
+        navGroupPage.textContent = user.group + ' csoport';
+        navGroupPage.href = `/#page=group&id=${user.group_id}`;
+        navGroupPage.style.display = '';
+    } else {
+        navGroupPage.style.display = 'none';
+    }
+
+    // Logout
+    document.getElementById('navLogoutBtn').addEventListener('click', () => {
         clearAuth();
         window.location.href = '/login';
     });
 
-    if (user.group === 'admin') {
-        const a = document.createElement('a');
-        a.id = 'navGroupLink';
-        a.href = '/admin';
-        a.className = 'nav-logout-btn';
-        a.textContent = 'Admin';
-        navUser.insertBefore(a, logoutBtn);
-    } else if (user.group) {
-        const a = document.createElement('a');
-        a.id = 'navGroupLink';
-        a.href = `/#page=group&id=${user.group_id}`;
-        a.className = 'nav-logout-btn';
-        a.textContent = user.group + ' csoport';
-        navUser.insertBefore(a, logoutBtn);
-    }
-
+    // Lesson (center of nav)
     const navLesson = document.getElementById('navLesson');
     if (navLesson) {
         apiCall('GET', '/me/lesson').then(lesson => {
@@ -118,6 +121,18 @@ function setupNav({ onNameClick } = {}) {
             }
         }).catch(() => {});
     }
+
+    // Default label is the user's own name; pages can override with setNavLabel()
+    setNavLabel(user.name || user.email);
+    navDropdown.style.display = '';
+
+    // Dropdown toggle
+    const trigger = document.getElementById('navDropdownTrigger');
+    trigger.addEventListener('click', (e) => {
+        e.stopPropagation();
+        navDropdown.classList.toggle('open');
+    });
+    document.addEventListener('click', () => navDropdown.classList.remove('open'));
 }
 
 // ============================================================================
