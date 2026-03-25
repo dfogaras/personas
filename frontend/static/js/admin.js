@@ -200,7 +200,7 @@ function renderUserRow(user) {
     const tr = document.createElement('tr');
     const pwdText = user.initial_password ?? '—';
     const groupOptions = _currentGroups.map(g =>
-        `<option value="${escapeHtml(g)}"${g === user.group ? ' selected' : ''}>${escapeHtml(g)}</option>`
+        `<option value="${escapeHtml(g.name)}"${g.name === user.group ? ' selected' : ''}>${escapeHtml(g.name)}</option>`
     ).join('');
 
     tr.innerHTML = `
