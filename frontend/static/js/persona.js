@@ -182,6 +182,51 @@ function showEditForm(persona) {
         promptsEl.appendChild(row);
     });
 
+    // AI feedback button
+    const aiFeedbackBtn = document.getElementById('aiFeedbackBtn');
+    const aiFeedbackBox = document.getElementById('aiFeedbackBox');
+    const aiFeedbackContent = document.getElementById('aiFeedbackContent');
+
+    function showFeedbackPanel() {
+        aiFeedbackBox.style.display = 'flex';
+        document.body.classList.add('ai-panel-open');
+    }
+
+    function hideFeedbackPanel() {
+        aiFeedbackBox.style.display = 'none';
+        document.body.classList.remove('ai-panel-open');
+    }
+
+    document.getElementById('aiFeedbackClose').addEventListener('click', hideFeedbackPanel);
+
+    aiFeedbackBtn.addEventListener('click', async () => {
+        const name = document.getElementById('pName').value.trim();
+        const specialty = specInput.value.trim();
+        const description = document.getElementById('pDesc').value.trim();
+
+        if (!description) {
+            aiFeedbackContent.textContent = 'Írj először egy leírást, aztán kérhetsz visszajelzést!';
+            showFeedbackPanel();
+            return;
+        }
+
+        aiFeedbackBtn.disabled = true;
+        aiFeedbackBtn.textContent = '⏳ Elemzés…';
+        aiFeedbackBox.style.display = 'none';
+
+        try {
+            const result = await apiCall('POST', '/ai/persona-feedback', { name, specialty, description });
+            aiFeedbackContent.textContent = result.feedback;
+            showFeedbackPanel();
+        } catch (e) {
+            aiFeedbackContent.textContent = 'Hiba történt, próbáld újra!';
+            showFeedbackPanel();
+        } finally {
+            aiFeedbackBtn.disabled = false;
+            aiFeedbackBtn.textContent = '✨ Visszajelzés kérése';
+        }
+    });
+
     document.getElementById('editMode').style.display = 'block';
     document.getElementById('pName').focus();
 }

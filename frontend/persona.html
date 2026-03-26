@@ -50,12 +50,24 @@
             <label class="form-label" for="pDesc">Leírás</label>
             <div id="descPrompts" class="desc-prompts"></div>
             <textarea id="pDesc" class="form-input" rows="5"></textarea>
+            <div class="ai-feedback-wrap">
+                <button id="aiFeedbackBtn" class="btn-ai-feedback" type="button">✨ Visszajelzés kérése</button>
+            </div>
             <div class="auth-error" id="formError" style="display:none"></div>
             <div class="form-actions">
                 <button id="submitBtn" class="btn-primary">✓</button>
                 <button id="cancelBtn" class="btn-secondary">✕</button>
             </div>
         </div>
+    </div>
+
+    <!-- AI feedback floating panel -->
+    <div id="aiFeedbackBox" class="ai-feedback-panel" style="display:none">
+        <div class="ai-feedback-header">
+            <span class="ai-feedback-title">🤖 AI visszajelzés</span>
+            <button class="ai-feedback-close" id="aiFeedbackClose" type="button">✕</button>
+        </div>
+        <div id="aiFeedbackContent" class="ai-feedback-content"></div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>

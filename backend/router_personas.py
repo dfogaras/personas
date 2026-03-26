@@ -3,8 +3,10 @@ import logging
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
+from pydantic import BaseModel
 from sqlalchemy.orm import Session, selectinload
 
+from ai_service import generate_and_record, get_ai_service
 from auth import get_current_user, check_owner_or_admin
 from messages import M
 from database import get_db
@@ -102,6 +104,55 @@ async def overwrite_persona(
     db.commit()
     db.refresh(db_persona)
     return db_persona
+
+
+class PersonaFeedbackRequest(BaseModel):
+    name: str
+    specialty: str
+    description: str
+
+
+@router.post("/api/ai/persona-feedback")
+async def persona_feedback(
+    req: PersonaFeedbackRequest,
+    db: Session = Depends(get_db),
+):
+    system_prompt = """\
+Te egy segítő tanár vagy, aki általános iskolás diákok (kb. 12–14 évesek) által írt AI persona leírásokat értékelsz.
+
+A diákok egy AI karaktert alkotnak: nevet, rövid szerepleírást és egy részletes személyleírást adnak meg.
+
+A feladatod: adj konkrét, barátságos visszajelzést magyarul. NE írd át a szöveget – csak mutasd meg, min érdemes javítani.
+
+Értékeld ezt a három mezőt:
+1. **Név** – Illő-e a karakterhez? Elég egyedi és személyes?
+2. **Cím / szerep** – Elég rövid és velős? Leírja-e, ki ez a karakter egy mondatban?
+3. **Leírás** – Elég részletes-e a személyiség, viselkedés, kommunikációs stílus? Vannak-e helyesírási hibák? Hiányzik-e valami fontos (pl. hogyan beszél, minek örül, mitől fél)?
+
+Stílus:
+- Légy bátorító, de őszinte
+- Legyen tömör (max 10–12 sor összesen)
+- Ha valami jó, mondj rá pár szót
+- Ha valami hiányzik vagy gyenge, adj egy konkrét példát, mit lehetne hozzáadni
+- Ne adj általános tanácsot – legyen specifikus erre a karakterre
+- Ne írj be kész mondatokat vagy átírt szövegrészeket
+"""
+
+    user_msg = (
+        f"Név: {req.name}\n"
+        f"Cím: {req.specialty}\n"
+        f"Leírás:\n{req.description}"
+    )
+
+    response = await generate_and_record(
+        service=get_ai_service(),
+        system_prompt=system_prompt,
+        messages=[{"role": "user", "content": user_msg}],
+        db=db,
+        model="anthropic/claude-haiku-4.5",
+        temperature=0.4,
+    )
+    return {"feedback": response.content}
 
 
 @router.delete("/api/personas/{persona_id}", status_code=204)
