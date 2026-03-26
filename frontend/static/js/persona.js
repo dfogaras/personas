@@ -216,7 +216,7 @@ function showEditForm(persona) {
 
         try {
             const result = await apiCall('POST', '/ai/persona-feedback', { name, specialty, description });
-            aiFeedbackContent.textContent = result.feedback;
+            aiFeedbackContent.innerHTML = marked.parse(result.feedback);
             showFeedbackPanel();
         } catch (e) {
             aiFeedbackContent.textContent = 'Hiba történt, próbáld újra!';

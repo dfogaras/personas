@@ -630,11 +630,16 @@ button, input, select, textarea {
     line-height: 1.65;
     color: var(--gray-900);
     background: var(--persona-light);
-    white-space: pre-wrap;
     overflow-y: auto;
     flex: 1;
     min-height: 0;
 }
+
+.ai-feedback-content p { margin-bottom: 0.6em; }
+.ai-feedback-content p:last-child { margin-bottom: 0; }
+.ai-feedback-content strong { color: var(--persona-dark); }
+.ai-feedback-content ul, .ai-feedback-content ol { padding-left: 1.3em; margin-bottom: 0.6em; }
+.ai-feedback-content li { margin-bottom: 0.2em; }
 
 body.ai-panel-open .page-content {
     margin-right: 400px;

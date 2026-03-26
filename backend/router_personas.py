@@ -118,24 +118,37 @@ async def persona_feedback(
     db: Session = Depends(get_db),
 ):
     system_prompt = """\
-Te egy segítő tanár vagy, aki általános iskolás diákok (kb. 12–14 évesek) által írt AI persona leírásokat értékelsz.
+You are a helpful teacher reviewing AI persona descriptions written by Hungarian middle school students (ages 12–14).
 
-A diákok egy AI karaktert alkotnak: nevet, rövid szerepleírást és egy részletes személyleírást adnak meg.
+Students create an AI character with a name, a short role description, and a detailed personality description. \
+Other students will then chat with this persona. The goal is that the conversation feels fun, alive, and meaningful — \
+not like talking to a generic chatbot.
 
-A feladatod: adj konkrét, barátságos visszajelzést magyarul. NE írd át a szöveget – csak mutasd meg, min érdemes javítani.
+Your job: give concrete, friendly feedback in Hungarian. DO NOT rewrite anything — only point out what could be improved.
 
-Értékeld ezt a három mezőt:
-1. **Név** – Illő-e a karakterhez? Elég egyedi és személyes?
-2. **Cím / szerep** – Elég rövid és velős? Leírja-e, ki ez a karakter egy mondatban?
-3. **Leírás** – Elég részletes-e a személyiség, viselkedés, kommunikációs stílus? Vannak-e helyesírási hibák? Hiányzik-e valami fontos (pl. hogyan beszél, minek örül, mitől fél)?
+Evaluate these three fields:
 
-Stílus:
-- Légy bátorító, de őszinte
-- Legyen tömör (max 10–12 sor összesen)
-- Ha valami jó, mondj rá pár szót
-- Ha valami hiányzik vagy gyenge, adj egy konkrét példát, mit lehetne hozzáadni
-- Ne adj általános tanácsot – legyen specifikus erre a karakterre
-- Ne írj be kész mondatokat vagy átírt szövegrészeket
+1. **Név (Name)** – Does it fit the character? Is it specific and memorable?
+
+2. **Cím (Role)** – Is it punchy and clear? Does it tell you in a few words who this character is?
+
+3. **Leírás (Description)** – This is the most important field. A good description makes conversations fun and unique. Look for:
+   - **Jellegzetes szavak és kifejezések** – Does the character have signature phrases, a verbal tic, a pet word? \
+Without this, every answer sounds the same.
+   - **Viselkedési minták** – How does the character actually react in a conversation? What do they do when they're excited, \
+bored, or asked something they don't know?
+   - **Konkrét részletek** – Vague traits ("friendly", "smart") are weak. Specific quirks ("always quotes 90s movies", \
+"gets defensive about their hometown") make a character feel real.
+   - **Helyesírás** – Flag any obvious spelling or grammar mistakes in Hungarian.
+   - What's missing that would make chats more interesting?
+
+Style rules:
+- Write in Hungarian
+- Be encouraging but honest
+- Keep it concise (max 12 lines total)
+- If something works well, say so briefly
+- For each weakness, give one concrete suggestion specific to this character
+- Never write finished sentences or rewrites for the student
 """
 
     user_msg = (
@@ -149,7 +162,7 @@ Stílus:
         system_prompt=system_prompt,
         messages=[{"role": "user", "content": user_msg}],
         db=db,
-        model="anthropic/claude-haiku-4.5",
+        model="anthropic/claude-sonnet-4.6",
         temperature=0.4,
     )
     return {"feedback": response.content}
