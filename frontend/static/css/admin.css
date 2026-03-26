@@ -631,13 +631,13 @@
 .lesson-item {
     display: flex;
     align-items: center;
-    gap: 16px;
-    padding: 14px 16px;
+    gap: 12px;
+    padding: 8px 14px;
     background: white;
     border-radius: var(--radius-sm);
     border-left: 3px solid var(--gray-200);
     box-shadow: 2px 4px 14px rgba(192, 57, 27, 0.08);
-    margin-bottom: 8px;
+    margin-bottom: 6px;
     transition: border-left-color 0.15s, box-shadow 0.15s;
 }
 
@@ -650,8 +650,9 @@
     flex: 1;
     min-width: 0;
     display: flex;
-    flex-direction: column;
-    gap: 6px;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
 }
 
 .lesson-item-name-row {
@@ -661,9 +662,10 @@
 }
 
 .lesson-item-name {
-    font-size: 18px;
+    font-size: 15px;
     font-weight: 700;
     color: var(--gray-900);
+    white-space: nowrap;
 }
 
 .lesson-name-input {
@@ -676,30 +678,59 @@
 
 .lesson-item-groups {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    align-items: center;
     gap: 5px;
 }
 
-.lesson-group-chip {
-    padding: 2px 10px;
-    border-radius: 12px;
+.lesson-group-select {
+    width: auto;
+    padding: 2px 2px 2px 4px;
+    border-radius: 8px;
     border: 1.5px solid var(--gray-300);
     background: var(--gray-100);
-    color: var(--gray-500);
+    color: var(--gray-700);
     font-size: 13px;
-    font-weight: 600;
+    font-family: inherit;
     cursor: pointer;
-    transition: background 0.13s, border-color 0.13s, color 0.13s;
+}
+
+.lesson-group-nav-btn {
+    display: flex;
+    align-items: center;
+    padding: 2px 5px;
+    border-radius: 6px;
+    border: 1.5px solid var(--gray-300);
+    background: transparent;
+    color: var(--gray-500);
+    cursor: pointer;
     font-family: inherit;
 }
 
-.lesson-group-chip.assigned {
-    background: var(--persona-light);
+.lesson-group-nav-btn:disabled {
+    opacity: 0.3;
+    cursor: default;
+}
+
+.lesson-group-nav-btn:not(:disabled):hover {
     border-color: var(--persona-color);
     color: var(--persona-color);
 }
 
-.lesson-group-chip:hover {
+.lesson-group-add-btn {
+    padding: 1px 7px;
+    border-radius: 6px;
+    border: 1.5px dashed var(--gray-300);
+    background: transparent;
+    color: var(--gray-400);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+    line-height: 1.4;
+}
+
+.lesson-group-add-btn:hover {
     border-color: var(--persona-color);
     color: var(--persona-color);
 }
@@ -727,9 +758,9 @@
 
 .lesson-item-right {
     display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 8px;
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
     flex-shrink: 0;
 }
 

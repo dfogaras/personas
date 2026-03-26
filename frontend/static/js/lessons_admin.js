@@ -40,6 +40,8 @@ function _svg(paths) {
 const ICON_EDIT   = _svg('<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>');
 const ICON_DELETE = _svg('<polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>');
 const ICON_REMIX  = _svg('<rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>');
+const ICON_ENTER  = _svg('<path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/>');
+const ICON_EXIT   = _svg('<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>');
 
 // ============================================================================
 // Nav lesson sync
@@ -77,7 +79,6 @@ function renderLessons() {
 
 function renderLessonRow(lesson) {
     const isActive = lesson.id === _myActiveLessonId;
-    const assignedGroupIds = new Set(lesson.groups.map(g => g.id));
 
     const row = document.createElement('div');
     row.className = `lesson-item${isActive ? ' active' : ''}`;
@@ -94,17 +95,7 @@ function renderLessonRow(lesson) {
     nameEl.textContent = lesson.name;
     nameRow.appendChild(nameEl);
 
-    const groupsEl = document.createElement('div');
-    groupsEl.className = 'lesson-item-groups';
-    for (const g of _allGroups) {
-        if (g.name === 'admin') continue;
-        const isAssigned = g.active_lesson_id === lesson.id;
-        const chip = document.createElement('button');
-        chip.className = `lesson-group-chip${isAssigned ? ' assigned' : ''}`;
-        chip.textContent = g.name;
-        chip.addEventListener('click', () => toggleGroup(lesson.id, g.id, isAssigned));
-        groupsEl.appendChild(chip);
-    }
+    const groupsEl = buildGroupSection(lesson.id, isActive);
 
     info.append(nameRow, groupsEl);
 
@@ -118,11 +109,6 @@ function renderLessonRow(lesson) {
 
     const actions = document.createElement('div');
     actions.className = 'lesson-item-actions';
-
-    const joinBtn = document.createElement('button');
-    joinBtn.className = `admin-btn ${isActive ? 'cancel-btn' : 'save-btn'}`;
-    joinBtn.textContent = isActive ? T.leaveLesson : T.joinLesson;
-    joinBtn.addEventListener('click', () => toggleJoin(lesson.id, isActive));
 
     const editBtn = document.createElement('button');
     editBtn.className = 'table-icon-btn edit-btn';
@@ -142,41 +128,132 @@ function renderLessonRow(lesson) {
     deleteBtn.innerHTML = ICON_DELETE;
     deleteBtn.addEventListener('click', () => deleteLesson(lesson.id));
 
-    actions.append(joinBtn, editBtn, remixBtn, deleteBtn);
+    actions.append(editBtn, remixBtn, deleteBtn);
     right.append(timeEl, actions);
     row.append(info, right);
     return row;
 }
 
 // ============================================================================
-// Group toggle
+// Group section (dropdowns)
 // ============================================================================
 
-async function toggleGroup(lessonId, groupId, isCurrentlyAssigned) {
-    const newLessonId = isCurrentlyAssigned ? null : lessonId;
-    try {
-        await apiCall('PATCH', `/admin/groups/${groupId}/active-lesson`, { lesson_id: newLessonId });
-        const g = _allGroups.find(g => g.id === groupId);
-        if (g) g.active_lesson_id = newLessonId;
-        renderLessons();
-    } catch (e) {
-        showError(e.message);
+function buildGroupSection(lessonId, isActive) {
+    const nonAdminGroups = _allGroups.filter(g => g.name !== 'admin');
+    const assignedGroups = nonAdminGroups.filter(g => g.active_lesson_id === lessonId);
+
+    const container = document.createElement('div');
+    container.className = 'lesson-item-groups';
+
+    // Each slot holds a group id string, '' for unassigned. Always at least one slot.
+    const slots = assignedGroups.length > 0 ? assignedGroups.map(g => String(g.id)) : [''];
+
+    function rebuild() {
+        container.innerHTML = '';
+        const navBtns = [];
+
+        slots.forEach((slotId, idx) => {
+            const sel = document.createElement('select');
+            sel.className = 'lesson-group-select';
+            sel.dataset.prev = slotId;
+
+            // Options: "—" + groups not used in other slots
+            const usedElsewhere = new Set(slots.filter((id, i) => i !== idx && id !== ''));
+            const emptyOpt = document.createElement('option');
+            emptyOpt.value = '';
+            emptyOpt.textContent = '—';
+            sel.appendChild(emptyOpt);
+            for (const g of nonAdminGroups) {
+                if (!usedElsewhere.has(String(g.id))) {
+                    const opt = document.createElement('option');
+                    opt.value = g.id;
+                    opt.textContent = g.name;
+                    if (String(g.id) === slotId) opt.selected = true;
+                    sel.appendChild(opt);
+                }
+            }
+
+            sel.addEventListener('change', async () => {
+                const oldId = sel.dataset.prev;
+                const newId = sel.value;
+                if (oldId === newId) return;
+                sel.disabled = true;
+                try {
+                    if (oldId) {
+                        await apiCall('PATCH', `/admin/groups/${oldId}/active-lesson`, { lesson_id: null });
+                        const g = _allGroups.find(g => String(g.id) === oldId);
+                        if (g) g.active_lesson_id = null;
+                    }
+                    if (newId) {
+                        await apiCall('PATCH', `/admin/groups/${newId}/active-lesson`, { lesson_id: lessonId });
+                        const g = _allGroups.find(g => String(g.id) === newId);
+                        if (g) g.active_lesson_id = lessonId;
+                    }
+                    if (!newId && slots.length > 1) {
+                        slots.splice(idx, 1);
+                        rebuild();
+                    } else {
+                        slots[idx] = newId;
+                        renderLessons();
+                    }
+                } catch (e) {
+                    showError(e.message);
+                    sel.value = oldId;
+                    sel.disabled = false;
+                }
+            });
+
+            const navBtn = document.createElement('button');
+            navBtn.type = 'button';
+            navBtn.className = 'lesson-group-nav-btn';
+            navBtn.innerHTML = ICON_ENTER;
+            navBtn.title = 'Belépés és ugrás a csoport oldalára';
+            navBtn.disabled = !slotId;
+            navBtn.addEventListener('click', async () => {
+                if (!sel.value) return;
+                try {
+                    await apiCall('PATCH', '/me/active-lesson', { lesson_id: lessonId });
+                    window.location.href = '/#page=group&id=' + sel.value;
+                } catch (e) {
+                    showError(e.message);
+                }
+            });
+
+            container.appendChild(sel);
+            navBtns.push(navBtn);
+        });
+
+        const addBtn = document.createElement('button');
+        addBtn.type = 'button';
+        addBtn.className = 'lesson-group-add-btn';
+        addBtn.textContent = '+';
+        addBtn.title = 'Csoport hozzáadása';
+        addBtn.addEventListener('click', () => { slots.push(''); rebuild(); });
+        container.appendChild(addBtn);
+        navBtns.forEach(btn => container.appendChild(btn));
+
+        if (isActive) {
+            const exitBtn = document.createElement('button');
+            exitBtn.type = 'button';
+            exitBtn.className = 'lesson-group-nav-btn';
+            exitBtn.innerHTML = ICON_EXIT;
+            exitBtn.title = 'Kilépés az óráról';
+            exitBtn.addEventListener('click', async () => {
+                try {
+                    await apiCall('PATCH', '/me/active-lesson', { lesson_id: null });
+                    _myActiveLessonId = null;
+                    syncNavLesson();
+                    renderLessons();
+                } catch (e) {
+                    showError(e.message);
+                }
+            });
+            container.appendChild(exitBtn);
+        }
     }
-}
 
-// ============================================================================
-// Join / leave
-// ============================================================================
-
-function toggleJoin(lessonId, isCurrentlyActive) {
-    const target = isCurrentlyActive ? null : lessonId;
-    if (target === null) {
-        apiCall('PATCH', '/me/active-lesson', { lesson_id: null })
-            .then(() => { _myActiveLessonId = null; syncNavLesson(); renderLessons(); })
-            .catch(e => showError(e.message));
-    } else {
-        window.location.href = `/lessons-admin?join=${target}`;
-    }
+    rebuild();
+    return container;
 }
 
 // ============================================================================
