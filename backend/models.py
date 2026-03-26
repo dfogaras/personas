@@ -193,6 +193,8 @@ LESSON_SETTINGS_DEFAULTS = {
     "ai_model": "google/gemini-2.5-flash-lite",
     "ai_temperature": 1.0,
     "persona_system_prompt_template": DEFAULT_PERSONA_SYSTEM_PROMPT,
+    "chat_can_set_model": False,
+    "chat_can_set_temperature": False,
 }
 
 
@@ -207,6 +209,8 @@ class LessonSettings(Base):
     ai_model = Column(String, nullable=False, default=LESSON_SETTINGS_DEFAULTS["ai_model"])
     ai_temperature = Column(Float, nullable=False, default=LESSON_SETTINGS_DEFAULTS["ai_temperature"])
     persona_system_prompt_template = Column(Text, nullable=False, default=LESSON_SETTINGS_DEFAULTS["persona_system_prompt_template"])
+    chat_can_set_model = Column(Boolean, nullable=False, default=False)
+    chat_can_set_temperature = Column(Boolean, nullable=False, default=False)
 
     lesson = relationship("Lesson", back_populates="settings")
 

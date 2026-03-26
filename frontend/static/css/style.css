@@ -1054,6 +1054,115 @@ button, input, select, textarea {
     flex-shrink: 0;
 }
 
+.chat-settings-stack {
+    flex-direction: column;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.chat-setting-select {
+    padding: 6px 8px;
+    border: 1.5px solid var(--gray-200);
+    border-radius: 20px;
+    font-size: 13px;
+    background: var(--gray-50);
+    color: var(--gray-500);
+    cursor: pointer;
+    width: 100%;
+    text-align: left;
+}
+
+/* native <select> */
+select.chat-setting-select {
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%239ca3af'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    padding-right: 22px;
+}
+
+.chat-setting-select:focus {
+    outline: none;
+    border-color: var(--chat-color);
+    color: var(--gray-700);
+}
+
+.chat-select-caret {
+    font-size: 10px;
+    color: var(--gray-400);
+    margin-left: 4px;
+}
+
+/* Custom model dropdown for chat */
+.chat-model-select {
+    position: relative;
+}
+
+.chat-model-menu {
+    display: none;
+    position: absolute;
+    bottom: calc(100% + 4px);
+    right: 0;
+    min-width: 180px;
+    background: white;
+    border: 1.5px solid var(--gray-200);
+    border-radius: 10px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    z-index: 20;
+    overflow: visible;
+}
+
+.chat-model-menu.open {
+    display: block;
+}
+
+.chat-model-option {
+    position: relative;
+    padding: 8px 12px;
+    font-size: 13px;
+    cursor: pointer;
+    color: var(--gray-700);
+    white-space: nowrap;
+}
+
+.chat-model-option:first-child { border-radius: 8px 8px 0 0; }
+.chat-model-option:last-child  { border-radius: 0 0 8px 8px; }
+
+.chat-model-option:hover {
+    background: var(--gray-100);
+}
+
+.chat-model-option.selected {
+    font-weight: 600;
+    color: var(--chat-color);
+}
+
+.chat-model-option::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    right: calc(100% + 8px);
+    top: 50%;
+    transform: translateY(-50%);
+    background: var(--gray-700);
+    color: white;
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 1.4;
+    white-space: normal;
+    width: 200px;
+    padding: 7px 10px;
+    border-radius: 6px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s;
+    z-index: 30;
+}
+
+.chat-model-option:hover::after {
+    opacity: 1;
+}
+
 .message-form {
     display: flex;
     gap: 10px;
@@ -1077,7 +1186,7 @@ button, input, select, textarea {
 }
 
 .send-btn {
-    padding: 13px 18px;
+    padding: 13px 28px;
     background: var(--chat-color);
     color: white;
     border: none;

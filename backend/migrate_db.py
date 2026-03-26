@@ -67,6 +67,8 @@ def cmd_migrate(engine):
         ("lesson_settings", "ai_model", "TEXT NOT NULL DEFAULT 'google/gemini-2.5-flash-lite'"),
         ("lesson_settings", "ai_temperature", "REAL NOT NULL DEFAULT 1.0"),
         ("lesson_settings", "persona_system_prompt_template", "TEXT"),  # backfilled below
+        ("lesson_settings", "chat_can_set_model", "BOOLEAN NOT NULL DEFAULT 0"),
+        ("lesson_settings", "chat_can_set_temperature", "BOOLEAN NOT NULL DEFAULT 0"),
     ]
     drop_columns = [
         ("users", "role"),

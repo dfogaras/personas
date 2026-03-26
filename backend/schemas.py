@@ -117,6 +117,8 @@ class MessageRequest(BaseModel):
     """Schema for sending a chat message."""
 
     message: str = Field(min_length=1, max_length=500)
+    model: Optional[str] = None
+    temperature: Optional[float] = None
 
 
 class UserAdminResponse(BaseModel):
@@ -161,6 +163,8 @@ class LessonSettingsResponse(BaseModel):
     ai_model: str
     ai_temperature: float
     persona_system_prompt_template: str
+    chat_can_set_model: bool = False
+    chat_can_set_temperature: bool = False
 
 
 class LessonUserResponse(BaseModel):

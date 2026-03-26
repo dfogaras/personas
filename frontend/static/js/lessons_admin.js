@@ -305,6 +305,11 @@ function initModelSelect() {
     const trigger = document.getElementById('lessonAiModelTrigger');
     const menu    = document.getElementById('lessonAiModelMenu');
 
+    // Populate options from shared MODELS constant
+    menu.innerHTML = MODELS.map(m =>
+        `<div class="model-select-option" data-value="${m.value}" data-tooltip="${m.tooltip}">${m.label}</div>`
+    ).join('');
+
     trigger.addEventListener('click', e => {
         e.stopPropagation();
         menu.classList.toggle('open');
@@ -333,11 +338,13 @@ function openLessonModal(lesson = null) {
 
     const s = lesson?.settings ?? {};
     document.getElementById('lessonName').value            = lesson?.name ?? '';
-    document.getElementById('lessonMaxMessages').value     = s.chat_max_messages ?? 60;
-    document.getElementById('lessonMaxPersonas').value     = s.max_personas_per_user ?? 20;
+    document.getElementById('lessonMaxMessages').value         = s.chat_max_messages ?? 60;
+    document.getElementById('lessonMaxPersonas').value         = s.max_personas_per_user ?? 20;
     setModelSelect(s.ai_model ?? 'google/gemini-2.5-flash-lite');
-    document.getElementById('lessonAiTemperature').value   = s.ai_temperature ?? 1.0;
-    document.getElementById('lessonSystemPrompt').value    = s.persona_system_prompt_template ?? DEFAULT_SYSTEM_PROMPT;
+    document.getElementById('lessonAiTemperature').value       = s.ai_temperature ?? 1.0;
+    document.getElementById('lessonCanSetModel').checked       = s.chat_can_set_model ?? false;
+    document.getElementById('lessonCanSetTemperature').checked = s.chat_can_set_temperature ?? false;
+    document.getElementById('lessonSystemPrompt').value        = s.persona_system_prompt_template ?? DEFAULT_SYSTEM_PROMPT;
 
     document.getElementById('lessonModalError').style.display = 'none';
     document.getElementById('lessonSubmitBtn').disabled = false;
@@ -386,6 +393,8 @@ async function submitLessonModal() {
         max_personas_per_user:          parseInt(document.getElementById('lessonMaxPersonas').value, 10) || 20,
         ai_model:                       document.getElementById('lessonAiModel').value || 'google/gemini-2.5-flash-lite',
         ai_temperature:                 tempVal,
+        chat_can_set_model:             document.getElementById('lessonCanSetModel').checked,
+        chat_can_set_temperature:       document.getElementById('lessonCanSetTemperature').checked,
         persona_system_prompt_template: document.getElementById('lessonSystemPrompt').value.trim(),
     };
 

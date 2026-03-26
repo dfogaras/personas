@@ -466,6 +466,27 @@
     gap: 4px;
 }
 
+.modal-field-check {
+    justify-content: center;
+}
+
+.modal-check-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: var(--gray-700);
+    cursor: pointer;
+    user-select: none;
+}
+
+.modal-check-label input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    accent-color: var(--danger-color);
+}
+
 .modal-label {
     font-size: 12px;
     font-weight: 600;

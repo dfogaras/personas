@@ -41,6 +41,20 @@
             <div class="chat-input-area">
                 <form id="messageForm" class="message-form">
                     <input type="text" id="messageInput" placeholder="Írj üzenetet..." autocomplete="off" />
+                    <div id="chatSettingsStack" class="chat-settings-stack" style="display:none">
+                        <div id="chatModelSetting" class="chat-model-select" style="display:none">
+                            <button type="button" class="chat-setting-select" id="chatModelTrigger">
+                                <span id="chatModelLabel"></span><span class="chat-select-caret">▾</span>
+                            </button>
+                            <div class="chat-model-menu" id="chatModelMenu"></div>
+                        </div>
+                        <select id="chatTempSelect" class="chat-setting-select" style="display:none" title="Hangnem">
+                            <option value="0">🎯 Precíz</option>
+                            <option value="1">📚 Kiegyensúlyozott</option>
+                            <option value="2">✨ Kreatív</option>
+                            <option value="3">🎲 Kiszámíthatatlan</option>
+                        </select>
+                    </div>
                     <button type="submit" class="send-btn" title="Küldés">➤</button>
                 </form>
             </div>
@@ -50,6 +64,6 @@
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="/static/js/i18n.js?v=10"></script>
     <script src="/static/js/common.js?v=10"></script>
-    <script src="/static/js/chat.js?v=10"></script>
+    <script src="/static/js/chat.js?v=15"></script>
 </body>
 </html>

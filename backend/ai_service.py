@@ -126,7 +126,7 @@ async def generate_and_record(
     """Generate an AI response and record token usage."""
     response = await service.generate(system_prompt, messages, model=model, temperature=temperature)
     logger.info(
-        f"AI response: model={response.model} "
+        f"AI response: model={response.model} temperature={temperature} "
         f"prompt={response.prompt_tokens} completion={response.completion_tokens}"
     )
     _record(response.model, response.prompt_tokens, response.completion_tokens, db)

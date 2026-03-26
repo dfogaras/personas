@@ -144,10 +144,17 @@ async def send_message(
         for m in db.query(Message).filter(Message.chat_id == chat_id).all()
     ]
 
+    effective_model = settings.ai_model
+    if settings.chat_can_set_model and req.model:
+        effective_model = req.model
+    effective_temperature = settings.ai_temperature
+    if settings.chat_can_set_temperature and req.temperature is not None:
+        effective_temperature = req.temperature
+
     response = await generate_and_record(
         ai_service, system_prompt, messages, db,
-        model=settings.ai_model,
-        temperature=settings.ai_temperature,
+        model=effective_model,
+        temperature=effective_temperature,
     )
     assistant_message = Message(
         chat_id=chat_id,
