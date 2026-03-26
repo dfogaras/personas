@@ -149,7 +149,6 @@ async def send_message(
         model=settings.ai_model,
         temperature=settings.ai_temperature,
     )
-I
     assistant_message = Message(
         chat_id=chat_id,
         role="assistant",
