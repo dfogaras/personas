@@ -142,7 +142,7 @@ function setupNav() {
 async function startNewChat(personaId) {
     try {
         const chat = await apiCall('POST', '/chats', { persona_id: personaId });
-        window.location.href = `/chat/${chat.id}`;
+        window.open(`/chat/${chat.id}`, '_blank');
     } catch (e) {
         alert(e.message);
     }
@@ -174,7 +174,7 @@ function createChatItem(chat, { personaName = null, showPersonaTag = false } = {
         <span class="chat-main">${personaTagHtml}${userPart}<span class="chat-preview">${previewPart}</span></span>
         <span class="chat-date">${prettyTime(chat.updated_at)}</span>
     `;
-    item.addEventListener('click', () => { window.location.href = `/chat/${chat.id}`; });
+    item.addEventListener('click', () => { window.open(`/chat/${chat.id}`, '_blank'); });
 
     if (chat.excerpt && chat.excerpt.length > 0) {
         const tooltip = document.createElement('div');

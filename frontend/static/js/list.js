@@ -43,7 +43,7 @@ async function route() {
         const suffix = page === 'persona-edit' ? '?edit' : page === 'persona-remix' ? '?remix' : '';
         window.location.href = `/persona/${params.id}${suffix}`;
     } else if (page === 'chat' && params.id) {
-        window.location.href = `/chat/${params.id}`;
+        window.open(`/chat/${params.id}`, '_blank');
     } else if (page === 'chat' && params.persona) {
         await startNewChat(parseInt(params.persona));
     } else {
