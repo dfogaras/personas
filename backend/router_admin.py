@@ -161,7 +161,7 @@ async def get_usage(
 
     models_usage = []
     for model, prompt_tok, completion_tok in rows:
-        p = pricing.get(model, {})
+        p = pricing.get(model) or pricing.get(model.replace("-", ".")) or {}
         prompt_price = float(p.get("prompt", 0) or 0)
         completion_price = float(p.get("completion", 0) or 0)
         cost = prompt_tok * prompt_price + completion_tok * completion_price if p else None

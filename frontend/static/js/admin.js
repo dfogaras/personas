@@ -432,8 +432,9 @@ function renderUsage(data) {
 
     const totalPrompt = models.reduce((s, r) => s + r.prompt_tokens, 0);
     const totalCompletion = models.reduce((s, r) => s + r.completion_tokens, 0);
-    const totalCost = models.every(r => r.cost_usd != null)
-        ? models.reduce((s, r) => s + r.cost_usd, 0) : null;
+    const costModels = models.filter(r => r.cost_usd != null);
+    const totalCost = costModels.length > 0
+        ? costModels.reduce((s, r) => s + r.cost_usd, 0) : null;
 
     const rows = models.map(r => `
         <tr>
