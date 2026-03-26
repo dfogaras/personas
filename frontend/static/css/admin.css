@@ -130,6 +130,22 @@
     transform: translateX(16px);
 }
 
+.group-lesson-select {
+    padding: 2px 4px;
+    border-radius: 6px;
+    border: 1.5px solid var(--gray-300);
+    background: var(--gray-100);
+    color: var(--gray-700);
+    font-size: 13px;
+    font-family: inherit;
+    cursor: pointer;
+    max-width: 180px;
+}
+
+.group-lesson-select:hover {
+    border-color: var(--persona-color);
+}
+
 .table-icon-btn {
     width: 30px;
     height: 30px;

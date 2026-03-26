@@ -95,7 +95,7 @@ function renderLessonRow(lesson) {
     nameEl.textContent = lesson.name;
     nameRow.appendChild(nameEl);
 
-    const groupsEl = buildGroupSection(lesson.id, isActive);
+    const groupsEl = buildGroupSection(lesson, isActive);
 
     info.append(nameRow, groupsEl);
 
@@ -138,9 +138,17 @@ function renderLessonRow(lesson) {
 // Group section (dropdowns)
 // ============================================================================
 
-function buildGroupSection(lessonId, isActive) {
+function buildGroupSection(lesson, isActive) {
+    const lessonId = lesson.id;
     const nonAdminGroups = _allGroups.filter(g => g.name !== 'admin');
-    const assignedGroups = nonAdminGroups.filter(g => g.active_lesson_id === lessonId);
+
+    // Assigned groups: from lesson_groups table, plus legacy groups whose active_lesson_id
+    // still points here (so existing data shows up before it's formally migrated).
+    const fromTable = new Set((lesson.groups ?? []).map(g => String(g.id)));
+    const assignedGroups = [
+        ...(lesson.groups ?? []),
+        ...nonAdminGroups.filter(g => g.active_lesson_id === lessonId && !fromTable.has(String(g.id))),
+    ];
 
     const container = document.createElement('div');
     container.className = 'lesson-item-groups';
@@ -179,25 +187,24 @@ function buildGroupSection(lessonId, isActive) {
                 if (oldId === newId) return;
                 sel.disabled = true;
                 try {
-                    if (oldId) {
-                        await apiCall('PATCH', `/admin/groups/${oldId}/active-lesson`, { lesson_id: null });
-                        const g = _allGroups.find(g => String(g.id) === oldId);
-                        if (g) g.active_lesson_id = null;
-                    }
-                    if (newId) {
-                        await apiCall('PATCH', `/admin/groups/${newId}/active-lesson`, { lesson_id: lessonId });
-                        const g = _allGroups.find(g => String(g.id) === newId);
-                        if (g) g.active_lesson_id = lessonId;
-                    }
+                    slots[idx] = newId;
+                    const groupIds = slots.filter(id => id !== '').map(Number);
+                    await apiCall('PUT', `/admin/lessons/${lessonId}/groups`, { group_ids: groupIds });
+                    lesson.groups = groupIds.map(id => {
+                        const existing = (lesson.groups ?? []).find(g => g.id === id);
+                        if (existing) return existing;
+                        const g = _allGroups.find(g => g.id === id);
+                        return { id, name: g?.name ?? '' };
+                    });
                     if (!newId && slots.length > 1) {
                         slots.splice(idx, 1);
                         rebuild();
                     } else {
-                        slots[idx] = newId;
                         renderLessons();
                     }
                 } catch (e) {
                     showError(e.message);
+                    slots[idx] = oldId;
                     sel.value = oldId;
                     sel.disabled = false;
                 }

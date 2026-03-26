@@ -1,6 +1,7 @@
 let _currentUsers = [];
 let _currentGroups = [];
 let _currentAccess = {};
+let _currentLessons = [];
 
 function normalizeEmail(val) {
     const email = val.trim().toLowerCase();
@@ -358,6 +359,39 @@ function renderUsers(users, groups, access) {
                 } catch (err) { showError(err.message); }
             });
             title.insertBefore(accessBtn, title.querySelector('.admin-group-actions'));
+
+            // Active lesson dropdown — only lessons assigned to this group
+            const groupLessons = _currentLessons.filter(l =>
+                l.groups?.some(g => g.id === group.id) || l.id === group.active_lesson_id
+            );
+            const lessonSel = document.createElement('select');
+            lessonSel.className = 'group-lesson-select';
+            lessonSel.title = 'Aktív lecke';
+            const noneOpt = document.createElement('option');
+            noneOpt.value = '';
+            noneOpt.textContent = '—';
+            lessonSel.appendChild(noneOpt);
+            for (const l of groupLessons) {
+                const opt = document.createElement('option');
+                opt.value = l.id;
+                opt.textContent = l.name;
+                if (l.id === group.active_lesson_id) opt.selected = true;
+                lessonSel.appendChild(opt);
+            }
+            lessonSel.addEventListener('click', e => e.stopPropagation());
+            lessonSel.addEventListener('change', async () => {
+                const newId = lessonSel.value ? parseInt(lessonSel.value) : null;
+                lessonSel.disabled = true;
+                try {
+                    await apiCall('PATCH', `/admin/groups/${group.id}/active-lesson`, { lesson_id: newId });
+                    group.active_lesson_id = newId;
+                } catch (err) {
+                    showError(err.message);
+                } finally {
+                    lessonSel.disabled = false;
+                }
+            });
+            title.insertBefore(lessonSel, title.querySelector('.admin-group-actions'));
         }
 
         title.addEventListener('click', e => {
@@ -467,11 +501,13 @@ async function init() {
     setupNav();
 
     try {
-        const [groups, users, access] = await Promise.all([
+        const [groups, users, access, lessons] = await Promise.all([
             apiCall('GET', '/admin/groups'),
             apiCall('GET', '/admin/users'),
             apiCall('GET', '/admin/access'),
+            apiCall('GET', '/admin/lessons'),
         ]);
+        _currentLessons = lessons;
         renderUsers(users, groups, access);
     } catch (e) {
         document.getElementById('usersTables').innerHTML = '';
