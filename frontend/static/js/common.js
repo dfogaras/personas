@@ -108,13 +108,19 @@ function setupNav() {
     navMyPage.textContent = user.name || user.email;
 
     // Admin link or lesson link
-    const navGroupPage = document.getElementById('navGroupPage');
+    const navGeneralAdminPage = document.getElementById('navGeneralAdminPage');
     if (user.group === 'admin') {
-        navGroupPage.textContent = 'Admin';
-        navGroupPage.href = '/admin';
-        navGroupPage.style.display = '';
+        navGeneralAdminPage.textContent = 'Admin főoldal';
+        navGeneralAdminPage.href = '/admin';
+        navGeneralAdminPage.style.display = '';
+        const navLessonsAdminPage = document.getElementById('navLessonsAdminPage');
+        if (navLessonsAdminPage) {
+            navLessonsAdminPage.textContent = 'Órák kezelése';
+            navLessonsAdminPage.href = '/lessons-admin';
+            navLessonsAdminPage.style.display = '';
+        }
     } else {
-        navGroupPage.style.display = 'none';
+        navGeneralAdminPage.style.display = 'none';
     }
 
     // Logout

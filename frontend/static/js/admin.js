@@ -447,6 +447,7 @@ async function init() {
     if (!user) { redirectToLogin(); return; }
 
     setupNav();
+    setNavLabel('Admin főoldal');
 
     try {
         const [groups, users] = await Promise.all([

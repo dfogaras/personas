@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Adminisztráció — kincskereso.ai</title>
+    <title>Admin főoldal — kincskereso.ai</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎭</text></svg>">
     <link rel="stylesheet" href="/static/css/style.css">
     <link rel="stylesheet" href="/static/css/admin.css">
@@ -19,29 +19,20 @@
             <div class="nav-dropdown-menu" id="navDropdownMenu">
                 <a class="nav-dropdown-item" id="navMyPage" href="/#page=me"></a>
                 <a class="nav-dropdown-item" id="navLessonPage" href="/" style="display:none"></a>
-                <a class="nav-dropdown-item" id="navGroupPage" href="/" style="display:none"></a>
+                <a class="nav-dropdown-item" id="navGeneralAdminPage" href="/" style="display:none"></a>
+                <a class="nav-dropdown-item" id="navLessonsAdminPage" href="/" style="display:none"></a>
                 <button class="nav-dropdown-item nav-dropdown-logout" id="navLogoutBtn">Kijelentkezés</button>
             </div>
         </div>
     </nav>
 
     <div class="page-content admin-content">
-        <div class="page-header">
-            <h1>Adminisztráció</h1>
-        </div>
-        <div class="auth-error" id="adminError" style="display:none"></div>
+<div class="auth-error" id="adminError" style="display:none"></div>
         <section>
             <h2 class="admin-section-title">Felhasználók</h2>
             <div id="usersTables"><p class="loading">Betöltés...</p></div>
         </section>
-        <section style="margin-top: 2rem;">
-            <h2 class="admin-section-title">Órák</h2>
-            <div class="general-row">
-                <span class="general-label">Órarendszer</span>
-                <a href="/lessons-admin" class="admin-btn save-btn" style="text-decoration:none">Órák kezelése →</a>
-            </div>
-        </section>
-        <section style="margin-top: 2rem;">
+<section style="margin-top: 2rem;">
             <h2 class="admin-section-title">Általános</h2>
             <div class="general-row">
                 <span class="general-label">Biztonsági mentés</span>

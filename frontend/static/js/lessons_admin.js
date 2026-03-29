@@ -495,6 +495,7 @@ async function init() {
     if (user.group !== 'admin') { window.location.href = '/'; return; }
 
     setupNav();
+    setNavLabel('Órák kezelése');
 
     initModelSelect();
     document.getElementById('newLessonBtn').addEventListener('click', () => openLessonModal());
