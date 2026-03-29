@@ -123,18 +123,19 @@ function setupNav() {
         window.location.href = '/login';
     });
 
-    // Lesson (center of nav + dropdown link for non-admin)
+    // Lesson (center of nav + dropdown link)
     const navLesson = document.getElementById('navLesson');
     if (navLesson) {
         apiCall('GET', '/me/lesson').then(lesson => {
             if (lesson) {
                 navLesson.textContent = lesson.name;
                 navLesson.style.display = '';
-                if (user.group !== 'admin') {
+                const navLessonPage = document.getElementById('navLessonPage');
+                if (navLessonPage) {
                     const groupNames = lesson.groups?.map(g => g.name).join(', ');
-                    navGroupPage.textContent = groupNames || 'Órám';
-                    navGroupPage.href = '/#page=lesson';
-                    navGroupPage.style.display = '';
+                    navLessonPage.textContent = groupNames || 'Órám';
+                    navLessonPage.href = '/#page=lesson';
+                    navLessonPage.style.display = '';
                 }
             }
         }).catch(() => {});
