@@ -27,12 +27,18 @@
 
     <div class="page-content admin-content">
         <a href="/admin" class="back-link">← Adminisztráció</a>
-        <div class="lessons-header">
-            <h1>Órák</h1>
-            <button class="admin-btn save-btn" id="newLessonBtn">+ Új óra</button>
-        </div>
         <div class="auth-error" id="lessonsError" style="display:none"></div>
-        <div id="lessonsList"><p class="loading">Betöltés...</p></div>
+        <section style="margin-bottom: 2rem;">
+            <h2 class="admin-section-title">Csoportok</h2>
+            <div id="groupsSection"><p class="loading">Betöltés...</p></div>
+        </section>
+        <section>
+            <div class="lessons-header">
+                <h2 class="admin-section-title">Órák</h2>
+                <button class="admin-btn save-btn" id="newLessonBtn">+ Új óra</button>
+            </div>
+            <div id="lessonsList"><p class="loading">Betöltés...</p></div>
+        </section>
     </div>
 
     <!-- Lesson editor modal (create / edit / remix) -->

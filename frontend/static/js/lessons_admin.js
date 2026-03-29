@@ -17,6 +17,7 @@ A személyleírásod a következő:
 
 let _lessons = [];
 let _allGroups = [];
+let _groupAccess = {};
 let _myActiveLessonId = null;
 let _modalLesson = null; // null = create mode, lesson object = edit mode
 
@@ -62,6 +63,69 @@ function syncNavLesson() {
 }
 
 // ============================================================================
+// Render groups section
+// ============================================================================
+
+function renderGroupsSection() {
+    const container = document.getElementById('groupsSection');
+    if (!container) return;
+    const nonAdminGroups = _allGroups.filter(g => g.name !== 'admin');
+    container.innerHTML = '';
+    for (const group of nonAdminGroups) {
+        const enabled = _groupAccess[group.name] ?? false;
+        const row = document.createElement('div');
+        row.className = 'general-row';
+
+        const label = document.createElement('span');
+        label.className = 'general-label';
+        label.textContent = group.name;
+
+        const accessBtn = document.createElement('button');
+        accessBtn.className = `access-toggle-btn ${enabled ? 'access-on' : 'access-off'}`;
+        accessBtn.title = enabled ? 'Letiltás' : 'Engedélyezés';
+        accessBtn.addEventListener('click', async () => {
+            try {
+                _groupAccess = await apiCall('PATCH', `/admin/access/${group.name}`, { enabled: !enabled });
+                renderGroupsSection();
+            } catch (err) { showError(err.message); }
+        });
+
+        const lessonSel = document.createElement('select');
+        lessonSel.className = 'group-lesson-select';
+        lessonSel.title = 'Aktív lecke';
+        const noneOpt = document.createElement('option');
+        noneOpt.value = '';
+        noneOpt.textContent = '—';
+        lessonSel.appendChild(noneOpt);
+        const groupLessons = _lessons.filter(l =>
+            l.groups?.some(g => g.id === group.id) || l.id === group.active_lesson_id
+        );
+        for (const l of groupLessons) {
+            const opt = document.createElement('option');
+            opt.value = l.id;
+            opt.textContent = l.name;
+            if (l.id === group.active_lesson_id) opt.selected = true;
+            lessonSel.appendChild(opt);
+        }
+        lessonSel.addEventListener('change', async () => {
+            const newId = lessonSel.value ? parseInt(lessonSel.value) : null;
+            lessonSel.disabled = true;
+            try {
+                await apiCall('PATCH', `/admin/groups/${group.id}/active-lesson`, { lesson_id: newId });
+                group.active_lesson_id = newId;
+            } catch (err) {
+                showError(err.message);
+            } finally {
+                lessonSel.disabled = false;
+            }
+        });
+
+        row.append(label, accessBtn, lessonSel);
+        container.appendChild(row);
+    }
+}
+
+// ============================================================================
 // Render
 // ============================================================================
 
@@ -69,12 +133,13 @@ function renderLessons() {
     const container = document.getElementById('lessonsList');
     if (!_lessons.length) {
         container.innerHTML = `<p class="empty">${T.noLessons}</p>`;
-        return;
+    } else {
+        container.innerHTML = '';
+        for (const lesson of _lessons) {
+            container.appendChild(renderLessonRow(lesson));
+        }
     }
-    container.innerHTML = '';
-    for (const lesson of _lessons) {
-        container.appendChild(renderLessonRow(lesson));
-    }
+    renderGroupsSection();
 }
 
 function renderLessonRow(lesson) {
@@ -452,13 +517,15 @@ async function init() {
     }
 
     try {
-        const [lessons, groups, myLesson] = await Promise.all([
+        const [lessons, groups, myLesson, access] = await Promise.all([
             apiCall('GET', '/admin/lessons'),
             apiCall('GET', '/admin/groups'),
             apiCall('GET', '/me/lesson'),
+            apiCall('GET', '/admin/access'),
         ]);
         _lessons = lessons;
         _allGroups = groups;
+        _groupAccess = access;
         _myActiveLessonId = myLesson?.id ?? null;
         syncNavLesson();
         renderLessons();

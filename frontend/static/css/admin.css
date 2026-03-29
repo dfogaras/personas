@@ -661,7 +661,8 @@
     margin-bottom: 24px;
 }
 
-.lessons-header h1 {
+.lessons-header h1,
+.lessons-header h2 {
     margin-bottom: 0;
 }
 
