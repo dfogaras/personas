@@ -679,9 +679,36 @@
     transition: border-left-color 0.15s, box-shadow 0.15s;
 }
 
-.lesson-item.active {
-    border-left-color: #16a34a;
-    box-shadow: 2px 4px 14px rgba(22, 163, 74, 0.14);
+
+.lesson-active-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #15803d;
+    background: #bbf7d0;
+    border-radius: 10px;
+    padding: 1px 6px 1px 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    flex-shrink: 0;
+}
+
+.lesson-active-badge-close {
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1;
+    cursor: pointer;
+    color: #15803d;
+    background: #86efac;
+    border-radius: 4px;
+    padding: 1px 3px;
+}
+
+.lesson-active-badge-close:hover {
+    background: #16a34a;
+    color: white;
 }
 
 .lesson-item-info {
@@ -733,27 +760,12 @@
     cursor: pointer;
 }
 
-.lesson-group-nav-btn {
-    display: flex;
-    align-items: center;
-    padding: 2px 5px;
-    border-radius: 6px;
-    border: 1.5px solid var(--gray-300);
-    background: transparent;
-    color: var(--gray-500);
-    cursor: pointer;
-    font-family: inherit;
+.lesson-group-select--on {
+    border-color: #16a34a;
+    background: #dcfce7;
+    color: #15803d;
 }
 
-.lesson-group-nav-btn:disabled {
-    opacity: 0.3;
-    cursor: default;
-}
-
-.lesson-group-nav-btn:not(:disabled):hover {
-    border-color: var(--persona-color);
-    color: var(--persona-color);
-}
 
 .lesson-group-add-btn {
     padding: 1px 7px;

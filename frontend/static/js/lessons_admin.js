@@ -42,7 +42,6 @@ const ICON_EDIT   = _svg('<path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2
 const ICON_DELETE = _svg('<polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>');
 const ICON_REMIX  = _svg('<rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>');
 const ICON_ENTER  = _svg('<path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/>');
-const ICON_EXIT   = _svg('<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>');
 
 // ============================================================================
 // Nav lesson sync
@@ -86,7 +85,7 @@ function renderGroupsSection() {
         accessBtn.addEventListener('click', async () => {
             try {
                 _groupAccess = await apiCall('PATCH', `/admin/access/${group.name}`, { enabled: !enabled });
-                renderGroupsSection();
+                renderLessons();
             } catch (err) { showError(err.message); }
         });
 
@@ -113,6 +112,7 @@ function renderGroupsSection() {
             try {
                 await apiCall('PATCH', `/admin/groups/${group.id}/active-lesson`, { lesson_id: newId });
                 group.active_lesson_id = newId;
+                renderLessons();
             } catch (err) {
                 showError(err.message);
             } finally {
@@ -169,8 +169,28 @@ function renderLessonRow(lesson) {
         }
     });
     nameRow.appendChild(nameEl);
+    if (isActive) {
+        const badge = document.createElement('span');
+        badge.className = 'lesson-active-badge';
+        badge.textContent = getUser()?.name ?? 'én';
+        const closeBtn = document.createElement('span');
+        closeBtn.className = 'lesson-active-badge-close';
+        closeBtn.textContent = '×';
+        closeBtn.title = 'Kilépés az óráról';
+        closeBtn.addEventListener('click', async e => {
+            e.preventDefault();
+            try {
+                await apiCall('PATCH', '/me/active-lesson', { lesson_id: null });
+                _myActiveLessonId = null;
+                syncNavLesson();
+                renderLessons();
+            } catch (err) { showError(err.message); }
+        });
+        badge.appendChild(closeBtn);
+        nameRow.appendChild(badge);
+    }
 
-    const groupsEl = buildGroupSection(lesson, isActive);
+    const groupsEl = buildGroupSection(lesson);
 
     info.append(nameRow, groupsEl);
 
@@ -213,7 +233,7 @@ function renderLessonRow(lesson) {
 // Group section (dropdowns)
 // ============================================================================
 
-function buildGroupSection(lesson, isActive) {
+function buildGroupSection(lesson) {
     const lessonId = lesson.id;
     const nonAdminGroups = _allGroups.filter(g => g.name !== 'admin');
 
@@ -251,6 +271,13 @@ function buildGroupSection(lesson, isActive) {
                     opt.textContent = g.name;
                     if (String(g.id) === slotId) opt.selected = true;
                     sel.appendChild(opt);
+                }
+            }
+
+            if (slotId) {
+                const g = _allGroups.find(g => String(g.id) === slotId);
+                if (g && g.active_lesson_id === lessonId && _groupAccess[g.name]) {
+                    sel.classList.add('lesson-group-select--on');
                 }
             }
 
@@ -294,24 +321,6 @@ function buildGroupSection(lesson, isActive) {
         addBtn.addEventListener('click', () => { slots.push(''); rebuild(); });
         container.appendChild(addBtn);
 
-        if (isActive) {
-            const exitBtn = document.createElement('button');
-            exitBtn.type = 'button';
-            exitBtn.className = 'lesson-group-nav-btn';
-            exitBtn.innerHTML = ICON_EXIT;
-            exitBtn.title = 'Kilépés az óráról';
-            exitBtn.addEventListener('click', async () => {
-                try {
-                    await apiCall('PATCH', '/me/active-lesson', { lesson_id: null });
-                    _myActiveLessonId = null;
-                    syncNavLesson();
-                    renderLessons();
-                } catch (e) {
-                    showError(e.message);
-                }
-            });
-            container.appendChild(exitBtn);
-        }
     }
 
     rebuild();
