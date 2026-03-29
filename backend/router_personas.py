@@ -29,33 +29,21 @@ async def list_groups(db: Session = Depends(get_db)):
 
 @router.get("/api/personas", response_model=list[PersonaResponse])
 async def list_personas(
-    for_group_id: Optional[int] = Query(None, alias="group_id"),
     for_user_id: Optional[int] = Query(None, alias="user_id"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    no_params = for_group_id is None and for_user_id is None
-    if no_params:
-        for_user_id = current_user.id
+    my_lesson = resolve_active_lesson(current_user, db)
+    if not my_lesson:
+        return []
 
     q = db.query(Persona).options(selectinload(Persona.user))
+
+    q = q.join(LessonPersona, Persona.id == LessonPersona.persona_id).filter(
+        LessonPersona.lesson_id == my_lesson.id
+    )
     if for_user_id is not None:
         q = q.filter(Persona.user_id == for_user_id)
-
-    my_lesson = resolve_active_lesson(current_user, db)
-
-    if for_group_id is not None:
-        for_group_lesson_id = db.query(Group.active_lesson_id).filter(Group.id == for_group_id).scalar()
-        if my_lesson is None or for_group_lesson_id is None:
-            q = q.join(User, Persona.user_id == User.id).filter(User.group_id == for_group_id)
-        elif for_group_lesson_id != my_lesson.id:
-            return []
-        # else: lessons match — lesson filter below replaces group filter intentionally
-
-    if my_lesson:
-        q = q.join(LessonPersona, Persona.id == LessonPersona.persona_id).filter(
-            LessonPersona.lesson_id == my_lesson.id
-        )
 
     return q.all()
 

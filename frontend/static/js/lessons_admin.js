@@ -220,7 +220,7 @@ function buildGroupSection(lesson, isActive) {
                 if (!sel.value) return;
                 try {
                     await apiCall('PATCH', '/me/active-lesson', { lesson_id: lessonId });
-                    window.location.href = '/#page=group&id=' + sel.value;
+                    window.location.href = '/#page=lesson';
                 } catch (e) {
                     showError(e.message);
                 }

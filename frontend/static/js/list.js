@@ -35,8 +35,8 @@ async function route() {
 
     if (page === 'me') {
         await showMePage();
-    } else if (page === 'group' && params.id) {
-        await showGroupPage(params.id);
+    } else if (page === 'lesson') {
+        await showLessonPage();
     } else if (page === 'user' && params.id) {
         await showUserPage(parseInt(params.id));
     } else if ((page === 'persona' || page === 'persona-edit' || page === 'persona-remix') && params.id) {
@@ -61,11 +61,17 @@ async function showMePage() {
     await showDashboardPage(`user_id=${user.id}`, `user_id=${user.id}`, true);
 }
 
-async function showGroupPage(groupId) {
-    const groups = await apiCall('GET', '/groups');
-    const group = groups.find(g => g.id === parseInt(groupId));
-    setNavLabel(group ? group.name + ' csoport' : 'Csoport');
-    await showDashboardPage(`group_id=${groupId}`, `group_id=${groupId}`);
+async function showLessonPage() {
+    const lesson = await apiCall('GET', '/me/lesson');
+    setNavLabel(lesson ? lesson.name : 'Óra');
+    if (!lesson) {
+        document.getElementById('page-dashboard').style.display = 'block';
+        document.getElementById('dashboardPersonas').innerHTML = '<p style="color:var(--text-muted)">Nincs aktív óra.</p>';
+        document.getElementById('dashboardChats').innerHTML = '';
+        document.getElementById('dashboardChatsHeading').style.display = 'none';
+        return;
+    }
+    await showDashboardPage(``, ``);
 }
 
 async function showUserPage(userId) {

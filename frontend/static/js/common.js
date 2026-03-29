@@ -107,15 +107,11 @@ function setupNav() {
     const navMyPage = document.getElementById('navMyPage');
     navMyPage.textContent = user.name || user.email;
 
-    // Group / admin link
+    // Admin link or lesson link
     const navGroupPage = document.getElementById('navGroupPage');
     if (user.group === 'admin') {
         navGroupPage.textContent = 'Admin';
         navGroupPage.href = '/admin';
-        navGroupPage.style.display = '';
-    } else if (user.group) {
-        navGroupPage.textContent = user.group + ' csoport';
-        navGroupPage.href = `/#page=group&id=${user.group_id}`;
         navGroupPage.style.display = '';
     } else {
         navGroupPage.style.display = 'none';
@@ -127,13 +123,18 @@ function setupNav() {
         window.location.href = '/login';
     });
 
-    // Lesson (center of nav)
+    // Lesson (center of nav + dropdown link for non-admin)
     const navLesson = document.getElementById('navLesson');
     if (navLesson) {
         apiCall('GET', '/me/lesson').then(lesson => {
             if (lesson) {
                 navLesson.textContent = lesson.name;
                 navLesson.style.display = '';
+                if (user.group !== 'admin') {
+                    navGroupPage.textContent = lesson.name;
+                    navGroupPage.href = '/#page=lesson';
+                    navGroupPage.style.display = '';
+                }
             }
         }).catch(() => {});
     }
