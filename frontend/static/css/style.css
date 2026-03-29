@@ -192,7 +192,6 @@ button, input, select, textarea {
     border: none;
     border-radius: 6px;
     padding: 8px 10px 12.5px;
-    text-transform: lowercase;
     letter-spacing: 1px;
     text-shadow: 1px 2px 4px rgba(0,0,0,0.25);
     cursor: pointer;
@@ -210,6 +209,10 @@ button, input, select, textarea {
     opacity: 0.75;
     transition: transform 0.15s;
     letter-spacing: 0;
+}
+
+.nav-label-num {
+    font-size: 32px;
 }
 
 .nav-dropdown.open .nav-dropdown-caret {

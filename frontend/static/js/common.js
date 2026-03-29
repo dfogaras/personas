@@ -93,7 +93,9 @@ function personaMetaHtml(persona) {
 
 function setNavLabel(label) {
     const el = document.getElementById('navContextLabel');
-    if (el) el.textContent = label;
+    if (!el) return;
+    // Pacifico numerals render shorter than letters — boost leading digits
+    el.innerHTML = label.replace(/^(\d+)/, '<span class="nav-label-num">$1</span>');
 }
 
 function setupNav() {
