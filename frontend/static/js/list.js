@@ -63,7 +63,8 @@ async function showMePage() {
 
 async function showLessonPage() {
     const lesson = await apiCall('GET', '/me/lesson');
-    setNavLabel(lesson ? lesson.name : 'Óra');
+    const groupNames = lesson.groups?.map(g => g.name).join(', ');
+    setNavLabel(groupNames || 'Órám');
     if (!lesson) {
         document.getElementById('page-dashboard').style.display = 'block';
         document.getElementById('dashboardPersonas').innerHTML = '<p style="color:var(--text-muted)">Nincs aktív óra.</p>';

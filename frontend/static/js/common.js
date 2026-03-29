@@ -131,7 +131,8 @@ function setupNav() {
                 navLesson.textContent = lesson.name;
                 navLesson.style.display = '';
                 if (user.group !== 'admin') {
-                    navGroupPage.textContent = lesson.name;
+                    const groupNames = lesson.groups?.map(g => g.name).join(', ');
+                    navGroupPage.textContent = groupNames || 'Órám';
                     navGroupPage.href = '/#page=lesson';
                     navGroupPage.style.display = '';
                 }

@@ -57,14 +57,24 @@ def _settings_response(lesson: Lesson) -> LessonSettingsResponse:
     )
 
 
-def _admin_response(lesson: Lesson) -> LessonAdminResponse:
+def _lesson_groups(lesson: Lesson, db: Session) -> list[LessonGroupInfo]:
+    """All groups associated with a lesson: via lesson_groups table or active_lesson_id."""
+    from_table = {lg.group_id for lg in lesson.groups}
+    groups = [LessonGroupInfo(id=lg.group_id, name=lg.group.name) for lg in lesson.groups]
+    for g in db.query(Group).filter(Group.active_lesson_id == lesson.id).all():
+        if g.id not in from_table:
+            groups.append(LessonGroupInfo(id=g.id, name=g.name))
+    return groups
+
+
+def _admin_response(lesson: Lesson, db: Session) -> LessonAdminResponse:
     return LessonAdminResponse(
         id=lesson.id,
         name=lesson.name,
         created_by=lesson.created_by,
         created_at=lesson.created_at,
         settings=_settings_response(lesson),
-        groups=[LessonGroupInfo(id=lg.group_id, name=lg.group.name) for lg in lesson.groups],
+        groups=_lesson_groups(lesson, db),
         personas=[LessonPersonaInfo(persona_id=lp.persona_id, is_pinned=lp.is_pinned) for lp in lesson.personas],
     )
 
@@ -110,7 +120,7 @@ class ActiveLessonUpdate(BaseModel):
 @router.get("/api/admin/lessons", response_model=list[LessonAdminResponse])
 async def admin_list_lessons(_: User = Depends(require_admin), db: Session = Depends(get_db)):
     lessons = db.query(Lesson).order_by(Lesson.created_at.desc()).all()
-    return [_admin_response(l) for l in lessons]
+    return [_admin_response(l, db) for l in lessons]
 
 
 @router.post("/api/admin/lessons", response_model=LessonAdminResponse, status_code=201)
@@ -125,7 +135,7 @@ async def admin_create_lesson(
     db.add(LessonSettings(lesson_id=lesson.id))
     db.commit()
     db.refresh(lesson)
-    return _admin_response(lesson)
+    return _admin_response(lesson, db)
 
 
 @router.get("/api/admin/lessons/{lesson_id}", response_model=LessonAdminResponse)
@@ -134,7 +144,7 @@ async def admin_get_lesson(
     _: User = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
-    return _admin_response(_get_lesson_or_404(lesson_id, db))
+    return _admin_response(_get_lesson_or_404(lesson_id, db), db)
 
 
 @router.put("/api/admin/lessons/{lesson_id}", response_model=LessonAdminResponse)
@@ -149,7 +159,7 @@ async def admin_update_lesson(
         lesson.name = body.name
     db.commit()
     db.refresh(lesson)
-    return _admin_response(lesson)
+    return _admin_response(lesson, db)
 
 
 @router.delete("/api/admin/lessons/{lesson_id}", status_code=204)
@@ -185,7 +195,7 @@ async def admin_copy_lesson(
             db.add(LessonPersona(lesson_id=copy.id, persona_id=lp.persona_id, is_pinned=True))
     db.commit()
     db.refresh(copy)
-    return _admin_response(copy)
+    return _admin_response(copy, db)
 
 
 # ============================================================================
@@ -213,7 +223,7 @@ async def admin_update_lesson_settings(
     s.chat_can_set_temperature = body.chat_can_set_temperature
     db.commit()
     db.refresh(lesson)
-    return _admin_response(lesson)
+    return _admin_response(lesson, db)
 
 
 # ============================================================================
@@ -241,7 +251,7 @@ async def admin_set_lesson_groups(
         db.add(LessonGroup(lesson_id=lesson.id, group_id=gid))
     db.commit()
     db.refresh(lesson)
-    return _admin_response(lesson)
+    return _admin_response(lesson, db)
 
 
 # ============================================================================
@@ -268,7 +278,7 @@ async def admin_set_lesson_persona(
         db.add(LessonPersona(lesson_id=lesson_id, persona_id=persona_id, is_pinned=body.is_pinned))
     db.commit()
     lesson = _get_lesson_or_404(lesson_id, db)
-    return _admin_response(lesson)
+    return _admin_response(lesson, db)
 
 
 @router.delete("/api/admin/lessons/{lesson_id}/personas/{persona_id}", status_code=204)
@@ -331,6 +341,7 @@ async def set_my_active_lesson(
         id=lesson.id,
         name=lesson.name,
         settings=_settings_response(lesson),
+        groups=_lesson_groups(lesson, db),
     )
 
 
@@ -346,4 +357,5 @@ async def get_my_lesson(
         id=lesson.id,
         name=lesson.name,
         settings=_settings_response(lesson),
+        groups=_lesson_groups(lesson, db),
     )

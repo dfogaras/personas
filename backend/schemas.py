@@ -167,17 +167,18 @@ class LessonSettingsResponse(BaseModel):
     chat_can_set_temperature: bool = False
 
 
+class LessonGroupInfo(BaseModel):
+    id: int
+    name: str
+
+
 class LessonUserResponse(BaseModel):
     """Lesson context for regular users: name + settings only."""
 
     id: int
     name: str
     settings: LessonSettingsResponse
-
-
-class LessonGroupInfo(BaseModel):
-    id: int
-    name: str
+    groups: List[LessonGroupInfo] = []
 
 
 class LessonPersonaInfo(BaseModel):
