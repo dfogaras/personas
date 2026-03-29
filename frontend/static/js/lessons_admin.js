@@ -90,9 +90,19 @@ function renderLessonRow(lesson) {
 
     const nameRow = document.createElement('div');
     nameRow.className = 'lesson-item-name-row';
-    const nameEl = document.createElement('span');
+    const nameEl = document.createElement('a');
     nameEl.className = 'lesson-item-name';
     nameEl.textContent = lesson.name;
+    nameEl.href = '#';
+    nameEl.addEventListener('click', async e => {
+        e.preventDefault();
+        try {
+            await apiCall('PATCH', '/me/active-lesson', { lesson_id: lesson.id });
+            window.location.href = '/#page=lesson';
+        } catch (err) {
+            showError(err.message);
+        }
+    });
     nameRow.appendChild(nameEl);
 
     const groupsEl = buildGroupSection(lesson, isActive);
@@ -158,8 +168,6 @@ function buildGroupSection(lesson, isActive) {
 
     function rebuild() {
         container.innerHTML = '';
-        const navBtns = [];
-
         slots.forEach((slotId, idx) => {
             const sel = document.createElement('select');
             sel.className = 'lesson-group-select';
@@ -210,24 +218,7 @@ function buildGroupSection(lesson, isActive) {
                 }
             });
 
-            const navBtn = document.createElement('button');
-            navBtn.type = 'button';
-            navBtn.className = 'lesson-group-nav-btn';
-            navBtn.innerHTML = ICON_ENTER;
-            navBtn.title = 'Belépés és ugrás a csoport oldalára';
-            navBtn.disabled = !slotId;
-            navBtn.addEventListener('click', async () => {
-                if (!sel.value) return;
-                try {
-                    await apiCall('PATCH', '/me/active-lesson', { lesson_id: lessonId });
-                    window.location.href = '/#page=lesson';
-                } catch (e) {
-                    showError(e.message);
-                }
-            });
-
             container.appendChild(sel);
-            navBtns.push(navBtn);
         });
 
         const addBtn = document.createElement('button');
@@ -237,7 +228,6 @@ function buildGroupSection(lesson, isActive) {
         addBtn.title = 'Csoport hozzáadása';
         addBtn.addEventListener('click', () => { slots.push(''); rebuild(); });
         container.appendChild(addBtn);
-        navBtns.forEach(btn => container.appendChild(btn));
 
         if (isActive) {
             const exitBtn = document.createElement('button');
@@ -479,3 +469,4 @@ async function init() {
 }
 
 document.addEventListener('DOMContentLoaded', init);
+window.addEventListener('pageshow', e => { if (e.persisted) window.location.reload(); });
