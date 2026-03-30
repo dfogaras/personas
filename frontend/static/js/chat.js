@@ -180,7 +180,10 @@ async function init() {
         const backParam = `?back=/chat/${chatId}`;
         metaEl.addEventListener('click', () => { window.location.href = `/persona/${persona.id}${backParam}`; });
 
-        document.getElementById('chatUserName').textContent = chat.user ? chat.user.name : '';
+        const chatUserNameEl = document.getElementById('chatUserName');
+        if (chat.user) {
+            chatUserNameEl.innerHTML = `<a class="user-link" href="/#page=user&id=${chat.user.id}">${chat.user.name}</a>`;
+        }
         document.getElementById('chatUserEmail').textContent = chat.user ? chat.user.email : '';
 
         const createdAt = chat.created_at;

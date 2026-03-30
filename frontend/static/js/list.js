@@ -206,7 +206,7 @@ function renderPersonasList(personas, container, showAddBtn = false, adminLesson
         body.innerHTML = `
             <div class="persona-name">${persona.name}${persona.is_pinned ? '<span class="persona-pinned-badge" title="Rögzített persona">📌</span>' : ''}</div>
             <div class="persona-specialty">${persona.specialty || T.general}</div>
-            ${creator ? `<div class="persona-card-creator">${T.createdBy} ${creator} — ${prettyTime(persona.created_at)}</div>` : ''}
+            ${creator ? `<div class="persona-card-creator">${T.createdBy} <a class="user-link" href="/#page=user&id=${persona.user.id}" onclick="event.stopPropagation()">${creator}</a> — ${prettyTime(persona.created_at)}</div>` : ''}
         `;
         body.addEventListener('click', () => { window.location.href = `/persona/${persona.id}`; });
 

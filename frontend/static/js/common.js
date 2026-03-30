@@ -79,7 +79,10 @@ function prettyTime(iso) {
 
 function personaMetaHtml(persona) {
     const creator = persona.user?.name;
-    const createdBy = creator ? `<p class="persona-meta-created">${T.createdBy} ${creator} — ${prettyTime(persona.created_at)}</p>` : '';
+    const creatorHtml = creator
+        ? `<a class="user-link" href="/#page=user&id=${persona.user.id}" onclick="event.stopPropagation()">${creator}</a>`
+        : null;
+    const createdBy = creator ? `<p class="persona-meta-created">${T.createdBy} ${creatorHtml} — ${prettyTime(persona.created_at)}</p>` : '';
     return `
         <div class="persona-meta-name">${persona.name}</div>
         <div class="persona-meta-specialty">${persona.specialty || T.general}</div>
@@ -108,6 +111,7 @@ function setupNav() {
     // "My page" link
     const navMyPage = document.getElementById('navMyPage');
     navMyPage.textContent = user.name || user.email;
+    navMyPage.href = `/#page=user&id=${user.id}`;
 
     // Admin link or lesson link
     const navGeneralAdminPage = document.getElementById('navGeneralAdminPage');
