@@ -99,17 +99,23 @@ function showEditForm(persona) {
     document.getElementById('pName').value = isRemix ? `${persona.name} #2` : (persona ? persona.name : '');
     document.getElementById('pDesc').value = persona ? (persona.description || '') : '';
 
-    const specInput = document.getElementById('pSpec');
-    const specCounter = document.getElementById('pSpecCounter');
-    specInput.value = persona ? (persona.specialty || '') : '';
-
-    function updateSpecCounter() {
-        const len = specInput.value.length;
-        specCounter.textContent = `${len} / 40`;
-        specCounter.classList.toggle('form-char-counter-near', len >= 33);
+    function setupCharCounter(inputEl, counterEl) {
+        const max = inputEl.maxLength;
+        function update() {
+            const len = inputEl.value.length;
+            counterEl.textContent = `${len} / ${max}`;
+            counterEl.classList.toggle('form-char-counter-near', len >= Math.floor(max * 0.85));
+        }
+        inputEl.addEventListener('input', update);
+        update();
     }
-    specInput.addEventListener('input', updateSpecCounter);
-    updateSpecCounter();
+
+    const nameInput = document.getElementById('pName');
+    setupCharCounter(nameInput, document.getElementById('pNameCounter'));
+
+    const specInput = document.getElementById('pSpec');
+    specInput.value = persona ? (persona.specialty || '') : '';
+    setupCharCounter(specInput, document.getElementById('pSpecCounter'));
 
     document.getElementById('submitBtn').title = isCreate || isRemix ? T.create : T.save;
 
