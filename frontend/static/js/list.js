@@ -2,17 +2,6 @@
  * AI Personas - List page (me / group / user)
  */
 
-// Shared cache for the lesson picker (loaded once on first use)
-let _allLessonsCache = null;
-async function _loadAllLessons() {
-    if (!_allLessonsCache) {
-        const all = await apiCall('GET', '/admin/lessons');
-        all.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-        _allLessonsCache = all;
-    }
-    return _allLessonsCache;
-}
-
 // ============================================================================
 // Routing
 // ============================================================================
@@ -69,7 +58,11 @@ async function route() {
 async function showMePage() {
     const user = getUser();
     setNavLabel(user.name || user.email);
-    await showDashboardPage(`user_id=${user.id}`, `user_id=${user.id}`, true);
+    let adminLesson = null;
+    if (user.group === 'admin') {
+        try { adminLesson = await apiCall('GET', '/me/lesson'); } catch (e) {}
+    }
+    await showDashboardPage(`user_id=${user.id}`, `user_id=${user.id}`, true, adminLesson);
 }
 
 async function showLessonPage() {
@@ -89,7 +82,11 @@ async function showLessonPage() {
 
 async function showUserPage(userId) {
     setNavLabel('…');
-    const personas = await showDashboardPage(`user_id=${userId}`, `user_id=${userId}`);
+    let adminLesson = null;
+    if (getUser()?.group === 'admin') {
+        try { adminLesson = await apiCall('GET', '/me/lesson'); } catch (e) {}
+    }
+    const personas = await showDashboardPage(`user_id=${userId}`, `user_id=${userId}`, false, adminLesson);
     setNavLabel(personas[0]?.user?.name || 'Felhasználó');
 }
 
@@ -190,101 +187,7 @@ function createPersonaActions(persona, adminLesson = null) {
         });
 
         div.append(pinBtn, removeBtn);
-
-        // Add-to-lesson picker — menu is portalled to body to escape card transforms
-        const pickerBtn = document.createElement('button');
-        pickerBtn.className = 'persona-card-btn';
-        pickerBtn.title = T.addToLesson;
-        pickerBtn.textContent = '📎';
-
-        const pickerMenu = document.createElement('div');
-        pickerMenu.className = 'lesson-picker-menu';
-        document.body.appendChild(pickerMenu);
-
-        function renderPickerMenu(lessons) {
-            pickerMenu.innerHTML = '';
-            if (!lessons || lessons.length === 0) {
-                const empty = document.createElement('div');
-                empty.className = 'lesson-picker-empty';
-                empty.textContent = T.noLessonsAvailable;
-                pickerMenu.appendChild(empty);
-                return;
-            }
-            lessons.forEach(lesson => {
-                const alreadyIn = lesson.personas.some(p => p.persona_id === persona.id);
-                const item = document.createElement('button');
-                item.className = 'lesson-picker-item' + (alreadyIn ? ' lesson-picker-item-added' : '');
-
-                const nameEl = document.createElement('span');
-                nameEl.className = 'lesson-picker-name';
-                nameEl.textContent = lesson.name;
-                item.appendChild(nameEl);
-
-                const groupLabel = lesson.groups?.map(g => g.name).join(', ');
-                if (groupLabel) {
-                    const groupEl = document.createElement('span');
-                    groupEl.className = 'lesson-picker-groups';
-                    groupEl.textContent = groupLabel;
-                    item.appendChild(groupEl);
-                }
-
-                const check = document.createElement('span');
-                check.className = 'lesson-picker-check';
-                check.textContent = alreadyIn ? '✓' : '';
-                item.appendChild(check);
-
-                item.addEventListener('click', async (e) => {
-                    e.stopPropagation();
-                    item.disabled = true;
-                    try {
-                        if (alreadyIn) {
-                            await apiCall('DELETE', `/admin/lessons/${lesson.id}/personas/${persona.id}`);
-                            lesson.personas = lesson.personas.filter(p => p.persona_id !== persona.id);
-                        } else {
-                            await apiCall('PUT', `/admin/lessons/${lesson.id}/personas/${persona.id}`, { is_pinned: false });
-                            lesson.personas.push({ persona_id: persona.id, is_pinned: false });
-                        }
-                        renderPickerMenu(lessons);
-                    } catch (err) {
-                        item.disabled = false;
-                        alert(err.message);
-                    }
-                });
-
-                pickerMenu.appendChild(item);
-            });
-        }
-
-        pickerBtn.addEventListener('click', async (e) => {
-            e.stopPropagation();
-            const wasOpen = pickerMenu.classList.contains('open');
-            document.querySelectorAll('.lesson-picker-menu.open').forEach(m => m.classList.remove('open'));
-            if (wasOpen) return;
-            const rect = pickerBtn.getBoundingClientRect();
-            pickerMenu.style.top   = (rect.bottom + 4) + 'px';
-            pickerMenu.style.right = (window.innerWidth - rect.right) + 'px';
-            pickerMenu.classList.add('open');
-            if (pickerMenu.childElementCount === 0) {
-                const loading = document.createElement('div');
-                loading.className = 'lesson-picker-empty';
-                loading.textContent = T.loading;
-                pickerMenu.appendChild(loading);
-                try {
-                    const lessons = await _loadAllLessons();
-                    renderPickerMenu(lessons);
-                } catch (err) {
-                    pickerMenu.innerHTML = '';
-                    const errEl = document.createElement('div');
-                    errEl.className = 'lesson-picker-empty';
-                    errEl.textContent = T.errApiError;
-                    pickerMenu.appendChild(errEl);
-                }
-            }
-        });
-
-        document.addEventListener('click', () => pickerMenu.classList.remove('open'));
-
-        div.appendChild(pickerBtn);
+        div.appendChild(createLessonPickerButton(id));
     }
 
     return div;

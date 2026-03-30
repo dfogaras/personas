@@ -9,7 +9,7 @@ const backUrl = urlParams.get('back') || '/';
 // View mode
 // ============================================================================
 
-function showView(persona, chats) {
+function showView(persona, chats, adminLesson = null) {
     document.title = `${persona.name} — kincskereso.ai`;
     document.getElementById('personaMeta').innerHTML = personaMetaHtml(persona);
     document.getElementById('personaDescription').textContent = persona.description;
@@ -40,103 +40,36 @@ function showView(persona, chats) {
     });
 
     if (getUser()?.group === 'admin') {
-        const btn = document.createElement('button');
-        btn.className = 'persona-card-btn';
-        btn.title = T.addToLesson;
-        btn.textContent = '📎';
-
-        const menu = document.createElement('div');
-        menu.className = 'lesson-picker-menu';
-        document.body.appendChild(menu);
-
-        let lessonsCache = null;
-
-        function renderLessonMenu() {
-            menu.innerHTML = '';
-            if (!lessonsCache || lessonsCache.length === 0) {
-                const empty = document.createElement('div');
-                empty.className = 'lesson-picker-empty';
-                empty.textContent = T.noLessonsAvailable;
-                menu.appendChild(empty);
-                return;
-            }
-            lessonsCache.forEach(lesson => {
-                const alreadyIn = lesson.personas.some(p => p.persona_id === personaId);
-                const item = document.createElement('button');
-                item.className = 'lesson-picker-item' + (alreadyIn ? ' lesson-picker-item-added' : '');
-
-                const nameEl = document.createElement('span');
-                nameEl.className = 'lesson-picker-name';
-                nameEl.textContent = lesson.name;
-                item.appendChild(nameEl);
-
-                const groupLabel = lesson.groups?.map(g => g.name).join(', ');
-                if (groupLabel) {
-                    const groupEl = document.createElement('span');
-                    groupEl.className = 'lesson-picker-groups';
-                    groupEl.textContent = groupLabel;
-                    item.appendChild(groupEl);
-                }
-
-                const check = document.createElement('span');
-                check.className = 'lesson-picker-check';
-                check.textContent = alreadyIn ? '✓' : '';
-                item.appendChild(check);
-
-                item.addEventListener('click', async () => {
-                    item.disabled = true;
-                    try {
-                        if (alreadyIn) {
-                            await apiCall('DELETE', `/admin/lessons/${lesson.id}/personas/${personaId}`);
-                            lesson.personas = lesson.personas.filter(p => p.persona_id !== personaId);
-                        } else {
-                            await apiCall('PUT', `/admin/lessons/${lesson.id}/personas/${personaId}`, { is_pinned: false });
-                            lesson.personas.push({ persona_id: personaId, is_pinned: false });
-                        }
-                        renderLessonMenu();
-                    } catch (err) {
-                        item.disabled = false;
-                        alert(err.message);
-                    }
-                });
-
-                menu.appendChild(item);
-            });
-        }
-
-        btn.addEventListener('click', async (e) => {
-            e.stopPropagation();
-            const wasOpen = menu.classList.contains('open');
-            document.querySelectorAll('.lesson-picker-menu.open').forEach(m => m.classList.remove('open'));
-            if (wasOpen) return;
-            const rect = btn.getBoundingClientRect();
-            menu.style.top   = (rect.bottom + 4) + 'px';
-            menu.style.right = (window.innerWidth - rect.right) + 'px';
-            menu.classList.add('open');
-            if (!lessonsCache) {
-                const loading = document.createElement('div');
-                loading.className = 'lesson-picker-empty';
-                loading.textContent = T.loading;
-                menu.appendChild(loading);
+        if (adminLesson) {
+            let isPinned = persona.is_pinned ?? false;
+            const pinBtn = document.createElement('button');
+            pinBtn.className = 'persona-card-btn';
+            pinBtn.title = isPinned ? T.unpinPersona : T.pinPersona;
+            pinBtn.textContent = isPinned ? '📌' : '☆';
+            pinBtn.addEventListener('click', async () => {
                 try {
-                    const all = await apiCall('GET', '/admin/lessons');
-                    all.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-                    lessonsCache = all;
-                } catch (err) {
-                    menu.innerHTML = '';
-                    const errEl = document.createElement('div');
-                    errEl.className = 'lesson-picker-empty';
-                    errEl.textContent = T.errApiError;
-                    menu.appendChild(errEl);
-                    return;
-                }
-                renderLessonMenu();
-            }
-        });
+                    await apiCall('PUT', `/admin/lessons/${adminLesson.id}/personas/${personaId}`, { is_pinned: !isPinned });
+                    isPinned = !isPinned;
+                    pinBtn.title = isPinned ? T.unpinPersona : T.pinPersona;
+                    pinBtn.textContent = isPinned ? '📌' : '☆';
+                } catch (err) { alert(err.message); }
+            });
 
-        document.addEventListener('click', () => menu.classList.remove('open'));
+            const removeBtn = document.createElement('button');
+            removeBtn.className = 'persona-card-btn btn-danger';
+            removeBtn.title = T.removeFromLesson;
+            removeBtn.textContent = '✕';
+            removeBtn.addEventListener('click', async () => {
+                if (!confirm(`"${persona.name}" — ${T.removeFromLessonConfirm}`)) return;
+                try {
+                    await apiCall('DELETE', `/admin/lessons/${adminLesson.id}/personas/${personaId}`);
+                    window.location.href = '/';
+                } catch (err) { alert(err.message); }
+            });
 
-        actions.appendChild(btn);
+            actions.append(pinBtn, removeBtn);
+        }
+        actions.appendChild(createLessonPickerButton(personaId));
     }
 
     const list = document.getElementById('chatsList');
@@ -344,11 +277,13 @@ async function init() {
         if (mode === 'create') {
             showEditForm(null);
         } else if (mode === 'view') {
-            const [persona, chats] = await Promise.all([
+            const isAdmin = getUser()?.group === 'admin';
+            const [persona, chats, activeLesson] = await Promise.all([
                 apiCall('GET', `/personas/${personaId}`),
                 apiCall('GET', `/chats?persona_id=${personaId}`),
+                isAdmin ? apiCall('GET', '/me/lesson').catch(() => null) : Promise.resolve(null),
             ]);
-            showView(persona, chats);
+            showView(persona, chats, activeLesson);
         } else {
             const persona = await apiCall('GET', `/personas/${personaId}`);
             showEditForm(persona);

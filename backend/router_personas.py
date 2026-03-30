@@ -74,11 +74,24 @@ async def create_persona(
 
 
 @router.get("/api/personas/{persona_id}", response_model=PersonaResponse)
-async def get_persona(persona_id: int, db: Session = Depends(get_db)):
-    persona = db.query(Persona).filter(Persona.id == persona_id).first()
+async def get_persona(
+    persona_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    persona = db.query(Persona).options(selectinload(Persona.user)).filter(Persona.id == persona_id).first()
     if not persona:
         raise HTTPException(status_code=404, detail=M["persona_not_found"])
-    return persona
+    resp = PersonaResponse.model_validate(persona)
+    my_lesson = resolve_active_lesson(current_user, db)
+    if my_lesson:
+        lp = db.query(LessonPersona).filter(
+            LessonPersona.lesson_id == my_lesson.id,
+            LessonPersona.persona_id == persona_id,
+        ).first()
+        if lp:
+            resp.is_pinned = lp.is_pinned
+    return resp
 
 
 @router.post("/api/personas/{persona_id}", response_model=PersonaResponse)

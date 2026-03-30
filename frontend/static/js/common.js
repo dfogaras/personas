@@ -163,6 +163,120 @@ function setupNav() {
 }
 
 // ============================================================================
+// Lesson picker (admin — add persona to lessons)
+// ============================================================================
+
+let _lessonPickerCache = null;
+
+async function _loadLessonsForPicker() {
+    if (!_lessonPickerCache) {
+        const all = await apiCall('GET', '/admin/lessons');
+        all.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        _lessonPickerCache = all;
+    }
+    return _lessonPickerCache;
+}
+
+/**
+ * Creates the 📎 "add to lesson" picker button with a portalled dropdown menu.
+ * Returns the button element (with a lesson-picker-menu already appended to body).
+ */
+function createLessonPickerButton(personaId) {
+    const btn = document.createElement('button');
+    btn.className = 'persona-card-btn';
+    btn.title = T.addToLesson;
+    btn.textContent = '📎';
+
+    const menu = document.createElement('div');
+    menu.className = 'lesson-picker-menu';
+    document.body.appendChild(menu);
+
+    function renderMenu(lessons) {
+        menu.innerHTML = '';
+        if (!lessons || lessons.length === 0) {
+            const empty = document.createElement('div');
+            empty.className = 'lesson-picker-empty';
+            empty.textContent = T.noLessonsAvailable;
+            menu.appendChild(empty);
+            return;
+        }
+        lessons.forEach(lesson => {
+            const alreadyIn = lesson.personas.some(p => p.persona_id === personaId);
+            const item = document.createElement('button');
+            item.className = 'lesson-picker-item' + (alreadyIn ? ' lesson-picker-item-added' : '');
+
+            const nameEl = document.createElement('span');
+            nameEl.className = 'lesson-picker-name';
+            nameEl.textContent = lesson.name;
+            item.appendChild(nameEl);
+
+            const groupLabel = lesson.groups?.map(g => g.name).join(', ');
+            if (groupLabel) {
+                const groupEl = document.createElement('span');
+                groupEl.className = 'lesson-picker-groups';
+                groupEl.textContent = groupLabel;
+                item.appendChild(groupEl);
+            }
+
+            const check = document.createElement('span');
+            check.className = 'lesson-picker-check';
+            check.textContent = alreadyIn ? '✓' : '';
+            item.appendChild(check);
+
+            item.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                item.disabled = true;
+                try {
+                    if (alreadyIn) {
+                        await apiCall('DELETE', `/admin/lessons/${lesson.id}/personas/${personaId}`);
+                        lesson.personas = lesson.personas.filter(p => p.persona_id !== personaId);
+                    } else {
+                        await apiCall('PUT', `/admin/lessons/${lesson.id}/personas/${personaId}`, { is_pinned: false });
+                        lesson.personas.push({ persona_id: personaId, is_pinned: false });
+                    }
+                    renderMenu(lessons);
+                } catch (err) {
+                    item.disabled = false;
+                    alert(err.message);
+                }
+            });
+
+            menu.appendChild(item);
+        });
+    }
+
+    btn.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const wasOpen = menu.classList.contains('open');
+        document.querySelectorAll('.lesson-picker-menu.open').forEach(m => m.classList.remove('open'));
+        if (wasOpen) return;
+        const rect = btn.getBoundingClientRect();
+        menu.style.top   = (rect.bottom + 4) + 'px';
+        menu.style.right = (window.innerWidth - rect.right) + 'px';
+        menu.classList.add('open');
+        if (menu.childElementCount === 0) {
+            const loading = document.createElement('div');
+            loading.className = 'lesson-picker-empty';
+            loading.textContent = T.loading;
+            menu.appendChild(loading);
+            try {
+                const lessons = await _loadLessonsForPicker();
+                renderMenu(lessons);
+            } catch (err) {
+                menu.innerHTML = '';
+                const errEl = document.createElement('div');
+                errEl.className = 'lesson-picker-empty';
+                errEl.textContent = T.errApiError;
+                menu.appendChild(errEl);
+            }
+        }
+    });
+
+    document.addEventListener('click', () => menu.classList.remove('open'));
+    return btn;
+}
+
+// ============================================================================
 // Chat helpers
 // ============================================================================
 
