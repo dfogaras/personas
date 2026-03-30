@@ -85,7 +85,7 @@ function renderGroupsSection() {
         accessBtn.addEventListener('click', async () => {
             try {
                 _groupAccess = await apiCall('PATCH', `/admin/access/${group.name}`, { enabled: !enabled });
-                renderLessons();
+                renderGroupsSection();
             } catch (err) { showError(err.message); }
         });
 
