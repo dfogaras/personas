@@ -107,4 +107,9 @@ const T = {
     unpinPersona:            'Rögzítés feloldása',
     removeFromLesson:        'Eltávolítás az óráról',
     removeFromLessonConfirm: 'Eltávolítod ezt a personát az óráról? (A persona megmarad, csak az óráról kerül le.)',
+
+    // Persona detail — add to lesson
+    addToLesson:             'Hozzáadás másik órához',
+    alreadyInLesson:         'Már szerepel ezen az órán',
+    noLessonsAvailable:      'Nincsenek elérhető leckék.',
 };
