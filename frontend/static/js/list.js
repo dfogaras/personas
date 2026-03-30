@@ -63,7 +63,7 @@ async function showMePage() {
 
 async function showLessonPage() {
     const lesson = await apiCall('GET', '/me/lesson');
-    const groupNames = lesson.groups?.map(g => g.name).join(', ');
+    const groupNames = lesson?.groups?.map(g => g.name).join(', ');
     setNavLabel(groupNames || 'Órám');
     if (!lesson) {
         document.getElementById('page-dashboard').style.display = 'block';
@@ -72,7 +72,8 @@ async function showLessonPage() {
         document.getElementById('dashboardChatsHeading').style.display = 'none';
         return;
     }
-    await showDashboardPage(``, ``);
+    const isAdmin = getUser()?.group === 'admin';
+    await showDashboardPage(``, ``, false, isAdmin ? lesson : null);
 }
 
 async function showUserPage(userId) {
@@ -81,7 +82,7 @@ async function showUserPage(userId) {
     setNavLabel(personas[0]?.user?.name || 'Felhasználó');
 }
 
-async function showDashboardPage(personaQuery, chatQuery, showAddBtn = false) {
+async function showDashboardPage(personaQuery, chatQuery, showAddBtn = false, adminLesson = null) {
     document.getElementById('page-dashboard').style.display = 'block';
     document.getElementById('dashboardPersonas').innerHTML = '';
     document.getElementById('dashboardChats').innerHTML = '';
@@ -92,7 +93,7 @@ async function showDashboardPage(personaQuery, chatQuery, showAddBtn = false) {
         apiCall('GET', `/chats?${chatQuery}&limit=10`),
     ]);
 
-    renderPersonasList(personas, document.getElementById('dashboardPersonas'), showAddBtn);
+    renderPersonasList(personas, document.getElementById('dashboardPersonas'), showAddBtn, adminLesson);
 
     if (chats.length > 0) {
         document.getElementById('dashboardChatsHeading').style.display = 'block';
@@ -108,7 +109,7 @@ async function showDashboardPage(personaQuery, chatQuery, showAddBtn = false) {
 // Persona card rendering
 // ============================================================================
 
-function createPersonaActions(persona) {
+function createPersonaActions(persona, adminLesson = null) {
     const id = persona.id;
     const actions = [
         { title: T.chat,  icon: '💬', handler: (e) => { e.stopPropagation(); startNewChat(id); } },
@@ -128,7 +129,7 @@ function createPersonaActions(persona) {
 
     const delBtn = document.createElement('button');
     delBtn.className = 'persona-card-btn btn-danger';
-    delBtn.title = T.delete;
+    delBtn.title = T.deletePersonaTt;
     delBtn.textContent = '🗑';
     delBtn.addEventListener('click', async (e) => {
         e.stopPropagation();
@@ -142,10 +143,48 @@ function createPersonaActions(persona) {
     });
     div.appendChild(delBtn);
 
+    if (adminLesson) {
+        const pinBtn = document.createElement('button');
+        pinBtn.className = 'persona-card-btn';
+        pinBtn.title = persona.is_pinned ? T.unpinPersona : T.pinPersona;
+        pinBtn.textContent = persona.is_pinned ? '📌' : '☆';
+        pinBtn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            try {
+                await apiCall('PUT', `/admin/lessons/${adminLesson.id}/personas/${persona.id}`, { is_pinned: !persona.is_pinned });
+                persona.is_pinned = !persona.is_pinned;
+                pinBtn.title = persona.is_pinned ? T.unpinPersona : T.pinPersona;
+                pinBtn.textContent = persona.is_pinned ? '📌' : '☆';
+                const badge = pinBtn.closest('.persona-card').querySelector('.persona-pinned-badge');
+                if (persona.is_pinned && !badge) {
+                    pinBtn.closest('.persona-card').querySelector('.persona-name')
+                        .insertAdjacentHTML('beforeend', '<span class="persona-pinned-badge" title="Rögzített persona">📌</span>');
+                } else if (!persona.is_pinned && badge) {
+                    badge.remove();
+                }
+            } catch (err) { alert(err.message); }
+        });
+
+        const removeBtn = document.createElement('button');
+        removeBtn.className = 'persona-card-btn btn-danger';
+        removeBtn.title = T.removeFromLesson;
+        removeBtn.textContent = '✕';
+        removeBtn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            if (!confirm(`"${persona.name}" — ${T.removeFromLessonConfirm}`)) return;
+            try {
+                await apiCall('DELETE', `/admin/lessons/${adminLesson.id}/personas/${persona.id}`);
+                removeBtn.closest('.persona-card').remove();
+            } catch (err) { alert(err.message); }
+        });
+
+        div.append(pinBtn, removeBtn);
+    }
+
     return div;
 }
 
-function renderPersonasList(personas, container, showAddBtn = false) {
+function renderPersonasList(personas, container, showAddBtn = false, adminLesson = null) {
     container.innerHTML = '';
     personas.forEach(persona => {
         const card = document.createElement('div');
@@ -155,14 +194,14 @@ function renderPersonasList(personas, container, showAddBtn = false) {
         body.className = 'persona-card-body';
         const creator = persona.user?.name;
         body.innerHTML = `
-            <div class="persona-name">${persona.name}</div>
+            <div class="persona-name">${persona.name}${persona.is_pinned ? '<span class="persona-pinned-badge" title="Rögzített persona">📌</span>' : ''}</div>
             <div class="persona-specialty">${persona.specialty || T.general}</div>
             ${creator ? `<div class="persona-card-creator">${T.createdBy} ${creator} — ${prettyTime(persona.created_at)}</div>` : ''}
         `;
         body.addEventListener('click', () => { window.location.href = `/persona/${persona.id}`; });
 
         card.appendChild(body);
-        card.appendChild(createPersonaActions(persona));
+        card.appendChild(createPersonaActions(persona, adminLesson));
         container.appendChild(card);
     });
 

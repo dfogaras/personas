@@ -517,7 +517,6 @@ async function init() {
         if (e.key === 'Enter') submitLessonModal();
         if (e.key === 'Escape') closeLessonModal();
     });
-
     // Handle ?join=<id> — set active lesson then clean URL
     const joinParam = new URLSearchParams(window.location.search).get('join');
     if (joinParam) {

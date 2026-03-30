@@ -56,6 +56,7 @@ const T = {
     deleteConfirm:         'Biztosan törlöd?',
 
     // Personas page — confirm dialogs
+    deletePersonaTt:       'Persona törlése (véglegesen)',
     deletePersonaConfirm:  'Biztosan törlöd ezt a personát? Az összes csevegése is törlődik.',
     deleteChatConfirm:     'Biztosan törlöd ezt a csevegést?',
     chattingAs:            'Csevegés mint:',
@@ -100,4 +101,10 @@ const T = {
     lessonNewTitle:        'Új óra létrehozása',
     editLesson:            'Óra szerkesztése',
     errPromptVariables:    'A sablonnak tartalmaznia kell: {name}, {short}, {long} — és más kapcsos zárójel nem szerepelhet benne.',
+
+    // Lesson personas
+    pinPersona:              'Rögzítés',
+    unpinPersona:            'Rögzítés feloldása',
+    removeFromLesson:        'Eltávolítás az óráról',
+    removeFromLessonConfirm: 'Eltávolítod ezt a personát az óráról? (A persona megmarad, csak az óráról kerül le.)',
 };

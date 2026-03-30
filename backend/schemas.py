@@ -62,6 +62,7 @@ class PersonaResponse(PersonaBase):
     created_at: datetime
     user_id: int
     user: Optional[UserResponse] = None
+    is_pinned: Optional[bool] = None
 
     class Config:
         from_attributes = True
@@ -184,6 +185,8 @@ class LessonUserResponse(BaseModel):
 class LessonPersonaInfo(BaseModel):
     persona_id: int
     is_pinned: bool
+    name: Optional[str] = None
+    specialty: Optional[str] = None
 
 
 class LessonAdminResponse(LessonUserResponse):

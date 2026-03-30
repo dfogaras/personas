@@ -363,6 +363,12 @@ button, input, select, textarea {
     margin-top: 6px;
 }
 
+.persona-pinned-badge {
+    font-size: 14px;
+    vertical-align: middle;
+    margin-left: 4px;
+}
+
 .persona-card-actions {
     padding: 8px 12px 10px;
     border-top: 1px solid var(--persona-light);

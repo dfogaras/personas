@@ -75,7 +75,15 @@ def _admin_response(lesson: Lesson, db: Session) -> LessonAdminResponse:
         created_at=lesson.created_at,
         settings=_settings_response(lesson),
         groups=_lesson_groups(lesson, db),
-        personas=[LessonPersonaInfo(persona_id=lp.persona_id, is_pinned=lp.is_pinned) for lp in lesson.personas],
+        personas=[
+            LessonPersonaInfo(
+                persona_id=lp.persona_id,
+                is_pinned=lp.is_pinned,
+                name=lp.persona.name,
+                specialty=lp.persona.specialty,
+            )
+            for lp in lesson.personas
+        ],
     )
 
 

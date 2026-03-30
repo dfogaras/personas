@@ -37,7 +37,7 @@ async def list_personas(
     if not my_lesson:
         return []
 
-    q = db.query(Persona).options(selectinload(Persona.user))
+    q = db.query(Persona, LessonPersona).options(selectinload(Persona.user))
 
     q = q.join(LessonPersona, Persona.id == LessonPersona.persona_id).filter(
         LessonPersona.lesson_id == my_lesson.id
@@ -45,7 +45,12 @@ async def list_personas(
     if for_user_id is not None:
         q = q.filter(Persona.user_id == for_user_id)
 
-    return q.all()
+    results = []
+    for persona, lp in q.all():
+        resp = PersonaResponse.model_validate(persona)
+        resp.is_pinned = lp.is_pinned
+        results.append(resp)
+    return results
 
 
 @router.post("/api/personas", response_model=PersonaResponse)
