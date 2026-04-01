@@ -11,7 +11,9 @@ const backUrl = urlParams.get('back') || '/';
 
 function showView(persona, chats, adminLesson = null) {
     document.title = `${persona.name} — kincskereso.ai`;
-    document.getElementById('personaMeta').innerHTML = personaMetaHtml(persona);
+    const metaEl = document.getElementById('personaMeta');
+    metaEl.innerHTML = personaMetaHtml(persona);
+    metaEl.querySelector('.persona-meta-name').appendChild(createLikeEl(persona));
     document.getElementById('personaDescription').textContent = persona.description;
 
     document.querySelector('#viewMode .back-link').href = backUrl;

@@ -112,4 +112,8 @@ const T = {
     addToLesson:             'Hozzáadás másik órához',
     alreadyInLesson:         'Már szerepel ezen az órán',
     noLessonsAvailable:      'Nincsenek elérhető leckék.',
+
+    // Likes
+    like:                    'Tetszik',
+    unlike:                  'Tetszés visszavonása',
 };

@@ -90,6 +90,47 @@ function personaMetaHtml(persona) {
     `;
 }
 
+function createLikeEl(persona) {
+    let likedByMe = persona.liked_by_me || false;
+    let likeCount = persona.like_count || 0;
+
+    const el = document.createElement('span');
+    el.className = 'persona-like' + (likedByMe ? ' liked' : '');
+    el.title = likedByMe ? T.unlike : T.like;
+
+    const heart = document.createElement('span');
+    heart.className = 'persona-like-heart';
+    heart.textContent = likedByMe ? '♥' : '♡';
+
+    const count = document.createElement('span');
+    count.className = 'persona-like-count';
+    if (likeCount > 0) count.textContent = likeCount;
+
+    el.append(heart, count);
+
+    el.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        try {
+            if (likedByMe) {
+                await apiCall('DELETE', `/personas/${persona.id}/like`);
+                likedByMe = false;
+                likeCount = Math.max(0, likeCount - 1);
+            } else {
+                await apiCall('POST', `/personas/${persona.id}/like`);
+                likedByMe = true;
+                likeCount++;
+            }
+            heart.textContent = likedByMe ? '♥' : '♡';
+            count.textContent = likeCount > 0 ? likeCount : '';
+            el.classList.toggle('liked', likedByMe);
+            el.title = likedByMe ? T.unlike : T.like;
+        } catch (_) {}
+    });
+
+    return el;
+}
+
 // ============================================================================
 // Nav setup (shared across all pages)
 // ============================================================================

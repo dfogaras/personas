@@ -208,6 +208,7 @@ function renderPersonasList(personas, container, showAddBtn = false, adminLesson
             <div class="persona-specialty">${persona.specialty || T.general}</div>
             ${creator ? `<div class="persona-card-creator">${T.createdBy} <a class="user-link" href="/#page=user&id=${persona.user.id}" onclick="event.stopPropagation()">${creator}</a> — ${prettyTime(persona.created_at)}</div>` : ''}
         `;
+        body.querySelector('.persona-name').appendChild(createLikeEl(persona));
         body.addEventListener('click', () => { window.location.href = `/persona/${persona.id}`; });
 
         card.appendChild(body);

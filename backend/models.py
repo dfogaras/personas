@@ -229,6 +229,18 @@ class LessonGroup(Base):
     group = relationship("Group")
 
 
+class PersonaLike(Base):
+    """A user's like on a persona (one per user per persona)."""
+
+    __tablename__ = "persona_likes"
+    __table_args__ = (UniqueConstraint("user_id", "persona_id"),)
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    persona_id = Column(Integer, ForeignKey("personas.id"), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
 class LessonPersona(Base):
     """Many-to-many between lessons and personas, with pinning."""
 

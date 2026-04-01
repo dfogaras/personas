@@ -162,6 +162,7 @@ async function init() {
         document.title = `${persona.name} — kincskereso.ai`;
         const metaEl = document.getElementById('chatPersonaMeta');
         metaEl.innerHTML = personaMetaHtml(persona);
+        metaEl.querySelector('.persona-meta-name').appendChild(createLikeEl(persona));
 
         const createdLine = metaEl.querySelector('.persona-meta-created');
         if (createdLine) {

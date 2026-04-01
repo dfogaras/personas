@@ -63,6 +63,8 @@ class PersonaResponse(PersonaBase):
     user_id: int
     user: Optional[UserResponse] = None
     is_pinned: Optional[bool] = None
+    like_count: int = 0
+    liked_by_me: bool = False
 
     class Config:
         from_attributes = True

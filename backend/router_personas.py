@@ -10,7 +10,8 @@ from ai_service import generate_and_record, get_ai_service
 from auth import get_current_user, check_owner_or_admin
 from messages import M
 from database import get_db
-from models import Group, LessonPersona, Persona, User
+from sqlalchemy import case, func
+from models import Group, LessonPersona, Persona, PersonaLike, User
 from router_lessons import resolve_active_lesson, resolve_lesson_settings
 from schemas import PersonaCreate, PersonaResponse
 
@@ -45,10 +46,28 @@ async def list_personas(
     if for_user_id is not None:
         q = q.filter(Persona.user_id == for_user_id)
 
+    rows = q.all()
+    persona_ids = [p.id for p, _ in rows]
+
+    like_rows = (
+        db.query(
+            PersonaLike.persona_id,
+            func.count().label("total"),
+            func.count(case((PersonaLike.user_id == current_user.id, 1))).label("mine"),
+        )
+        .filter(PersonaLike.persona_id.in_(persona_ids))
+        .group_by(PersonaLike.persona_id)
+        .all()
+    )
+    like_counts = {row.persona_id: row.total for row in like_rows}
+    my_likes = {row.persona_id for row in like_rows if row.mine > 0}
+
     results = []
-    for persona, lp in q.all():
+    for persona, lp in rows:
         resp = PersonaResponse.model_validate(persona)
         resp.is_pinned = lp.is_pinned
+        resp.like_count = like_counts.get(persona.id, 0)
+        resp.liked_by_me = persona.id in my_likes
         results.append(resp)
     return results
 
@@ -91,6 +110,10 @@ async def get_persona(
         ).first()
         if lp:
             resp.is_pinned = lp.is_pinned
+    resp.like_count = db.query(func.count()).filter(PersonaLike.persona_id == persona_id).scalar()
+    resp.liked_by_me = db.query(PersonaLike).filter(
+        PersonaLike.user_id == current_user.id, PersonaLike.persona_id == persona_id
+    ).first() is not None
     return resp
 
 
@@ -172,6 +195,38 @@ Style rules:
         temperature=0.4,
     )
     return {"feedback": response.content}
+
+
+@router.post("/api/personas/{persona_id}/like", status_code=204)
+async def like_persona(
+    persona_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    if not db.query(Persona).filter(Persona.id == persona_id).first():
+        raise HTTPException(status_code=404, detail=M["persona_not_found"])
+    existing = db.query(PersonaLike).filter(
+        PersonaLike.user_id == current_user.id, PersonaLike.persona_id == persona_id
+    ).first()
+    if not existing:
+        db.add(PersonaLike(user_id=current_user.id, persona_id=persona_id))
+        db.commit()
+    return Response(status_code=204)
+
+
+@router.delete("/api/personas/{persona_id}/like", status_code=204)
+async def unlike_persona(
+    persona_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    existing = db.query(PersonaLike).filter(
+        PersonaLike.user_id == current_user.id, PersonaLike.persona_id == persona_id
+    ).first()
+    if existing:
+        db.delete(existing)
+        db.commit()
+    return Response(status_code=204)
 
 
 @router.delete("/api/personas/{persona_id}", status_code=204)

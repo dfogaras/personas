@@ -369,6 +369,43 @@ button, input, select, textarea {
     margin-left: 4px;
 }
 
+.persona-like {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    margin-left: 8px;
+    vertical-align: middle;
+    cursor: pointer;
+    opacity: 0.45;
+    transition: opacity 0.15s;
+    user-select: none;
+    font-size: 0.8em;
+    color: var(--gray-500);
+}
+
+.persona-like:hover {
+    opacity: 1;
+}
+
+.persona-like.liked {
+    opacity: 1;
+    color: var(--persona-color);
+}
+
+[data-theme="chat"] .persona-like.liked {
+    color: var(--chat-color);
+}
+
+.persona-like-heart {
+    font-size: 1.1em;
+    line-height: 1;
+}
+
+.persona-like-count {
+    font-size: 0.9em;
+    font-weight: 600;
+}
+
 .persona-card-actions {
     padding: 8px 12px 10px;
     border-top: 1px solid var(--persona-light);
