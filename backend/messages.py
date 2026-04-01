@@ -22,6 +22,7 @@ M = {
 
     # Conflict / validation
     "email_exists":           "Az e-mail cím már foglalt",
+    "persona_creation_disabled": "Perszóna szerkesztése nem engedélyezett",
     "too_many_personas":      "Elérted a személyek maximális számát (20)",
     "too_many_messages":      "Ez a csevegés elérte az üzenetek maximális számát (60)",
     "invalid_group":          "Érvénytelen csoport. Lehetséges értékek",

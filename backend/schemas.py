@@ -168,6 +168,7 @@ class LessonSettingsResponse(BaseModel):
     persona_system_prompt_template: str
     chat_can_set_model: bool = False
     chat_can_set_temperature: bool = False
+    can_create_personas: bool = True
 
 
 class LessonGroupInfo(BaseModel):
@@ -182,6 +183,7 @@ class LessonUserResponse(BaseModel):
     name: str
     settings: LessonSettingsResponse
     groups: List[LessonGroupInfo] = []
+    creation_allowed: bool = True
 
 
 class LessonPersonaInfo(BaseModel):

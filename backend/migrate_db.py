@@ -69,6 +69,7 @@ def cmd_migrate(engine):
         ("lesson_settings", "persona_system_prompt_template", "TEXT"),  # backfilled below
         ("lesson_settings", "chat_can_set_model", "BOOLEAN NOT NULL DEFAULT 0"),
         ("lesson_settings", "chat_can_set_temperature", "BOOLEAN NOT NULL DEFAULT 0"),
+        ("lesson_settings", "can_create_personas", "BOOLEAN NOT NULL DEFAULT 1"),
     ]
     drop_columns = [
         ("users", "role"),

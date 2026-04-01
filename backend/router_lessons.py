@@ -54,6 +54,7 @@ def _settings_response(lesson: Lesson) -> LessonSettingsResponse:
         persona_system_prompt_template=s.persona_system_prompt_template,
         chat_can_set_model=s.chat_can_set_model,
         chat_can_set_temperature=s.chat_can_set_temperature,
+        can_create_personas=s.can_create_personas,
     )
 
 
@@ -107,6 +108,7 @@ class LessonSettingsUpdate(BaseModel):
     persona_system_prompt_template: str = LESSON_SETTINGS_DEFAULTS["persona_system_prompt_template"]
     chat_can_set_model: bool = False
     chat_can_set_temperature: bool = False
+    can_create_personas: bool = True
 
 
 class LessonGroupsUpdate(BaseModel):
@@ -229,6 +231,7 @@ async def admin_update_lesson_settings(
     s.persona_system_prompt_template = body.persona_system_prompt_template
     s.chat_can_set_model = body.chat_can_set_model
     s.chat_can_set_temperature = body.chat_can_set_temperature
+    s.can_create_personas = body.can_create_personas
     db.commit()
     db.refresh(lesson)
     return _admin_response(lesson, db)
@@ -345,11 +348,13 @@ async def set_my_active_lesson(
     lesson = resolve_active_lesson(current_user, db)
     if not lesson:
         return None
+    s = _settings_response(lesson)
     return LessonUserResponse(
         id=lesson.id,
         name=lesson.name,
-        settings=_settings_response(lesson),
+        settings=s,
         groups=_lesson_groups(lesson, db),
+        creation_allowed=current_user.group == "admin" or s.can_create_personas,
     )
 
 
@@ -361,9 +366,11 @@ async def get_my_lesson(
     lesson = resolve_active_lesson(current_user, db)
     if not lesson:
         return None
+    s = _settings_response(lesson)
     return LessonUserResponse(
         id=lesson.id,
         name=lesson.name,
-        settings=_settings_response(lesson),
+        settings=s,
         groups=_lesson_groups(lesson, db),
+        creation_allowed=current_user.group == "admin" or s.can_create_personas,
     )

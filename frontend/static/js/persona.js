@@ -9,7 +9,7 @@ const backUrl = urlParams.get('back') || '/';
 // View mode
 // ============================================================================
 
-function showView(persona, chats, adminLesson = null) {
+function showView(persona, chats, adminLesson = null, creationAllowed) {
     document.title = `${persona.name} — kincskereso.ai`;
     const metaEl = document.getElementById('personaMeta');
     metaEl.innerHTML = personaMetaHtml(persona);
@@ -22,15 +22,17 @@ function showView(persona, chats, adminLesson = null) {
 
     const headerBtns = [
         { icon: '💬', title: T.chat,  cls: '', onClick: () => startNewChat(personaId) },
-        { icon: '✏️', title: T.edit,   cls: '',          onClick: () => { window.location.href = `/persona/${personaId}?edit&back=${backUrl}`; } },
-        { icon: '⧉',  title: T.remix,  cls: '',          onClick: () => { window.location.href = `/persona/${personaId}?remix&back=${backUrl}`; } },
-        { icon: '🗑',  title: T.delete, cls: 'btn-danger', onClick: async () => {
-            if (!confirm(`"${persona.name}" — ${T.deletePersonaConfirm}`)) return;
-            try {
-                await apiCall('DELETE', `/personas/${personaId}`);
-                window.location.href = '/';
-            } catch (e) { alert(e.message); }
-        }},
+        ...(creationAllowed ? [
+            { icon: '✏️', title: T.edit,  cls: '', onClick: () => { window.location.href = `/persona/${personaId}?edit&back=${backUrl}`; } },
+            { icon: '⧉',  title: T.remix, cls: '', onClick: () => { window.location.href = `/persona/${personaId}?remix&back=${backUrl}`; } },
+            { icon: '🗑',  title: T.delete, cls: 'btn-danger', onClick: async () => {
+                if (!confirm(`"${persona.name}" — ${T.deletePersonaConfirm}`)) return;
+                try {
+                    await apiCall('DELETE', `/personas/${personaId}`);
+                    window.location.href = '/';
+                } catch (e) { alert(e.message); }
+            }},
+        ] : []),
     ];
     headerBtns.forEach(({ icon, title, cls, onClick }) => {
         const btn = document.createElement('button');
@@ -286,12 +288,13 @@ async function init() {
             showEditForm(null);
         } else if (mode === 'view') {
             const isAdmin = getUser()?.group === 'admin';
-            const [persona, chats, activeLesson] = await Promise.all([
+            const [persona, chats, lesson] = await Promise.all([
                 apiCall('GET', `/personas/${personaId}`),
                 apiCall('GET', `/chats?persona_id=${personaId}`),
-                isAdmin ? apiCall('GET', '/me/lesson').catch(() => null) : Promise.resolve(null),
+                apiCall('GET', '/me/lesson').catch(() => null),
             ]);
-            showView(persona, chats, activeLesson);
+            const creationAllowed = lesson?.creation_allowed ?? true;
+            showView(persona, chats, isAdmin ? lesson : null, creationAllowed);
         } else {
             const persona = await apiCall('GET', `/personas/${personaId}`);
             showEditForm(persona);

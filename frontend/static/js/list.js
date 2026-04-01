@@ -58,11 +58,12 @@ async function route() {
 async function showMePage() {
     const user = getUser();
     setNavLabel(user.name || user.email);
-    let adminLesson = null;
-    if (user.group === 'admin') {
-        try { adminLesson = await apiCall('GET', '/me/lesson'); } catch (e) {}
-    }
-    await showDashboardPage(`user_id=${user.id}`, `user_id=${user.id}`, true, adminLesson);
+    const isAdmin = user.group === 'admin';
+    let lesson = null;
+    try { lesson = await apiCall('GET', '/me/lesson'); } catch (e) {}
+    const adminLesson = isAdmin ? lesson : null;
+    const creationAllowed = lesson?.creation_allowed ?? true;
+    await showDashboardPage(`user_id=${user.id}`, `user_id=${user.id}`, creationAllowed, adminLesson);
 }
 
 async function showLessonPage() {
@@ -77,20 +78,25 @@ async function showLessonPage() {
         return;
     }
     const isAdmin = getUser()?.group === 'admin';
-    await showDashboardPage(``, ``, false, isAdmin ? lesson : null);
+    const creationAllowed = lesson.creation_allowed;
+    await showDashboardPage(``, ``, creationAllowed, isAdmin ? lesson : null);
 }
 
 async function showUserPage(userId) {
     setNavLabel('…');
-    let adminLesson = null;
-    if (getUser()?.group === 'admin') {
-        try { adminLesson = await apiCall('GET', '/me/lesson'); } catch (e) {}
+    const user = getUser();
+    const isOwnPage = userId === user?.id;
+    let lesson = null;
+    if (user?.group === 'admin' || isOwnPage) {
+        try { lesson = await apiCall('GET', '/me/lesson'); } catch (e) {}
     }
-    const personas = await showDashboardPage(`user_id=${userId}`, `user_id=${userId}`, false, adminLesson);
+    const adminLesson = user?.group === 'admin' ? lesson : null;
+    const creationAllowed = isOwnPage ? (lesson?.creation_allowed ?? true) : false;
+    const personas = await showDashboardPage(`user_id=${userId}`, `user_id=${userId}`, creationAllowed, adminLesson);
     setNavLabel(personas[0]?.user?.name || 'Felhasználó');
 }
 
-async function showDashboardPage(personaQuery, chatQuery, showAddBtn = false, adminLesson = null) {
+async function showDashboardPage(personaQuery, chatQuery, creationAllowed, adminLesson = null) {
     document.getElementById('page-dashboard').style.display = 'block';
     document.getElementById('dashboardPersonas').innerHTML = '';
     document.getElementById('dashboardChats').innerHTML = '';
@@ -101,7 +107,7 @@ async function showDashboardPage(personaQuery, chatQuery, showAddBtn = false, ad
         apiCall('GET', `/chats?${chatQuery}&limit=10`),
     ]);
 
-    renderPersonasList(personas, document.getElementById('dashboardPersonas'), showAddBtn, adminLesson);
+    renderPersonasList(personas, document.getElementById('dashboardPersonas'), creationAllowed, adminLesson);
 
     if (chats.length > 0) {
         document.getElementById('dashboardChatsHeading').style.display = 'block';
@@ -117,12 +123,14 @@ async function showDashboardPage(personaQuery, chatQuery, showAddBtn = false, ad
 // Persona card rendering
 // ============================================================================
 
-function createPersonaActions(persona, adminLesson = null) {
+function createPersonaActions(persona, adminLesson = null, creationAllowed) {
     const id = persona.id;
     const actions = [
         { title: T.chat,  icon: '💬', handler: (e) => { e.stopPropagation(); startNewChat(id); } },
-        { title: T.edit,  icon: '✏️', handler: (e) => { e.stopPropagation(); window.location.href = `/persona/${id}?edit`; } },
-        { title: T.remix, icon: '⧉', handler: (e) => { e.stopPropagation(); window.location.href = `/persona/${id}?remix`; } },
+        ...(creationAllowed ? [
+            { title: T.edit,  icon: '✏️', handler: (e) => { e.stopPropagation(); window.location.href = `/persona/${id}?edit`; } },
+            { title: T.remix, icon: '⧉', handler: (e) => { e.stopPropagation(); window.location.href = `/persona/${id}?remix`; } },
+        ] : []),
     ];
     const div = document.createElement('div');
     div.className = 'persona-card-actions';
@@ -135,21 +143,23 @@ function createPersonaActions(persona, adminLesson = null) {
         div.appendChild(btn);
     });
 
-    const delBtn = document.createElement('button');
-    delBtn.className = 'persona-card-btn btn-danger';
-    delBtn.title = T.deletePersonaTt;
-    delBtn.textContent = '🗑';
-    delBtn.addEventListener('click', async (e) => {
-        e.stopPropagation();
-        if (!confirm(`"${persona.name}" — ${T.deletePersonaConfirm}`)) return;
-        try {
-            await apiCall('DELETE', `/personas/${id}`);
-            delBtn.closest('.persona-card')?.remove();
-        } catch (err) {
-            alert(err.message);
-        }
-    });
-    div.appendChild(delBtn);
+    if (creationAllowed) {
+        const delBtn = document.createElement('button');
+        delBtn.className = 'persona-card-btn btn-danger';
+        delBtn.title = T.deletePersonaTt;
+        delBtn.textContent = '🗑';
+        delBtn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            if (!confirm(`"${persona.name}" — ${T.deletePersonaConfirm}`)) return;
+            try {
+                await apiCall('DELETE', `/personas/${id}`);
+                delBtn.closest('.persona-card')?.remove();
+            } catch (err) {
+                alert(err.message);
+            }
+        });
+        div.appendChild(delBtn);
+    }
 
     if (adminLesson) {
         const pinBtn = document.createElement('button');
@@ -193,7 +203,7 @@ function createPersonaActions(persona, adminLesson = null) {
     return div;
 }
 
-function renderPersonasList(personas, container, showAddBtn = false, adminLesson = null) {
+function renderPersonasList(personas, container, creationAllowed, adminLesson = null) {
     container.innerHTML = '';
     document.querySelectorAll('.lesson-picker-menu').forEach(m => m.remove());
     personas.forEach(persona => {
@@ -212,11 +222,11 @@ function renderPersonasList(personas, container, showAddBtn = false, adminLesson
         body.addEventListener('click', () => { window.location.href = `/persona/${persona.id}`; });
 
         card.appendChild(body);
-        card.appendChild(createPersonaActions(persona, adminLesson));
+        card.appendChild(createPersonaActions(persona, adminLesson, creationAllowed));
         container.appendChild(card);
     });
 
-    if (showAddBtn) {
+    if (creationAllowed) {
         const addCard = document.createElement('div');
         addCard.className = 'persona-card persona-card-add';
         addCard.textContent = '+';

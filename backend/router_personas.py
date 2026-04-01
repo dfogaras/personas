@@ -79,6 +79,8 @@ async def create_persona(
     current_user: User = Depends(get_current_user),
 ):
     settings = resolve_lesson_settings(current_user, db)
+    if current_user.group != "admin" and not settings.can_create_personas:
+        raise HTTPException(status_code=403, detail=M["persona_creation_disabled"])
     if db.query(Persona).filter(Persona.user_id == current_user.id).count() >= settings.max_personas_per_user:
         raise HTTPException(status_code=400, detail=M["too_many_personas"])
     db_persona = Persona(**persona.model_dump(), user_id=current_user.id)
@@ -128,6 +130,9 @@ async def overwrite_persona(
     if not db_persona:
         raise HTTPException(status_code=404, detail=M["persona_not_found"])
     check_owner_or_admin(db_persona, current_user, "not_your_persona")
+    settings = resolve_lesson_settings(current_user, db)
+    if current_user.group != "admin" and not settings.can_create_personas:
+        raise HTTPException(status_code=403, detail=M["persona_creation_disabled"])
     for key, value in persona.model_dump().items():
         setattr(db_persona, key, value)
     db.commit()
@@ -239,6 +244,9 @@ async def delete_persona(
     if not db_persona:
         raise HTTPException(status_code=404, detail=M["persona_not_found"])
     check_owner_or_admin(db_persona, current_user, "not_your_persona")
+    settings = resolve_lesson_settings(current_user, db)
+    if current_user.group != "admin" and not settings.can_create_personas:
+        raise HTTPException(status_code=403, detail=M["persona_creation_disabled"])
     for chat in db_persona.chats:
         db.delete(chat)
     db.delete(db_persona)

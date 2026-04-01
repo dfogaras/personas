@@ -413,6 +413,7 @@ function openLessonModal(lesson = null) {
     document.getElementById('lessonMaxPersonas').value         = s.max_personas_per_user ?? 20;
     setModelSelect(s.ai_model ?? 'google/gemini-2.5-flash-lite');
     document.getElementById('lessonAiTemperature').value       = s.ai_temperature ?? 1.0;
+    document.getElementById('lessonCanCreatePersonas').checked  = s.can_create_personas ?? true;
     document.getElementById('lessonCanSetModel').checked       = s.chat_can_set_model ?? false;
     document.getElementById('lessonCanSetTemperature').checked = s.chat_can_set_temperature ?? false;
     document.getElementById('lessonSystemPrompt').value        = s.persona_system_prompt_template ?? DEFAULT_SYSTEM_PROMPT;
@@ -464,6 +465,7 @@ async function submitLessonModal() {
         max_personas_per_user:          parseInt(document.getElementById('lessonMaxPersonas').value, 10) || 20,
         ai_model:                       document.getElementById('lessonAiModel').value || 'google/gemini-2.5-flash-lite',
         ai_temperature:                 tempVal,
+        can_create_personas:   document.getElementById('lessonCanCreatePersonas').checked,
         chat_can_set_model:             document.getElementById('lessonCanSetModel').checked,
         chat_can_set_temperature:       document.getElementById('lessonCanSetTemperature').checked,
         persona_system_prompt_template: document.getElementById('lessonSystemPrompt').value.trim(),

@@ -195,6 +195,7 @@ LESSON_SETTINGS_DEFAULTS = {
     "persona_system_prompt_template": DEFAULT_PERSONA_SYSTEM_PROMPT,
     "chat_can_set_model": False,
     "chat_can_set_temperature": False,
+    "can_create_personas": True,
 }
 
 
@@ -211,6 +212,7 @@ class LessonSettings(Base):
     persona_system_prompt_template = Column(Text, nullable=False, default=LESSON_SETTINGS_DEFAULTS["persona_system_prompt_template"])
     chat_can_set_model = Column(Boolean, nullable=False, default=False)
     chat_can_set_temperature = Column(Boolean, nullable=False, default=False)
+    can_create_personas = Column(Boolean, nullable=False, default=True)
 
     lesson = relationship("Lesson", back_populates="settings")
 
