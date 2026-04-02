@@ -46,25 +46,23 @@
         <div class="modal lesson-modal">
             <h2 class="modal-title" id="lessonModalTitle">Új óra létrehozása</h2>
 
+            <div class="modal-compact-row">
+                <span class="modal-compact-title">Név</span>
+                <input id="lessonName" class="admin-input" type="text" placeholder="pl. Matematika — 6B" style="flex:1">
+            </div>
+
             <div class="modal-field">
-                <label class="modal-label">Név</label>
-                <input id="lessonName" class="admin-input" type="text" placeholder="pl. Matematika — 6B">
+                <div class="modal-label-row">
+                    <label class="modal-label">Perszóna sablon</label>
+                    <div class="modal-hint">Változók: <code>{name}</code>, <code>{short}</code>, <code>{long}</code></div>
+                </div>
+                <textarea id="lessonSystemPrompt" class="admin-textarea" rows="12"></textarea>
             </div>
 
-            <div class="modal-row">
-                <div class="modal-field">
-                    <label class="modal-label">Max üzenetek / chat</label>
-                    <input id="lessonMaxMessages" class="admin-input" type="number" min="1" max="999" value="60">
-                </div>
-                <div class="modal-field">
-                    <label class="modal-label">Max personák / felhasználó</label>
-                    <input id="lessonMaxPersonas" class="admin-input" type="number" min="1" max="100" value="20">
-                </div>
-            </div>
-
-            <div class="modal-row">
-                <div class="modal-field">
-                    <label class="modal-label">AI modell</label>
+            <div class="modal-compact-row">
+                <span class="modal-compact-title">AI</span>
+                <div class="modal-compact-group">
+                    <label class="modal-compact-label">Modell</label>
                     <div class="model-select" id="lessonAiModelSelect">
                         <button type="button" class="model-select-trigger admin-input" id="lessonAiModelTrigger">
                             <span id="lessonAiModelLabel">Gemini 2.5 Flash Lite</span>
@@ -74,40 +72,38 @@
                     </div>
                     <input type="hidden" id="lessonAiModel" value="google/gemini-2.5-flash-lite">
                 </div>
-                <div class="modal-field">
-                    <label class="modal-label">AI hőmérséklet <span class="modal-label-info" data-tooltip="0 = kiszámítható, szó szerint követi az utasításokat. 1 = kreatív és változatos.">ⓘ</span></label>
-                    <input id="lessonAiTemperature" class="admin-input" type="number" min="0" max="1" step="0.1" value="1.0">
+                <div class="modal-compact-group">
+                    <label class="modal-compact-label">Hőmérséklet <span class="modal-label-info" data-tooltip="0 = kiszámítható, szó szerint követi az utasításokat. 1 = kreatív és változatos.">ⓘ</span></label>
+                    <input id="lessonAiTemperature" class="admin-input admin-input-sm" type="number" min="0" max="1" step="0.1" value="1.0">
                 </div>
             </div>
 
-            <div class="modal-field">
-                <label class="modal-label">Tanulók jogosultságai</label>
-                <div class="modal-row">
-                    <div class="modal-field modal-field-check">
-                        <label class="modal-check-label">
-                            <input type="checkbox" id="lessonCanCreatePersonas" checked>
-                            Létrehozhatnak perszónát
-                        </label>
-                    </div>
-                    <div class="modal-field modal-field-check">
-                        <label class="modal-check-label">
-                            <input type="checkbox" id="lessonCanSetModel">
-                            Változtathatják az AI modellt
-                        </label>
-                    </div>
-                    <div class="modal-field modal-field-check">
-                        <label class="modal-check-label">
-                            <input type="checkbox" id="lessonCanSetTemperature">
-                            Változtathatják az AI hőmérsékletet
-                        </label>
-                    </div>
+            <div class="modal-compact-row">
+                <span class="modal-compact-title">Limits</span>
+                <div class="modal-compact-group">
+                    <label class="modal-compact-label">Max üzenetek / chat</label>
+                    <input id="lessonMaxMessages" class="admin-input admin-input-sm" type="number" min="1" max="999" value="60">
+                </div>
+                <div class="modal-compact-group">
+                    <label class="modal-compact-label">Max personák / felh.</label>
+                    <input id="lessonMaxPersonas" class="admin-input admin-input-sm" type="number" min="1" max="100" value="20">
                 </div>
             </div>
 
-            <div class="modal-field">
-                <label class="modal-label">Perszóna sablon</label>
-                <div class="modal-hint">Változók: <code>{name}</code>, <code>{short}</code>, <code>{long}</code></div>
-                <textarea id="lessonSystemPrompt" class="admin-textarea" rows="12"></textarea>
+            <div class="modal-compact-row">
+                <span class="modal-compact-title" style="white-space:nowrap">Tanuló módosíthatja</span>
+                <label class="modal-check-pill">
+                    <input type="checkbox" id="lessonCanCreatePersonas" checked>
+                    <span class="modal-compact-label">Perszónát</span>
+                </label>
+                <label class="modal-check-pill">
+                    <input type="checkbox" id="lessonCanSetModel">
+                    <span class="modal-compact-label">AI modellt</span>
+                </label>
+                <label class="modal-check-pill">
+                    <input type="checkbox" id="lessonCanSetTemperature">
+                    <span class="modal-compact-label">AI hőmérsékletet</span>
+                </label>
             </div>
 
             <div class="auth-error" id="lessonModalError" style="display:none"></div>

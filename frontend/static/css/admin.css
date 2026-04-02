@@ -475,6 +475,96 @@
     gap: 16px;
 }
 
+.modal-compact-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.modal-compact-group {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.modal-compact-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--gray-500);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    min-width: 52px;
+}
+
+.modal-compact-label {
+    font-size: 12px;
+    color: var(--gray-500);
+    white-space: nowrap;
+}
+
+.admin-input-sm {
+    width: 64px !important;
+}
+
+.modal-label-row {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 2px;
+}
+
+.modal-label-row .modal-label {
+    margin-bottom: 0;
+}
+
+.modal-label-row .modal-hint {
+    margin-bottom: 0;
+}
+
+.modal-check-pill {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+}
+
+.modal-check-pill input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--persona-color);
+    border-radius: 4px;
+    cursor: pointer;
+    flex-shrink: 0;
+    position: relative;
+    background: white;
+}
+
+.modal-check-pill input[type="checkbox"]:checked {
+    background: var(--persona-color);
+}
+
+.modal-check-pill input[type="checkbox"]:checked::after {
+    content: '';
+    position: absolute;
+    left: 2px;
+    top: -1px;
+    width: 5px;
+    height: 9px;
+    border: 2px solid white;
+    border-top: none;
+    border-left: none;
+    transform: rotate(45deg);
+}
+
+#lessonAiModelSelect {
+    min-width: 140px;
+    max-width: 220px;
+}
+
 .modal-field {
     flex: 1;
     display: flex;
