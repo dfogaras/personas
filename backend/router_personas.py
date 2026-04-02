@@ -81,12 +81,21 @@ async def create_persona(
     settings = resolve_lesson_settings(current_user, db)
     if current_user.group != "admin" and not settings.can_create_personas:
         raise HTTPException(status_code=403, detail=M["persona_creation_disabled"])
-    if db.query(Persona).filter(Persona.user_id == current_user.id).count() >= settings.max_personas_per_user:
+    lesson = resolve_active_lesson(current_user, db)
+    if lesson:
+        persona_count = (
+            db.query(LessonPersona)
+            .join(Persona, Persona.id == LessonPersona.persona_id)
+            .filter(LessonPersona.lesson_id == lesson.id, Persona.user_id == current_user.id)
+            .count()
+        )
+    else:
+        persona_count = db.query(Persona).filter(Persona.user_id == current_user.id).count()
+    if persona_count >= settings.max_personas_per_user:
         raise HTTPException(status_code=400, detail=M["too_many_personas"])
     db_persona = Persona(**persona.model_dump(), user_id=current_user.id)
     db.add(db_persona)
     db.flush()
-    lesson = resolve_active_lesson(current_user, db)
     if lesson:
         db.add(LessonPersona(lesson_id=lesson.id, persona_id=db_persona.id, is_pinned=False))
     db.commit()

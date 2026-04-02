@@ -189,7 +189,7 @@ A személyleírásod a következő:
 
 LESSON_SETTINGS_DEFAULTS = {
     "chat_max_messages": 60,
-    "max_personas_per_user": 20,
+    "max_personas_per_user": 10,
     "ai_model": "google/gemini-2.5-flash-lite",
     "ai_temperature": 1.0,
     "persona_system_prompt_template": DEFAULT_PERSONA_SYSTEM_PROMPT,

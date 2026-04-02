@@ -63,7 +63,7 @@ def cmd_migrate(engine):
         ("users", "active_lesson_id", "INTEGER REFERENCES lessons(id)"),
         ("chats", "lesson_id", "INTEGER REFERENCES lessons(id)"),
         # lesson_settings new fields
-        ("lesson_settings", "max_personas_per_user", "INTEGER NOT NULL DEFAULT 20"),
+        ("lesson_settings", "max_personas_per_user", "INTEGER NOT NULL DEFAULT 10"),
         ("lesson_settings", "ai_model", "TEXT NOT NULL DEFAULT 'google/gemini-2.5-flash-lite'"),
         ("lesson_settings", "ai_temperature", "REAL NOT NULL DEFAULT 1.0"),
         ("lesson_settings", "persona_system_prompt_template", "TEXT"),  # backfilled below
