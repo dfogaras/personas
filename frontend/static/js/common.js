@@ -16,6 +16,7 @@ const MODELS = [
     { value: 'anthropic/claude-haiku-4.5',   label: 'Claude Haiku 4.5',      maxTemp: 1.0, tooltip: 'Gyors és olcsó Anthropic modell. Hőmérséklet max. 1.' },
     { value: 'anthropic/claude-sonnet-4.5',  label: 'Claude Sonnet 4.5',     maxTemp: 1.0, tooltip: 'Erős Anthropic modell. Hőmérséklet max. 1.' },
     { value: 'anthropic/claude-sonnet-4.6',  label: 'Claude Sonnet 4.6',     maxTemp: 1.0, tooltip: 'Az Anthropic legújabb Sonnet modellje. Legjobb minőség a listában. Hőmérséklet max. 1.' },
+    { value: 'perplexity/sonar',             label: 'Perplexity Sonar',       maxTemp: 2.0, tooltip: 'Valós idejű webes keresés. Aktuális kérdésekre, pl. hogyan csináljak valamit egy adott eszközben.' },
 ];
 
 // ============================================================================
