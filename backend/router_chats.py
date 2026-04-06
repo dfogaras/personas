@@ -1,3 +1,4 @@
+import json
 from datetime import datetime, timezone
 from typing import List, Optional
 
@@ -150,6 +151,7 @@ async def send_message(
         prompt_tokens=response.prompt_tokens,
         completion_tokens=response.completion_tokens,
         total_tokens=response.total_tokens,
+        citations=json.dumps([c.model_dump() for c in response.citations]),
     )
     db.add(assistant_message)
     db.commit()

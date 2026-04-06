@@ -118,7 +118,7 @@ function setupChatSettings(lessonSettings) {
 // Messages
 // ============================================================================
 
-function addMessageToUI(role, content, messageId = null) {
+function addMessageToUI(role, content, messageId = null, citations = []) {
     const messagesList = document.getElementById('messagesList');
     const message = document.createElement('div');
     message.className = `message ${role}`;
@@ -128,7 +128,27 @@ function addMessageToUI(role, content, messageId = null) {
 
     const contentDiv = document.createElement('div');
     contentDiv.className = 'message-content';
-    contentDiv.innerHTML = marked.parse(content);
+
+    let html = marked.parse(content);
+    const citByNum = {};
+    if (citations && citations.length > 0) {
+        citations.forEach(c => { citByNum[c.num] = c; });
+        html = html.replace(/\[(\d+)\]/g, (match, n) => {
+            const c = citByNum[parseInt(n)];
+            return c ? `<sup><a href="${c.url}" target="_blank" rel="noopener">[${n}]</a></sup>` : match;
+        });
+    }
+    contentDiv.innerHTML = html;
+
+    if (citations && citations.length > 0) {
+        const citDiv = document.createElement('div');
+        citDiv.className = 'message-citations';
+        citDiv.innerHTML = citations.map(c => {
+            const label = c.title || (() => { try { return new URL(c.url).hostname.replace(/^www\./, ''); } catch (_) { return c.url; } })();
+            return `<a href="${c.url}" target="_blank" rel="noopener" class="citation-link"><span class="citation-num">${c.num}</span>${label}</a>`;
+        }).join('');
+        contentDiv.appendChild(citDiv);
+    }
 
     message.appendChild(contentDiv);
 
@@ -196,7 +216,7 @@ async function init() {
         }
         updateChatTimes(chat.updated_at);
 
-        chat.messages.forEach(m => addMessageToUI(m.role, m.content, m.role === 'assistant' ? m.id : null));
+        chat.messages.forEach(m => addMessageToUI(m.role, m.content, m.role === 'assistant' ? m.id : null, m.citations || []));
 
         await pricesPromise;
         setupChatSettings(lessonSettings);
@@ -226,7 +246,7 @@ async function init() {
                 }
                 const response = await apiCall('POST', `/chats/${chatId}/messages`, msgPayload);
                 document.querySelector(`[data-message-id="${loadingId}"]`)?.remove();
-                addMessageToUI('assistant', response.content, response.id);
+                addMessageToUI('assistant', response.content, response.id, response.citations || []);
                 if (response.chat_updated_at) updateChatTimes(response.chat_updated_at);
             } catch (e) {
                 document.querySelector(`[data-message-id="${loadingId}"]`)?.remove();

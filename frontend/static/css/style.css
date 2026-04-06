@@ -1270,6 +1270,41 @@ body.ai-panel-open .page-content {
     border-radius: 4px;
     font-size: 15px;
 }
+.message-content sup a {
+    color: var(--chat-dark);
+    text-decoration: none;
+    font-size: 11px;
+    font-weight: 600;
+}
+.message-content sup a:hover { text-decoration: underline; }
+.message-citations {
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px solid var(--gray-200);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+.citation-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    background: var(--gray-100);
+    border-radius: 12px;
+    color: var(--chat-dark);
+    text-decoration: none;
+    font-size: 11px;
+    white-space: nowrap;
+    max-width: 180px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.citation-link:hover { background: var(--gray-200); }
+.citation-num {
+    font-weight: 700;
+    flex-shrink: 0;
+}
 .message-content pre code {
     background: none;
     padding: 0;

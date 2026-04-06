@@ -1,8 +1,9 @@
 """Pydantic schemas for request/response validation."""
 
+import json
 from datetime import datetime
 from typing import Optional, List
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class UserResponse(BaseModel):
@@ -70,6 +71,12 @@ class PersonaResponse(PersonaBase):
         from_attributes = True
 
 
+class Citation(BaseModel):
+    num: int
+    url: str
+    title: str
+
+
 class MessageResponse(BaseModel):
     """Schema for message response."""
 
@@ -81,6 +88,14 @@ class MessageResponse(BaseModel):
     prompt_tokens: Optional[int] = None
     completion_tokens: Optional[int] = None
     total_tokens: Optional[int] = None
+    citations: List[Citation] = []
+
+    @field_validator('citations', mode='before')
+    @classmethod
+    def parse_citations(cls, v):
+        if not v:
+            return []
+        return json.loads(v)
 
     class Config:
         from_attributes = True

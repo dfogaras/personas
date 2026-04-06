@@ -1,7 +1,8 @@
 """AI service for interacting with OpenRouter."""
 
 import logging
-from dataclasses import dataclass
+import re
+from dataclasses import dataclass, field
 from datetime import datetime
 
 import aiohttp
@@ -9,8 +10,23 @@ from sqlalchemy.orm import Session
 
 from config import Settings
 from models import TokenUsage
+from schemas import Citation
 
 logger = logging.getLogger(__name__)
+
+
+def _get_used_citations(content: str, annotations: list) -> list[Citation]:
+    all_citations = [
+        a["url_citation"]
+        for a in annotations
+        if a.get("type") == "url_citation"
+    ]
+    used_nums = {int(m) for m in re.findall(r'\[(\d+)\]', content)}
+    return [
+        Citation(num=i + 1, url=c["url"], title=c.get("title", ""))
+        for i, c in enumerate(all_citations)
+        if (i + 1) in used_nums
+    ]
 
 
 @dataclass
@@ -20,6 +36,7 @@ class AIResponse:
     completion_tokens: int
     total_tokens: int
     model: str
+    citations: list[Citation] = field(default_factory=list)
 
 
 class AIService:
@@ -74,13 +91,18 @@ class AIService:
                 error_text = await resp.text()
                 raise Exception(f"OpenRouter API error: {error_text}")
             data = await resp.json()
+            choice = data["choices"][0]
+            content = choice["message"]["content"]
+            annotations = choice["message"].get("annotations") or []
+            citations = _get_used_citations(content, annotations)
             usage = data.get("usage", {})
             return AIResponse(
-                content=data["choices"][0]["message"]["content"],
+                content=content,
                 prompt_tokens=usage.get("prompt_tokens", 0),
                 completion_tokens=usage.get("completion_tokens", 0),
                 total_tokens=usage.get("total_tokens", 0),
                 model=effective_model,
+                citations=citations,
             )
 
 

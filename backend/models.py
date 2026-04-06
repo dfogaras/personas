@@ -137,6 +137,7 @@ class Message(Base):
     prompt_tokens = Column(Integer, nullable=True)
     completion_tokens = Column(Integer, nullable=True)
     total_tokens = Column(Integer, nullable=True)
+    citations = Column(Text, nullable=True)  # JSON array of URLs, for search-enabled models
 
     chat = relationship("Chat", back_populates="messages")
 
