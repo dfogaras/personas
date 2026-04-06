@@ -80,6 +80,9 @@ class AIService:
             "temperature": effective_temperature,
             "max_tokens": self._default_max_tokens,
         }
+        # TODO: consider adding recency filter for web search results for perplexity models.  
+        # if effective_model.startswith("perplexity/"):
+        #    payload["search_recency_filter"] = "day"
 
         async with self._openrouter_session.post(
             f"{self._base_url}/chat/completions",
