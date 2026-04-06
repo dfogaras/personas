@@ -1336,41 +1336,67 @@ select.chat-setting-select {
     position: absolute;
     bottom: calc(100% + 4px);
     right: 0;
-    min-width: 180px;
+    min-width: 540px;
     background: white;
     border: 1.5px solid var(--gray-200);
     border-radius: 10px;
     box-shadow: 0 4px 16px rgba(0,0,0,0.12);
     z-index: 20;
     overflow: visible;
+    padding: 4px;
 }
 
 .chat-model-menu.open {
     display: block;
 }
 
-.chat-model-option {
-    position: relative;
-    padding: 8px 12px;
-    font-size: 13px;
-    cursor: pointer;
-    color: var(--gray-700);
-    white-space: nowrap;
+.model-price-badge {
+    font-size: 11px;
+    color: var(--gray-400);
+    margin-left: 10px;
+    flex-shrink: 0;
 }
 
-.chat-model-option:first-child { border-radius: 8px 8px 0 0; }
-.chat-model-option:last-child  { border-radius: 0 0 8px 8px; }
+/* Grid layout — shared with admin, teal selected colour for chat */
+.chat-model-menu .model-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 3px;
+}
 
-.chat-model-option:hover {
+.chat-model-menu .model-grid-col-header {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--gray-400);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    padding: 4px 8px 6px;
+    text-align: center;
+}
+
+.chat-model-menu .model-select-option {
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 7px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    color: var(--gray-700);
+    font-size: 13px;
+}
+
+.chat-model-menu .model-select-option:hover {
     background: var(--gray-100);
 }
 
-.chat-model-option.selected {
+.chat-model-menu .model-select-option.selected .model-option-name {
     font-weight: 600;
     color: var(--chat-color);
 }
 
-.chat-model-option::after {
+.chat-model-menu .model-select-option::after {
     content: attr(data-tooltip);
     position: absolute;
     right: calc(100% + 8px);
@@ -1391,7 +1417,7 @@ select.chat-setting-select {
     z-index: 30;
 }
 
-.chat-model-option:hover::after {
+.chat-model-menu .model-select-option:hover::after {
     opacity: 1;
 }
 

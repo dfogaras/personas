@@ -16,8 +16,55 @@ const MODELS = [
     { value: 'anthropic/claude-haiku-4.5',   label: 'Claude Haiku 4.5',      maxTemp: 1.0, tooltip: 'Gyors és olcsó Anthropic modell. Hőmérséklet max. 1.' },
     { value: 'anthropic/claude-sonnet-4.5',  label: 'Claude Sonnet 4.5',     maxTemp: 1.0, tooltip: 'Erős Anthropic modell. Hőmérséklet max. 1.' },
     { value: 'anthropic/claude-sonnet-4.6',  label: 'Claude Sonnet 4.6',     maxTemp: 1.0, tooltip: 'Az Anthropic legújabb Sonnet modellje. Legjobb minőség a listában. Hőmérséklet max. 1.' },
-    { value: 'perplexity/sonar',             label: 'Perplexity Sonar',       maxTemp: 2.0, tooltip: 'Valós idejű webes keresés. Aktuális kérdésekre, pl. hogyan csináljak valamit egy adott eszközben.' },
+    { value: 'perplexity/sonar',             label: 'Perplexity Sonar',       maxTemp: 2.0, tooltip: 'Valós idejű webes keresés. Gyors és olcsó — egyszerű aktuális kérdésekhez.' },
+    { value: 'perplexity/sonar-pro',         label: 'Perplexity Sonar Pro',   maxTemp: 2.0, tooltip: 'Valós idejű webes keresés erősebb modellel. Összetettebb kérdésekhez, pontosabb válaszokkal.' },
 ];
+
+// ============================================================================
+// Model pricing (fetched once per page load)
+// ============================================================================
+
+let _modelPrices = {};
+
+async function fetchModelPrices() {
+    try {
+        _modelPrices = await apiCall('GET', '/models');
+    } catch (_) { /* silently ignore — prices just won't show */ }
+}
+
+function modelOptionHtml(m) {
+    return `<div class="model-select-option" data-value="${m.value}" data-label="${m.label}" data-tooltip="${m.tooltip}">
+        <span class="model-option-name">${m.label}</span>
+        ${getModelPriceBadge(m.value)}
+    </div>`;
+}
+
+function renderModelGrid() {
+    const byProvider = (prefix) => MODELS.filter(m => m.value.startsWith(prefix));
+    const cols = [
+        { header: 'Google',     models: byProvider('google/') },
+        { header: 'OpenAI',     models: byProvider('openai/') },
+        { header: 'Anthropic',  models: byProvider('anthropic/') },
+        { header: 'Perplexity', models: byProvider('perplexity/') },
+    ];
+    const maxRows = Math.max(...cols.map(c => c.models.length));
+    let rows = '';
+    for (let i = 0; i < maxRows; i++) {
+        cols.forEach(({ models }) => {
+            rows += models[i] ? modelOptionHtml(models[i]) : '<div class="model-grid-empty"></div>';
+        });
+    }
+    const headers = cols.map(c => `<div class="model-grid-col-header">${c.header}</div>`).join('');
+    return `<div class="model-grid">${headers}${rows}</div>`;
+}
+
+function getModelPriceBadge(modelId) {
+    const p = _modelPrices[modelId];
+    if (!p || p.relative == null) return '';
+    const r = p.relative;
+    const label = r < 0.15 ? 'ingyenes' : (Math.round(r * 10) / 10) + '×';
+    return `<span class="model-price-badge">${label}$</span>`;
+}
 
 // ============================================================================
 // Auth state (localStorage)

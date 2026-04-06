@@ -366,7 +366,7 @@ function setModelSelect(value) {
     const label  = document.getElementById('lessonAiModelLabel');
     const option = document.querySelector(`#lessonAiModelMenu [data-value="${value}"]`);
     hidden.value = value;
-    label.textContent = option ? option.textContent : value;
+    label.textContent = option ? option.dataset.label : value;
     document.querySelectorAll('#lessonAiModelMenu .model-select-option').forEach(el => {
         el.classList.toggle('selected', el.dataset.value === value);
     });
@@ -376,10 +376,7 @@ function initModelSelect() {
     const trigger = document.getElementById('lessonAiModelTrigger');
     const menu    = document.getElementById('lessonAiModelMenu');
 
-    // Populate options from shared MODELS constant
-    menu.innerHTML = MODELS.map(m =>
-        `<div class="model-select-option" data-value="${m.value}" data-tooltip="${m.tooltip}">${m.label}</div>`
-    ).join('');
+    menu.innerHTML = renderModelGrid();
 
     trigger.addEventListener('click', e => {
         e.stopPropagation();
@@ -508,7 +505,6 @@ async function init() {
     setupNav();
     setNavLabel('Órák kezelése');
 
-    initModelSelect();
     document.getElementById('newLessonBtn').addEventListener('click', () => openLessonModal());
     document.getElementById('lessonCancelBtn').addEventListener('click', closeLessonModal);
     document.getElementById('lessonSubmitBtn').addEventListener('click', submitLessonModal);
@@ -533,11 +529,13 @@ async function init() {
             apiCall('GET', '/admin/groups'),
             apiCall('GET', '/me/lesson'),
             apiCall('GET', '/admin/access'),
+            fetchModelPrices(),
         ]);
         _lessons = lessons;
         _allGroups = groups;
         _groupAccess = access;
         _myActiveLessonId = myLesson?.id ?? null;
+        initModelSelect();
         syncNavLesson();
         renderLessons();
     } catch (e) {

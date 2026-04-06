@@ -73,16 +73,13 @@ function setupChatSettings(lessonSettings) {
         const menu    = document.getElementById('chatModelMenu');
         wrapper.style.display = '';
 
-        // Populate from shared MODELS list
-        menu.innerHTML = MODELS.map(m =>
-            `<div class="chat-model-option" data-value="${m.value}" data-tooltip="${m.tooltip}">${m.label}</div>`
-        ).join('');
+        menu.innerHTML = renderModelGrid();
 
         function setChatModel(value) {
             _chatModel = value;
-            const m = MODELS.find(m => m.value === value);
-            label.textContent = m ? m.label : value;
-            menu.querySelectorAll('.chat-model-option').forEach(el =>
+            const opt = menu.querySelector(`.model-select-option[data-value="${value}"]`);
+            label.textContent = opt ? opt.dataset.label : value;
+            menu.querySelectorAll('.model-select-option').forEach(el =>
                 el.classList.toggle('selected', el.dataset.value === value)
             );
             syncUrlParams();
@@ -92,7 +89,7 @@ function setupChatSettings(lessonSettings) {
             e.stopPropagation();
             menu.classList.toggle('open');
         });
-        menu.querySelectorAll('.chat-model-option').forEach(opt => {
+        menu.querySelectorAll('.model-select-option').forEach(opt => {
             opt.addEventListener('click', () => {
                 setChatModel(opt.dataset.value);
                 menu.classList.remove('open');
@@ -149,6 +146,8 @@ async function init() {
 
     setupNav();
 
+    const pricesPromise = fetchModelPrices();
+
     let lessonSettings = null;
     try {
         const lesson = await apiCall('GET', '/me/lesson');
@@ -199,6 +198,7 @@ async function init() {
 
         chat.messages.forEach(m => addMessageToUI(m.role, m.content, m.role === 'assistant' ? m.id : null));
 
+        await pricesPromise;
         setupChatSettings(lessonSettings);
 
         const msgInput = document.getElementById('messageInput');

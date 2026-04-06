@@ -360,10 +360,10 @@
     position: absolute;
     top: calc(100% + 4px);
     left: 0;
-    right: 0;
+    min-width: 560px;
     background: white;
     border: 2px solid var(--persona-color);
-    border-radius: 8px;
+    border-radius: 10px;
     overflow: visible;
     z-index: 20;
     box-shadow: 0 4px 16px rgba(0,0,0,0.12);
@@ -373,29 +373,41 @@
     display: block;
 }
 
+.model-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 3px;
+    padding: 8px;
+}
+
+.model-grid-col-header {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--gray-400);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    padding: 2px 8px 6px;
+    text-align: center;
+}
+
+.model-grid-empty {
+    /* placeholder to keep grid alignment */
+}
+
+
 .model-select-option {
-    position: relative;
-    padding: 9px 12px;
-    font-size: 15px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 7px 10px;
+    border-radius: 6px;
     cursor: pointer;
     color: var(--gray-700);
 }
 
-.model-select-option:first-child {
-    border-radius: 6px 6px 0 0;
-}
-
-.model-select-option:last-child {
-    border-radius: 0 0 6px 6px;
-}
-
 .model-select-option:hover {
     background: var(--gray-100);
-}
-
-.model-select-option.selected {
-    font-weight: 600;
-    color: var(--persona-color);
 }
 
 .model-select-option::after {
@@ -410,7 +422,7 @@
     font-weight: 400;
     line-height: 1.4;
     white-space: normal;
-    width: 220px;
+    width: 200px;
     padding: 7px 10px;
     border-radius: 6px;
     pointer-events: none;
@@ -421,6 +433,24 @@
 
 .model-select-option:hover::after {
     opacity: 1;
+}
+
+.model-select-option.selected .model-option-name {
+    font-weight: 600;
+    color: var(--persona-color);
+}
+
+.model-option-name {
+    font-size: 13px;
+    line-height: 1.3;
+}
+
+
+.model-price-badge {
+    font-size: 11px;
+    color: var(--gray-400);
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .modal-title {

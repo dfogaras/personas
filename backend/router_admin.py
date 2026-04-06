@@ -5,7 +5,7 @@ import io
 import sqlite3
 import zipfile
 from datetime import datetime, timedelta, timezone
-import price
+from price_service import PriceService, get_price_service
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import Response, StreamingResponse
@@ -13,7 +13,7 @@ from pydantic import BaseModel
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from auth import require_admin
+from auth import get_current_user, require_admin
 from settings_service import get_settings
 from messages import M
 from database import get_db
@@ -138,13 +138,71 @@ async def set_group_access(
 # ============================================================================
 # Token usage
 # ============================================================================
+# Model list with pricing
+# ============================================================================
+
+_DEFAULT_MODEL = "google/gemini-2.5-flash-lite"
+
+_KNOWN_MODELS = [
+    "google/gemini-2.5-flash-lite",
+    "google/gemini-2.5-flash",
+    "google/gemini-2.5-pro",
+    "openai/gpt-5.4-nano",
+    "openai/gpt-5.4-mini",
+    "openai/gpt-5.4",
+    "anthropic/claude-haiku-4.5",
+    "anthropic/claude-sonnet-4.5",
+    "anthropic/claude-sonnet-4.6",
+    "perplexity/sonar",
+    "perplexity/sonar-pro",
+]
+
+
+@router.get("/api/models")
+async def list_models_with_prices(
+    _: User = Depends(get_current_user),
+    prices: PriceService = Depends(get_price_service),
+):
+    try:
+        all_prices = await prices.get_prices()
+    except Exception:
+        return {}
+
+    def blended(p: dict, model_id: str) -> float:
+        # 3 prompt tokens per 1 completion token — reflects accumulating context in multi-turn chat
+        prompt = float(p.get("prompt", 0) or 0)
+        completion = float(p.get("completion", 0) or 0)
+        # Perplexity's web_search is a mandatory per-request fee — amortize over ~300 completion tokens.
+        # For other providers it's an optional tool fee, so we ignore it.
+        if model_id.startswith("perplexity/"):
+            completion += float(p.get("web_search", 0) or 0) / 300
+        return (prompt * 3 + completion) / 4
+
+    default_blended = blended(all_prices.get(_DEFAULT_MODEL, {}), _DEFAULT_MODEL)
+
+    result = {}
+    for model_id in _KNOWN_MODELS:
+        p = all_prices.get(model_id, {})
+        completion = float(p.get("completion", 0) or 0)
+        prompt_val = float(p.get("prompt", 0) or 0)
+        model_blended = blended(p, model_id)
+        relative = round(model_blended / default_blended, 2) if default_blended > 0 and model_blended > 0 else None
+        result[model_id] = {
+            "completion_per_1m": round(completion * 1_000_000, 4),
+            "prompt_per_1m": round(prompt_val * 1_000_000, 4),
+            "relative": relative,
+        }
+    return result
+
+
+# ============================================================================
 
 @router.get("/api/admin/usage")
 async def get_usage(
     minutes: int = Query(60, ge=1, le=10080),
     _: User = Depends(require_admin),
     db: Session = Depends(get_db),
-    settings=Depends(get_settings),
+    prices: PriceService = Depends(get_price_service),
 ):
     since = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(minutes=minutes)
 
@@ -155,8 +213,8 @@ async def get_usage(
         .all()
     )
     pricing, credit_info = await asyncio.gather(
-        price.get_prices(settings),
-        price.get_credit_info(settings),
+        prices.get_prices(),
+        prices.get_credit_info(),
     )
 
     models_usage = []
