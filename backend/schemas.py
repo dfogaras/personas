@@ -47,7 +47,7 @@ class PersonaBase(BaseModel):
 
     name: str = Field(min_length=1, max_length=100)
     description: str = Field(min_length=1, max_length=4000)
-    specialty: Optional[str] = Field(default=None, max_length=40)
+    title: Optional[str] = Field(default=None, max_length=40)
 
 
 class PersonaCreate(PersonaBase):
@@ -205,7 +205,7 @@ class LessonPersonaInfo(BaseModel):
     persona_id: int
     is_pinned: bool
     name: Optional[str] = None
-    specialty: Optional[str] = None
+    title: Optional[str] = None
 
 
 class LessonAdminResponse(LessonUserResponse):

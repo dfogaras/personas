@@ -79,6 +79,7 @@ def cmd_migrate(engine):
     ]
     rename_columns = [
         ("lesson_settings", "max_messages_per_chat", "chat_max_messages"),
+        ("personas", "specialty", "title"),
     ]
     null_user_cleanup = [
         # Remove legacy rows that have no owner, in dependency order

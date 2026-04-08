@@ -81,7 +81,7 @@ def _admin_response(lesson: Lesson, db: Session) -> LessonAdminResponse:
                 persona_id=lp.persona_id,
                 is_pinned=lp.is_pinned,
                 name=lp.persona.name,
-                specialty=lp.persona.specialty,
+                title=lp.persona.title,
             )
             for lp in lesson.personas
         ],

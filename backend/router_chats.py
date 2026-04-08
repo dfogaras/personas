@@ -123,7 +123,7 @@ async def send_message(
     persona = chat.persona
     system_prompt = settings.persona_system_prompt_template.format(
         name=persona.name,
-        short=persona.specialty or "",
+        short=persona.title or "",
         long=persona.description,
     )
 

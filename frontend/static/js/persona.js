@@ -118,7 +118,7 @@ function showEditForm(persona) {
     setupCharCounter(nameInput, document.getElementById('pNameCounter'));
 
     const specInput = document.getElementById('pSpec');
-    specInput.value = persona ? (persona.specialty || '') : '';
+    specInput.value = persona ? (persona.title || '') : '';
     setupCharCounter(specInput, document.getElementById('pSpecCounter'));
 
     document.getElementById('submitBtn').title = isCreate || isRemix ? T.create : T.save;
@@ -134,14 +134,14 @@ function showEditForm(persona) {
         const descEl = document.getElementById('pDesc');
         const name = nameEl.value.trim();
         const description = descEl.value.trim();
-        const specialty = specInput.value.trim();
+        const title = specInput.value.trim();
         const errorEl = document.getElementById('formError');
 
         nameEl.classList.toggle('input-error', !name);
-        specInput.classList.toggle('input-error', !specialty);
+        specInput.classList.toggle('input-error', !title);
         descEl.classList.toggle('input-error', !description);
 
-        if (!name || !specialty || !description) {
+        if (!name || !title || !description) {
             errorEl.textContent = T.errRequiredFields;
             errorEl.style.display = 'block';
             return;
@@ -150,10 +150,10 @@ function showEditForm(persona) {
 
         try {
             if (isCreate || isRemix) {
-                const newPersona = await apiCall('POST', '/personas', { name, description, specialty });
+                const newPersona = await apiCall('POST', '/personas', { name, description, title });
                 window.location.href = `/persona/${newPersona.id}`;
             } else {
-                await apiCall('POST', `/personas/${personaId}`, { name, description, specialty: specialty || null });
+                await apiCall('POST', `/personas/${personaId}`, { name, description, title: title || null });
                 window.location.href = `/persona/${personaId}?back=${backUrl}`;
             }
         } catch (e) {
@@ -244,7 +244,7 @@ function showEditForm(persona) {
 
     aiFeedbackBtn.addEventListener('click', async () => {
         const name = document.getElementById('pName').value.trim();
-        const specialty = specInput.value.trim();
+        const title = specInput.value.trim();
         const description = document.getElementById('pDesc').value.trim();
 
         if (!description) {
@@ -258,7 +258,7 @@ function showEditForm(persona) {
         aiFeedbackBox.style.display = 'none';
 
         try {
-            const result = await apiCall('POST', '/ai/persona-feedback', { name, specialty, description });
+            const result = await apiCall('POST', '/ai/persona-feedback', { name, title, description });
             aiFeedbackContent.innerHTML = marked.parse(result.feedback);
             showFeedbackPanel();
         } catch (e) {

@@ -151,7 +151,7 @@ async def overwrite_persona(
 
 class PersonaFeedbackRequest(BaseModel):
     name: str
-    specialty: str
+    title: str
     description: str
 
 
@@ -196,7 +196,7 @@ Style rules:
 
     user_msg = (
         f"Név: {req.name}\n"
-        f"Cím: {req.specialty}\n"
+        f"Cím: {req.title}\n"
         f"Leírás:\n{req.description}"
     )
 
