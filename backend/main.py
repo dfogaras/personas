@@ -24,9 +24,12 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db(get_settings())
-    init_ai_service(get_settings())
-    init_price_service(get_settings())
     print("✓ Database initialized")
+    init_ai_service(get_settings())
+    print("✓ AI service initialized")
+    init_price_service(get_settings())
+    print("✓ Price service initialized")
+
     print(f"✓ Application started on {get_settings().app.host}:{get_settings().app.port}")
     yield
     await get_ai_service().close()
