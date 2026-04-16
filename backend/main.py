@@ -11,7 +11,7 @@ from fastapi.staticfiles import StaticFiles
 from ai_service import get_ai_service, init_ai_service
 from price_service import init_price_service
 from settings_service import get_frontend_path, get_settings, read_frontend_file
-from database import init_db
+from database_service import init_db
 from router_admin import router as admin_router
 from router_auth import router as auth_router
 from router_chats import router as chats_router

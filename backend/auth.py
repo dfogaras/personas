@@ -8,7 +8,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import bcrypt
 from sqlalchemy.orm import Session
 
-from database import get_db
+from database_service import get_db
 from messages import M
 from models import AuthToken, User
 

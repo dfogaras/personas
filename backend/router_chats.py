@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from auth import get_current_user, check_owner_or_admin
 from messages import M
-from database import get_db
+from database_service import get_db
 from models import Chat, Message, Persona, User
 from ai_service import AIService, generate_and_record, get_ai_service
 from router_lessons import resolve_active_lesson, resolve_lesson_settings

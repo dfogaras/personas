@@ -16,7 +16,7 @@ from sqlalchemy.orm import Session
 from auth import get_current_user, require_admin
 from settings_service import get_settings
 from messages import M
-from database import get_db
+from database_service import get_db
 from models import Group, User, TokenUsage
 from schemas import UserAdminCreate, UserAdminResponse, UserAdminUpdate
 

@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from auth import create_token, get_current_user, hash_password, verify_password
 from messages import M
 from settings_service import get_settings
-from database import get_db
+from database_service import get_db
 from models import AuthToken, User
 from schemas import ChangePasswordRequest, LoginRequest, TokenResponse, UserResponse
 

@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session, selectinload
 from ai_service import generate_and_record, get_ai_service
 from auth import get_current_user, check_owner_or_admin
 from messages import M
-from database import get_db
+from database_service import get_db
 from sqlalchemy import case, func
 from models import Group, LessonPersona, Persona, PersonaLike, User
 from router_lessons import resolve_active_lesson, resolve_lesson_settings

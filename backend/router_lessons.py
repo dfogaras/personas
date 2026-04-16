@@ -7,7 +7,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from auth import get_current_user, require_admin
-from database import get_db
+from database_service import get_db
 from models import Group, Lesson, LessonGroup, LessonPersona, LessonSettings, LESSON_SETTINGS_DEFAULTS, Persona, User
 from schemas import LessonAdminResponse, LessonGroupInfo, LessonPersonaInfo, LessonSettingsResponse, LessonUserResponse
 
