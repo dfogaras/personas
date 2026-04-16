@@ -197,6 +197,8 @@ LESSON_SETTINGS_DEFAULTS = {
     "chat_can_set_model": False,
     "chat_can_set_temperature": False,
     "can_create_personas": True,
+    "persona_sort_order": "recency",
+    "personas_pinned_first": True,
 }
 
 
@@ -214,6 +216,8 @@ class LessonSettings(Base):
     chat_can_set_model = Column(Boolean, nullable=False, default=False)
     chat_can_set_temperature = Column(Boolean, nullable=False, default=False)
     can_create_personas = Column(Boolean, nullable=False, default=True)
+    persona_sort_order = Column(String, nullable=False, default=LESSON_SETTINGS_DEFAULTS["persona_sort_order"])
+    personas_pinned_first = Column(Boolean, nullable=False, default=LESSON_SETTINGS_DEFAULTS["personas_pinned_first"])
 
     lesson = relationship("Lesson", back_populates="settings")
 

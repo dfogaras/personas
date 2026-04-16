@@ -70,6 +70,8 @@ def cmd_migrate(engine):
         ("lesson_settings", "chat_can_set_model", "BOOLEAN NOT NULL DEFAULT 0"),
         ("lesson_settings", "chat_can_set_temperature", "BOOLEAN NOT NULL DEFAULT 0"),
         ("lesson_settings", "can_create_personas", "BOOLEAN NOT NULL DEFAULT 1"),
+        ("lesson_settings", "persona_sort_order", "TEXT NOT NULL DEFAULT 'recency'"),
+        ("lesson_settings", "personas_pinned_first", "BOOLEAN NOT NULL DEFAULT 1"),
         ("messages", "citations", "TEXT"),
     ]
     drop_columns = [

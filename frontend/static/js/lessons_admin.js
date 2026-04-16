@@ -414,6 +414,8 @@ function openLessonModal(lesson = null) {
     document.getElementById('lessonCanSetModel').checked       = s.chat_can_set_model ?? false;
     document.getElementById('lessonCanSetTemperature').checked = s.chat_can_set_temperature ?? false;
     document.getElementById('lessonSystemPrompt').value        = s.persona_system_prompt_template ?? DEFAULT_SYSTEM_PROMPT;
+    document.getElementById('lessonPersonaSortOrder').value    = s.persona_sort_order ?? 'recency';
+    document.getElementById('lessonPersonasPinnedFirst').checked = s.personas_pinned_first ?? true;
 
     document.getElementById('lessonModalError').style.display = 'none';
     document.getElementById('lessonSubmitBtn').disabled = false;
@@ -466,6 +468,8 @@ async function submitLessonModal() {
         chat_can_set_model:             document.getElementById('lessonCanSetModel').checked,
         chat_can_set_temperature:       document.getElementById('lessonCanSetTemperature').checked,
         persona_system_prompt_template: document.getElementById('lessonSystemPrompt').value.trim(),
+        persona_sort_order:             document.getElementById('lessonPersonaSortOrder').value || 'recency',
+        personas_pinned_first:          document.getElementById('lessonPersonasPinnedFirst').checked,
     };
 
     try {

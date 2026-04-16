@@ -184,6 +184,8 @@ class LessonSettingsResponse(BaseModel):
     chat_can_set_model: bool = False
     chat_can_set_temperature: bool = False
     can_create_personas: bool = True
+    persona_sort_order: str = "recency"
+    personas_pinned_first: bool = True
 
 
 class LessonGroupInfo(BaseModel):

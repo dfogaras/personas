@@ -55,6 +55,8 @@ def _settings_response(lesson: Lesson) -> LessonSettingsResponse:
         chat_can_set_model=s.chat_can_set_model,
         chat_can_set_temperature=s.chat_can_set_temperature,
         can_create_personas=s.can_create_personas,
+        persona_sort_order=s.persona_sort_order,
+        personas_pinned_first=s.personas_pinned_first,
     )
 
 
@@ -109,6 +111,8 @@ class LessonSettingsUpdate(BaseModel):
     chat_can_set_model: bool = False
     chat_can_set_temperature: bool = False
     can_create_personas: bool = True
+    persona_sort_order: str = LESSON_SETTINGS_DEFAULTS["persona_sort_order"]
+    personas_pinned_first: bool = LESSON_SETTINGS_DEFAULTS["personas_pinned_first"]
 
 
 class LessonGroupsUpdate(BaseModel):
@@ -232,6 +236,8 @@ async def admin_update_lesson_settings(
     s.chat_can_set_model = body.chat_can_set_model
     s.chat_can_set_temperature = body.chat_can_set_temperature
     s.can_create_personas = body.can_create_personas
+    s.persona_sort_order = body.persona_sort_order
+    s.personas_pinned_first = body.personas_pinned_first
     db.commit()
     db.refresh(lesson)
     return _admin_response(lesson, db)

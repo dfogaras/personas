@@ -106,6 +106,22 @@
                 </label>
             </div>
 
+            <div class="modal-compact-row">
+                <span class="modal-compact-title">Perszóna megjelenítés</span>
+                <div class="modal-compact-group">
+                    <label class="modal-compact-label" for="lessonPersonaSortOrder">Sorrend</label>
+                    <select id="lessonPersonaSortOrder" class="admin-input" style="width: 140px;">
+                        <option value="recency">Legújabb</option>
+                        <option value="likes">Legtöbb like</option>
+                        <option value="random">Véletlenszerű</option>
+                    </select>
+                </div>
+                <label class="modal-check-pill">
+                    <input type="checkbox" id="lessonPersonasPinnedFirst" checked>
+                    <span class="modal-compact-label">Kitűzöttek az elején</span>
+                </label>
+            </div>
+
             <div class="auth-error" id="lessonModalError" style="display:none"></div>
             <div class="modal-actions">
                 <button id="lessonSubmitBtn" class="admin-btn save-btn">Létrehozás</button>

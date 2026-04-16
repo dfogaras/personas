@@ -1,4 +1,5 @@
 import logging
+import random
 
 from typing import Optional
 
@@ -26,6 +27,25 @@ router = APIRouter(dependencies=[Depends(get_current_user)])
 @router.get("/api/groups")
 async def list_groups(db: Session = Depends(get_db)):
     return [{"id": g.id, "name": g.name} for g in db.query(Group).order_by(Group.id).all()]
+
+
+def _resort_personas(results_by_recency, sort_order, pinned_first):
+    """Sort personas according to lesson settings: pinned first, then by sort order."""
+    if pinned_first:
+        priority_results = [r for r in results_by_recency if r.is_pinned]
+        remaining_results = [r for r in results_by_recency if not r.is_pinned]
+    else:
+        priority_results = []
+        remaining_results = results_by_recency
+
+    # Sort remaining results by selected order
+    if sort_order == 'likes':
+        remaining_results.sort(key=lambda r: r.like_count, reverse=True)
+    elif sort_order == 'random':
+        random.shuffle(remaining_results)
+    # else: 'recency' (default, already in creation order)
+
+    return priority_results + remaining_results
 
 
 @router.get("/api/personas", response_model=list[PersonaResponse])
@@ -69,7 +89,9 @@ async def list_personas(
         resp.like_count = like_counts.get(persona.id, 0)
         resp.liked_by_me = persona.id in my_likes
         results.append(resp)
-    return results
+
+    lesson_settings = resolve_lesson_settings(current_user, db)
+    return _resort_personas(results, lesson_settings.persona_sort_order, lesson_settings.personas_pinned_first)
 
 
 @router.post("/api/personas", response_model=PersonaResponse)
