@@ -196,6 +196,21 @@ async function init() {
                 btn.addEventListener('click', (e) => { e.stopPropagation(); window.location.href = href; });
                 createdLine.appendChild(btn);
             });
+
+            const newChatBtn = document.createElement('button');
+            newChatBtn.className = 'persona-card-btn chat-persona-action-btn';
+            newChatBtn.title = T.newChat;
+            newChatBtn.textContent = '💬';
+            newChatBtn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                try {
+                    const response = await apiCall('POST', '/chats', { persona_id: persona.id });
+                    window.location.href = `/chat/${response.id}`;
+                } catch (e) {
+                    alert(e.message);
+                }
+            });
+            createdLine.appendChild(newChatBtn);
         }
         const backParam = `?back=/chat/${chatId}`;
         metaEl.addEventListener('click', () => { window.location.href = `/persona/${persona.id}${backParam}`; });

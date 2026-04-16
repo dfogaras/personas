@@ -19,6 +19,7 @@ const T = {
     remixPersona:          'Persona remixelése',
     remix:                 'Remix',
     chat:                  'Chat',
+    newChat:               'Új csevegés',
     previousChats:         'Korábbi csevegések',
     deleteChat:            'Chat törlése',
 
