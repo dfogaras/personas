@@ -169,9 +169,11 @@ async function init() {
     const pricesPromise = fetchModelPrices();
 
     let lessonSettings = null;
+    let creationAllowed = true;
     try {
         const lesson = await apiCall('GET', '/me/lesson');
         lessonSettings = lesson?.settings ?? null;
+        creationAllowed = lesson?.creation_allowed ?? true;
     } catch (_) { /* no active lesson */ }
 
     try {
@@ -184,7 +186,7 @@ async function init() {
         metaEl.querySelector('.persona-meta-name').appendChild(createLikeEl(persona));
 
         const createdLine = metaEl.querySelector('.persona-meta-created');
-        if (createdLine) {
+        if (createdLine && creationAllowed) {
             [
                 { icon: '✏️', title: T.edit,  href: `/persona/${persona.id}?edit&back=/chat/${chatId}` },
                 { icon: '⧉',  title: T.remix, href: `/persona/${persona.id}?remix&back=/chat/${chatId}` },
