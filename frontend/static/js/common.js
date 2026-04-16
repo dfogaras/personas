@@ -231,6 +231,11 @@ function setupNav() {
             if (lesson) {
                 navLesson.textContent = lesson.name;
                 navLesson.style.display = '';
+                navLesson.style.cursor = 'pointer';
+                navLesson.style.pointerEvents = 'auto';
+                navLesson.addEventListener('click', () => {
+                    window.location.href = '/list#page=lesson';
+                });
                 const navLessonPage = document.getElementById('navLessonPage');
                 if (navLessonPage) {
                     const groupNames = lesson.groups?.map(g => g.name).join(', ');
