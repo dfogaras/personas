@@ -186,18 +186,20 @@ async function init() {
         metaEl.querySelector('.persona-meta-name').appendChild(createLikeEl(persona));
 
         const createdLine = metaEl.querySelector('.persona-meta-created');
-        if (createdLine && creationAllowed) {
-            [
-                { icon: '✏️', title: T.edit,  href: `/persona/${persona.id}?edit&back=/chat/${chatId}` },
-                { icon: '⧉',  title: T.remix, href: `/persona/${persona.id}?remix&back=/chat/${chatId}` },
-            ].forEach(({ icon, title, href }) => {
-                const btn = document.createElement('button');
-                btn.className = 'persona-card-btn chat-persona-action-btn';
-                btn.title = title;
-                btn.textContent = icon;
-                btn.addEventListener('click', (e) => { e.stopPropagation(); window.location.href = href; });
-                createdLine.appendChild(btn);
-            });
+        if (createdLine) {
+            if (creationAllowed) {
+                [
+                    { icon: '✏️', title: T.edit,  href: `/persona/${persona.id}?edit&back=/chat/${chatId}` },
+                    { icon: '⧉',  title: T.remix, href: `/persona/${persona.id}?remix&back=/chat/${chatId}` },
+                ].forEach(({ icon, title, href }) => {
+                    const btn = document.createElement('button');
+                    btn.className = 'persona-card-btn chat-persona-action-btn';
+                    btn.title = title;
+                    btn.textContent = icon;
+                    btn.addEventListener('click', (e) => { e.stopPropagation(); window.location.href = href; });
+                    createdLine.appendChild(btn);
+                });
+            }
 
             const newChatBtn = document.createElement('button');
             newChatBtn.className = 'persona-card-btn chat-persona-action-btn';
