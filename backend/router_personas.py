@@ -19,6 +19,7 @@ from schemas import PersonaCreate, PersonaResponse
 logger = logging.getLogger(__name__)
 router = APIRouter(dependencies=[Depends(get_current_user)])
 
+_secure_random = random.SystemRandom()
 
 # ============================================================================
 # Personas API
@@ -42,7 +43,7 @@ def _resort_personas(results_by_recency, sort_order, pinned_first):
     if sort_order == 'likes':
         remaining_results.sort(key=lambda r: r.like_count, reverse=True)
     elif sort_order == 'random':
-        random.shuffle(remaining_results)
+        _secure_random.shuffle(remaining_results)
     # else: 'recency' (default, already in creation order)
 
     return priority_results + remaining_results
