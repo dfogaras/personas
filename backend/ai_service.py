@@ -38,7 +38,24 @@ class AIService:
     async def close(self):
         await self._openrouter_session.close()
 
-    async def generate(
+    async def generate_and_record(
+        self,
+        system_prompt: str,
+        messages: list[dict],
+        db: Session,
+        model: str | None = None,
+        temperature: float | None = None,
+    ) -> AIResponse:
+        """Generate an AI response and record token usage."""
+        response = await self._generate(system_prompt, messages, model=model, temperature=temperature)
+        logger.info(
+            f"AI response: model={response.model} temperature={temperature} "
+            f"prompt={response.prompt_tokens} completion={response.completion_tokens}"
+        )
+        _record(response.model, response.prompt_tokens, response.completion_tokens, db)
+        return response
+
+    async def _generate(
         self,
         system_prompt: str,
         messages: list[dict],
@@ -112,7 +129,6 @@ def _record(model: str, prompt_tokens: int, completion_tokens: int, db: Session)
     db.commit()
 
 
-# ── Public API ────────────────────────────────────────────────────────────────
 
 _default_ai_service: AIService | None = None
 
@@ -124,24 +140,6 @@ def init_ai_service(settings: Settings) -> None:
 
 def get_ai_service() -> AIService:
     return _default_ai_service
-
-
-async def generate_and_record(
-    service: AIService,
-    system_prompt: str,
-    messages: list[dict],
-    db: Session,
-    model: str | None = None,
-    temperature: float | None = None,
-) -> AIResponse:
-    """Generate an AI response and record token usage."""
-    response = await service.generate(system_prompt, messages, model=model, temperature=temperature)
-    logger.info(
-        f"AI response: model={response.model} temperature={temperature} "
-        f"prompt={response.prompt_tokens} completion={response.completion_tokens}"
-    )
-    _record(response.model, response.prompt_tokens, response.completion_tokens, db)
-    return response
 
 
 def _get_used_citations(content: str, annotations: list) -> list[Citation]:

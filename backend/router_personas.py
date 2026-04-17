@@ -6,7 +6,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from sqlalchemy.orm import Session, selectinload
 
-from ai_service import generate_and_record, get_ai_service
+from ai_service import get_ai_service
 from auth import get_current_user, check_owner_or_admin
 from messages import M
 from database_service import get_db
@@ -216,9 +216,8 @@ Style rules:
         f"Leírás:\n{req.description}"
     )
 
-    response = await generate_and_record(
-        service=get_ai_service(),
-        system_prompt=system_prompt,
+    response = await get_ai_service().generate_and_record(
+        system_prompt,
         messages=[{"role": "user", "content": user_msg}],
         db=db,
         model="anthropic/claude-sonnet-4.6",

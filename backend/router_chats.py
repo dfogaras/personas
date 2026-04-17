@@ -9,7 +9,7 @@ from auth import get_current_user, check_owner_or_admin
 from messages import M
 from database_service import get_db
 from models import Chat, Message, Persona, User
-from ai_service import AIService, generate_and_record, get_ai_service
+from ai_service import AIService, get_ai_service
 from router_lessons import resolve_active_lesson, resolve_lesson_settings
 from schemas import (
     ChatCreate, ChatDetailResponse, ChatResponse,
@@ -139,8 +139,8 @@ async def send_message(
     if settings.chat_can_set_temperature and req.temperature is not None:
         effective_temperature = req.temperature
 
-    response = await generate_and_record(
-        ai_service, system_prompt, messages, db,
+    response = await ai_service.generate_and_record(
+        system_prompt, messages, db,
         model=effective_model,
         temperature=effective_temperature,
     )
