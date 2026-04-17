@@ -6,6 +6,10 @@ from typing import Optional, List
 from pydantic import BaseModel, Field, field_validator
 
 
+# ============================================================================
+# Shared schemas (used across multiple endpoints)
+# ============================================================================
+
 class UserResponse(BaseModel):
     """Schema for user response."""
 
@@ -20,13 +24,17 @@ class UserResponse(BaseModel):
         from_attributes = True
 
 
-class TokenResponse(BaseModel):
-    """Schema for auth token response."""
+class Citation(BaseModel):
+    """Citation in a message response."""
 
-    token: str
-    user: UserResponse
-    must_change_password: bool = False
+    num: int
+    url: str
+    title: str
 
+
+# ============================================================================
+# Auth endpoints
+# ============================================================================
 
 class LoginRequest(BaseModel):
     """Schema for password-based login."""
@@ -42,6 +50,18 @@ class ChangePasswordRequest(BaseModel):
     new_password: str
 
 
+class TokenResponse(BaseModel):
+    """Schema for auth token response."""
+
+    token: str
+    user: UserResponse
+    must_change_password: bool = False
+
+
+# ============================================================================
+# Personas endpoints
+# ============================================================================
+
 class PersonaBase(BaseModel):
     """Base persona schema."""
 
@@ -51,9 +71,17 @@ class PersonaBase(BaseModel):
 
 
 class PersonaCreate(PersonaBase):
-    """Schema for creating a persona."""
+    """Schema for creating/updating a persona."""
 
     pass
+
+
+class PersonaFeedbackRequest(BaseModel):
+    """Schema for requesting persona feedback."""
+
+    name: str
+    title: str
+    description: str
 
 
 class PersonaResponse(PersonaBase):
@@ -71,10 +99,22 @@ class PersonaResponse(PersonaBase):
         from_attributes = True
 
 
-class Citation(BaseModel):
-    num: int
-    url: str
-    title: str
+# ============================================================================
+# Chats endpoints
+# ============================================================================
+
+class MessageRequest(BaseModel):
+    """Schema for sending a chat message."""
+
+    message: str = Field(min_length=1, max_length=500)
+    model: Optional[str] = None
+    temperature: Optional[float] = None
+
+
+class ChatCreate(BaseModel):
+    """Schema for creating a chat."""
+
+    persona_id: int
 
 
 class MessageResponse(BaseModel):
@@ -101,12 +141,6 @@ class MessageResponse(BaseModel):
         from_attributes = True
 
 
-class ChatCreate(BaseModel):
-    """Schema for creating a chat."""
-
-    persona_id: int
-
-
 class ChatResponse(BaseModel):
     """Schema for chat response."""
 
@@ -131,27 +165,108 @@ class ChatDetailResponse(ChatResponse):
     messages: List[MessageResponse] = []
 
 
-class MessageRequest(BaseModel):
-    """Schema for sending a chat message."""
+# ============================================================================
+# Lessons endpoints
+# ============================================================================
 
-    message: str = Field(min_length=1, max_length=500)
-    model: Optional[str] = None
-    temperature: Optional[float] = None
+class LessonCreate(BaseModel):
+    """Schema for creating a lesson."""
+
+    name: str
 
 
-class UserAdminResponse(BaseModel):
-    """Schema for user response in admin context (includes sensitive fields)."""
+class LessonUpdate(BaseModel):
+    """Schema for updating a lesson."""
+
+    name: Optional[str] = None
+
+
+class LessonSettingsUpdate(BaseModel):
+    """Schema for updating lesson settings."""
+
+    chat_max_messages: int
+    max_personas_per_user: int
+    ai_model: str
+    ai_temperature: float
+    persona_system_prompt_template: str
+    chat_can_set_model: bool = False
+    chat_can_set_temperature: bool = False
+    can_create_personas: bool = True
+    persona_sort_order: str = "recency"
+    personas_pinned_first: bool = True
+
+
+class LessonGroupsUpdate(BaseModel):
+    """Schema for updating lesson group assignments."""
+
+    group_ids: List[int]
+
+
+class LessonPersonaUpdate(BaseModel):
+    """Schema for updating lesson persona pin status."""
+
+    is_pinned: bool = False
+
+
+class ActiveLessonUpdate(BaseModel):
+    """Schema for updating active lesson."""
+
+    lesson_id: Optional[int] = None  # null = deactivate
+
+
+class LessonSettingsResponse(BaseModel):
+    """Schema for lesson settings response."""
+
+    chat_max_messages: int
+    max_personas_per_user: int
+    ai_model: str
+    ai_temperature: float
+    persona_system_prompt_template: str
+    chat_can_set_model: bool = False
+    chat_can_set_temperature: bool = False
+    can_create_personas: bool = True
+    persona_sort_order: str = "recency"
+    personas_pinned_first: bool = True
+
+
+class LessonGroupInfo(BaseModel):
+    """Schema for lesson group info in response."""
 
     id: int
-    email: str
     name: str
-    group: str
-    initial_password: Optional[str] = None
+
+
+class LessonPersonaInfo(BaseModel):
+    """Schema for lesson persona info in response."""
+
+    persona_id: int
+    is_pinned: bool
+    name: Optional[str] = None
+    title: Optional[str] = None
+
+
+class LessonUserResponse(BaseModel):
+    """Lesson context for regular users: name + settings only."""
+
+    id: int
+    name: str
+    settings: LessonSettingsResponse
+    groups: List[LessonGroupInfo] = []
+    creation_allowed: bool = True
+
+
+class LessonAdminResponse(LessonUserResponse):
+    """Full lesson detail for admin views."""
+
+    created_by: Optional[int]
     created_at: datetime
+    groups: List[LessonGroupInfo]
+    personas: List[LessonPersonaInfo]
 
-    class Config:
-        from_attributes = True
 
+# ============================================================================
+# Admin endpoints
+# ============================================================================
 
 class UserAdminCreate(BaseModel):
     """Schema for creating a user in admin context."""
@@ -171,49 +286,21 @@ class UserAdminUpdate(BaseModel):
     initial_password: Optional[str] = None
 
 
-# ============================================================================
-# Lessons
-# ============================================================================
+class AccessUpdate(BaseModel):
+    """Schema for updating group access status."""
 
-class LessonSettingsResponse(BaseModel):
-    chat_max_messages: int
-    max_personas_per_user: int
-    ai_model: str
-    ai_temperature: float
-    persona_system_prompt_template: str
-    chat_can_set_model: bool = False
-    chat_can_set_temperature: bool = False
-    can_create_personas: bool = True
-    persona_sort_order: str = "recency"
-    personas_pinned_first: bool = True
+    enabled: bool
 
 
-class LessonGroupInfo(BaseModel):
-    id: int
-    name: str
-
-
-class LessonUserResponse(BaseModel):
-    """Lesson context for regular users: name + settings only."""
+class UserAdminResponse(BaseModel):
+    """Schema for user response in admin context (includes sensitive fields)."""
 
     id: int
+    email: str
     name: str
-    settings: LessonSettingsResponse
-    groups: List[LessonGroupInfo] = []
-    creation_allowed: bool = True
-
-
-class LessonPersonaInfo(BaseModel):
-    persona_id: int
-    is_pinned: bool
-    name: Optional[str] = None
-    title: Optional[str] = None
-
-
-class LessonAdminResponse(LessonUserResponse):
-    """Full lesson detail for admin views."""
-
-    created_by: Optional[int]
+    group: str
+    initial_password: Optional[str] = None
     created_at: datetime
-    groups: List[LessonGroupInfo]
-    personas: List[LessonPersonaInfo]
+
+    class Config:
+        from_attributes = True

@@ -3,13 +3,15 @@
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Response
-from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from auth import get_current_user, require_admin
 from database_service import get_db
 from models import Group, Lesson, LessonGroup, LessonPersona, LessonSettings, LESSON_SETTINGS_DEFAULTS, Persona, User
-from schemas import LessonAdminResponse, LessonGroupInfo, LessonPersonaInfo, LessonSettingsResponse, LessonUserResponse
+from schemas import (
+    LessonAdminResponse, LessonGroupInfo, LessonPersonaInfo, LessonSettingsResponse, LessonUserResponse,
+    LessonCreate, LessonUpdate, LessonSettingsUpdate, LessonGroupsUpdate, LessonPersonaUpdate, ActiveLessonUpdate,
+)
 
 router = APIRouter()
 
@@ -88,43 +90,6 @@ def _admin_response(lesson: Lesson, db: Session) -> LessonAdminResponse:
             for lp in lesson.personas
         ],
     )
-
-
-# ============================================================================
-# Pydantic bodies
-# ============================================================================
-
-class LessonCreate(BaseModel):
-    name: str
-
-
-class LessonUpdate(BaseModel):
-    name: str | None = None
-
-
-class LessonSettingsUpdate(BaseModel):
-    chat_max_messages: int = LESSON_SETTINGS_DEFAULTS["chat_max_messages"]
-    max_personas_per_user: int = LESSON_SETTINGS_DEFAULTS["max_personas_per_user"]
-    ai_model: str = LESSON_SETTINGS_DEFAULTS["ai_model"]
-    ai_temperature: float = LESSON_SETTINGS_DEFAULTS["ai_temperature"]
-    persona_system_prompt_template: str = LESSON_SETTINGS_DEFAULTS["persona_system_prompt_template"]
-    chat_can_set_model: bool = False
-    chat_can_set_temperature: bool = False
-    can_create_personas: bool = True
-    persona_sort_order: str = LESSON_SETTINGS_DEFAULTS["persona_sort_order"]
-    personas_pinned_first: bool = LESSON_SETTINGS_DEFAULTS["personas_pinned_first"]
-
-
-class LessonGroupsUpdate(BaseModel):
-    group_ids: list[int]
-
-
-class LessonPersonaUpdate(BaseModel):
-    is_pinned: bool = False
-
-
-class ActiveLessonUpdate(BaseModel):
-    lesson_id: int | None  # null = deactivate
 
 
 # ============================================================================

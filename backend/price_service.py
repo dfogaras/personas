@@ -53,3 +53,5 @@ def init_price_service(settings: Settings) -> None:
 
 def get_price_service() -> PriceService:
     return _price_service
+
+

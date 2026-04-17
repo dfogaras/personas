@@ -4,7 +4,6 @@ import random
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
-from pydantic import BaseModel
 from sqlalchemy.orm import Session, selectinload
 
 from ai_service import generate_and_record, get_ai_service
@@ -14,7 +13,7 @@ from database_service import get_db
 from sqlalchemy import case, func
 from models import Group, LessonPersona, Persona, PersonaLike, User
 from router_lessons import resolve_active_lesson, resolve_lesson_settings
-from schemas import PersonaCreate, PersonaResponse
+from schemas import PersonaCreate, PersonaResponse, PersonaFeedbackRequest
 
 logger = logging.getLogger(__name__)
 router = APIRouter(dependencies=[Depends(get_current_user)])
@@ -170,12 +169,6 @@ async def overwrite_persona(
     db.commit()
     db.refresh(db_persona)
     return db_persona
-
-
-class PersonaFeedbackRequest(BaseModel):
-    name: str
-    title: str
-    description: str
 
 
 @router.post("/api/ai/persona-feedback")

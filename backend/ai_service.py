@@ -15,20 +15,6 @@ from schemas import Citation
 logger = logging.getLogger(__name__)
 
 
-def _get_used_citations(content: str, annotations: list) -> list[Citation]:
-    all_citations = [
-        a["url_citation"]
-        for a in annotations
-        if a.get("type") == "url_citation"
-    ]
-    used_nums = {int(m) for m in re.findall(r'\[(\d+)\]', content)}
-    return [
-        Citation(num=i + 1, url=c["url"], title=c.get("title", ""))
-        for i, c in enumerate(all_citations)
-        if (i + 1) in used_nums
-    ]
-
-
 @dataclass
 class AIResponse:
     content: str
@@ -156,3 +142,19 @@ async def generate_and_record(
     )
     _record(response.model, response.prompt_tokens, response.completion_tokens, db)
     return response
+
+
+def _get_used_citations(content: str, annotations: list) -> list[Citation]:
+    all_citations = [
+        a["url_citation"]
+        for a in annotations
+        if a.get("type") == "url_citation"
+    ]
+    used_nums = {int(m) for m in re.findall(r'\[(\d+)\]', content)}
+    return [
+        Citation(num=i + 1, url=c["url"], title=c.get("title", ""))
+        for i, c in enumerate(all_citations)
+        if (i + 1) in used_nums
+    ]
+
+

@@ -9,7 +9,6 @@ from price_service import PriceService, get_price_service
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import Response, StreamingResponse
-from pydantic import BaseModel
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
@@ -18,7 +17,7 @@ from settings_service import get_settings
 from messages import M
 from database_service import get_db
 from models import Group, User, TokenUsage
-from schemas import UserAdminCreate, UserAdminResponse, UserAdminUpdate
+from schemas import UserAdminCreate, UserAdminResponse, UserAdminUpdate, AccessUpdate
 
 router = APIRouter()
 
@@ -112,10 +111,6 @@ async def admin_delete_user(
 # Group access control
 # ============================================================================
 
-class _AccessUpdate(BaseModel):
-    enabled: bool
-
-
 @router.get("/api/admin/access", response_model=dict[str, bool])
 async def get_access(_: User = Depends(require_admin), db: Session = Depends(get_db)):
     return {g.name: g.access_enabled for g in db.query(Group).order_by(Group.id).all()}
@@ -124,7 +119,7 @@ async def get_access(_: User = Depends(require_admin), db: Session = Depends(get
 @router.patch("/api/admin/access/{group}", response_model=dict[str, bool])
 async def set_group_access(
     group: str,
-    body: _AccessUpdate,
+    body: AccessUpdate,
     _: User = Depends(require_admin),
     db: Session = Depends(get_db),
 ):
