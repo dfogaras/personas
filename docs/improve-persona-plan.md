@@ -35,12 +35,12 @@ Your partner may invite you to discuss improving your own personality. If invite
 engage in the discussion and brainstorm constructively. If the conversation produces
 a sufficient, specific idea, propose actual improvements — but only then. If the
 input is vague (e.g. "be better", "be cooler"), ask for more direction instead.
-When you do have a concrete proposal, append it as JSON at the very end of your reply:
-{"suggestion": {"name": "...", "title": "...", "description": "..."}}
+When you do have a concrete proposal, wrap it in a suggestion tag at the very end of your reply:
+<suggestion>{"name": "...", "title": "...", "description": "..."}</suggestion>
 Only include the fields that change.
 ```
 
-After the AI responds, parse the trailing JSON (if present) and return `suggestion` alongside the normal message content in `MessageResponse`.
+After the AI responds, extract the `<suggestion>...</suggestion>` block with a regex (if present), parse the JSON inside it, and return `suggestion` alongside the normal message content in `MessageResponse`. The tag is stripped from the content before returning.
 
 ### `MessageResponse` schema (`schemas.py`)
 
@@ -80,12 +80,14 @@ Rendered inline in the message list, below the assistant bubble:
 └───────────────────────────────────────────────────┘
 ```
 
-Uses a **word-level rich diff** (inline, not line-by-line): removed words in red with strikethrough, added words in green. The diff is computed client-side by comparing `suggestion` fields against the current persona values using a simple LCS algorithm (~40 lines of vanilla JS, no library).
+The suggestion carries only the **new values** for changed fields. The frontend already has the current persona loaded, so the diff is computed client-side by comparing each key in `suggestion` against the corresponding current value — no old values need to be sent from the backend.
 
-Each changed field (name, title, description) gets its own diff section. Unchanged fields are omitted.
+Uses a **word-level rich diff** (inline, not line-by-line): removed words in red with strikethrough, added words in green. Computed with a simple LCS algorithm (~40 lines of vanilla JS, no library).
 
-- **Alkalmaz**: POST to `/api/personas/{id}` with merged fields, update the chat header persona display, turn off improve mode.
-- **Elvet**: remove the card, keep chatting.
+Each changed field (name, title, description) gets its own diff section. Unchanged fields are absent from `suggestion` and omitted from the card.
+
+- **Alkalmaz**: POST to `/api/personas/{id}` with merged fields, update the chat header persona display, turn off improve mode. The card remains in the chat history in a collapsed "applied" state (e.g. faded, with a checkmark and "Alkalmazva" label) so the conversation records what changed and when.
+- **Elvet**: the card transitions to a dismissed state (faded, strikethrough or "Elutasítva" label) and stays in the history — it is not removed.
 
 ## Access control
 
