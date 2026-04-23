@@ -89,6 +89,7 @@ def _admin_response(lesson: Lesson, db: Session) -> LessonAdminResponse:
                 title=lp.persona.title,
             )
             for lp in lesson.personas
+            if lp.persona is not None
         ],
     )
 
