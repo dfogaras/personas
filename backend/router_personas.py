@@ -1,5 +1,6 @@
 import logging
 import random
+import unicodedata
 
 from typing import Optional
 
@@ -31,21 +32,19 @@ async def list_groups(db: Session = Depends(get_db)):
 
 def _resort_personas(results_by_recency, sort_order, pinned_first):
     """Sort personas according to lesson settings: pinned first, then by sort order."""
-    if pinned_first:
-        priority_results = [r for r in results_by_recency if r.is_pinned]
-        remaining_results = [r for r in results_by_recency if not r.is_pinned]
-    else:
-        priority_results = []
-        remaining_results = results_by_recency
+    all_results = list(results_by_recency)
 
-    # Sort remaining results by selected order
     if sort_order == 'likes':
-        remaining_results.sort(key=lambda r: r.like_count, reverse=True)
+        all_results.sort(key=lambda r: r.like_count, reverse=True)
     elif sort_order == 'random':
-        _secure_random.shuffle(remaining_results)
+        _secure_random.shuffle(all_results)
+    elif sort_order == 'title':
+        all_results.sort(key=lambda r: unicodedata.normalize('NFD', (r.title or "").lower()))
     # else: 'recency' (default, already in creation order)
 
-    return priority_results + remaining_results
+    if pinned_first:
+        return [r for r in all_results if r.is_pinned] + [r for r in all_results if not r.is_pinned]
+    return all_results
 
 
 @router.get("/api/personas", response_model=list[PersonaResponse])
