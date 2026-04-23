@@ -81,6 +81,7 @@ class Persona(Base):
     name = Column(String, index=True)
     description = Column(Text)
     title = Column(String, nullable=True)
+    color = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
 

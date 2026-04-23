@@ -62,12 +62,23 @@ class TokenResponse(BaseModel):
 # Personas endpoints
 # ============================================================================
 
+PERSONA_COLORS = {None, "#e11d48", "#ea580c", "#d97706", "#059669", "#0891b2", "#2563eb", "#7c3aed", "#db2777"}
+
+
 class PersonaBase(BaseModel):
     """Base persona schema."""
 
     name: str = Field(min_length=1, max_length=100)
     description: str = Field(min_length=1, max_length=4000)
     title: Optional[str] = Field(default=None, max_length=40)
+    color: Optional[str] = Field(default=None)
+
+    @field_validator("color")
+    @classmethod
+    def validate_color(cls, v):
+        if v not in PERSONA_COLORS:
+            raise ValueError("invalid color")
+        return v
 
 
 class PersonaCreate(PersonaBase):

@@ -73,6 +73,7 @@ def cmd_migrate(engine):
         ("lesson_settings", "persona_sort_order", "TEXT NOT NULL DEFAULT 'recency'"),
         ("lesson_settings", "personas_pinned_first", "BOOLEAN NOT NULL DEFAULT 1"),
         ("messages", "citations", "TEXT"),
+        ("personas", "color", "TEXT"),
     ]
     drop_columns = [
         ("users", "role"),

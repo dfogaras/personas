@@ -209,6 +209,7 @@ function renderPersonasList(personas, container, creationAllowed, adminLesson = 
     personas.forEach(persona => {
         const card = document.createElement('div');
         card.className = 'persona-card';
+        if (persona.color) card.style.setProperty('--card-accent', persona.color);
 
         const body = document.createElement('div');
         body.className = 'persona-card-body';

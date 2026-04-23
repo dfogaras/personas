@@ -121,6 +121,23 @@ function showEditForm(persona) {
     specInput.value = persona ? (persona.title || '') : '';
     setupCharCounter(specInput, document.getElementById('pSpecCounter'));
 
+    const COLORS = [null, '#e11d48', '#ea580c', '#d97706', '#059669', '#0891b2', '#2563eb', '#7c3aed', '#db2777'];
+    let selectedColor = (isRemix ? null : (persona?.color ?? null));
+    const swatchContainer = document.getElementById('colorSwatches');
+    swatchContainer.innerHTML = '';
+    COLORS.forEach(hex => {
+        const sw = document.createElement('button');
+        sw.type = 'button';
+        sw.className = 'color-swatch' + (hex === null ? ' color-swatch-none' : '') + (selectedColor === hex ? ' selected' : '');
+        if (hex) sw.style.background = hex;
+        sw.addEventListener('click', () => {
+            selectedColor = hex;
+            swatchContainer.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
+            sw.classList.add('selected');
+        });
+        swatchContainer.appendChild(sw);
+    });
+
     document.getElementById('submitBtn').title = isCreate || isRemix ? T.create : T.save;
 
     document.getElementById('editBackLink').href = isCreate ? '/' : backUrl;
@@ -150,10 +167,10 @@ function showEditForm(persona) {
 
         try {
             if (isCreate || isRemix) {
-                const newPersona = await apiCall('POST', '/personas', { name, description, title });
+                const newPersona = await apiCall('POST', '/personas', { name, description, title, color: selectedColor });
                 window.location.href = `/persona/${newPersona.id}`;
             } else {
-                await apiCall('POST', `/personas/${personaId}`, { name, description, title: title || null });
+                await apiCall('POST', `/personas/${personaId}`, { name, description, title: title || null, color: selectedColor });
                 window.location.href = `/persona/${personaId}?back=${backUrl}`;
             }
         } catch (e) {
