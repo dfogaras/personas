@@ -216,7 +216,7 @@ function renderPersonasList(personas, container, creationAllowed, adminLesson = 
         const creator = persona.user?.name;
         body.innerHTML = `
             <div class="persona-name">${persona.name}${persona.is_pinned ? '<span class="persona-pinned-badge" title="Rögzített persona">📌</span>' : ''}</div>
-            <div class="persona-title">${persona.title || T.general}</div>
+            <div class="persona-title">${persona.is_teacher ? '🎓 ' : ''}${persona.title || T.general}</div>
             ${creator ? `<div class="persona-card-creator">${T.createdBy} <a class="user-link" href="/#page=user&id=${persona.user.id}" onclick="event.stopPropagation()">${creator}</a> — ${prettyTime(persona.created_at)}</div>` : ''}
         `;
         body.querySelector('.persona-name').appendChild(createLikeEl(persona));

@@ -602,6 +602,53 @@
     gap: 4px;
 }
 
+.prompt-card {
+    border: 1px solid var(--gray-200, #e5e7eb);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.prompt-card .prompt-collapsible {
+    padding: 8px 10px 10px;
+}
+
+.prompt-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 8px 10px;
+    background: var(--gray-50, #f9fafb);
+    border: none;
+    border-radius: 0;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--gray-500);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    text-align: left;
+}
+
+.prompt-toggle:hover {
+    background: var(--gray-100, #f3f4f6);
+}
+
+.prompt-toggle-caret {
+    font-size: 10px;
+    transition: transform 0.15s;
+}
+
+.prompt-toggle--open .prompt-toggle-caret {
+    transform: rotate(180deg);
+}
+
+.prompt-collapsible {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
 .modal-field-check {
     justify-content: center;
 }

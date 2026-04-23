@@ -121,7 +121,8 @@ async def send_message(
     db.refresh(user_message)
 
     persona = chat.persona
-    system_prompt = settings.persona_system_prompt_template.format(
+    template = settings.teacher_system_prompt_template if persona.is_teacher else settings.persona_system_prompt_template
+    system_prompt = template.format(
         name=persona.name,
         short=persona.title or "",
         long=persona.description,

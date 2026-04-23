@@ -54,7 +54,13 @@
             </div>
             <label class="form-label">Szín</label>
             <div class="color-swatches" id="colorSwatches"></div>
-            <label class="form-label" for="pDesc">Leírás</label>
+            <div class="form-label-row">
+                <label class="form-label" for="pDesc">Leírás</label>
+                <label id="teacherSection" class="teacher-inline-label" style="display:none">
+                    <input type="checkbox" id="isTeacherCheck">
+                    <span id="teacherPersonaLabel"></span>
+                </label>
+            </div>
             <div id="descPrompts" class="desc-prompts"></div>
             <textarea id="pDesc" class="form-input" rows="5"></textarea>
             <div class="ai-feedback-wrap">

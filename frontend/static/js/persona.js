@@ -146,6 +146,16 @@ function showEditForm(persona) {
         window.location.href = isCreate ? '/' : backUrl;
     });
 
+    const isAdmin = getUser()?.group === 'admin';
+    const teacherSection = document.getElementById('teacherSection');
+    if (isAdmin) {
+        teacherSection.style.display = '';
+        document.getElementById('teacherPersonaLabel').textContent = T.teacherPersona;
+        if (!isCreate && !isRemix && persona?.is_teacher) {
+            document.getElementById('isTeacherCheck').checked = true;
+        }
+    }
+
     document.getElementById('submitBtn').addEventListener('click', async () => {
         const nameEl = document.getElementById('pName');
         const descEl = document.getElementById('pDesc');
@@ -165,12 +175,14 @@ function showEditForm(persona) {
         }
         errorEl.style.display = 'none';
 
+        const is_teacher = isAdmin && document.getElementById('isTeacherCheck').checked;
+
         try {
             if (isCreate || isRemix) {
-                const newPersona = await apiCall('POST', '/personas', { name, description, title, color: selectedColor });
+                const newPersona = await apiCall('POST', '/personas', { name, description, title, color: selectedColor, is_teacher });
                 window.location.href = `/persona/${newPersona.id}`;
             } else {
-                await apiCall('POST', `/personas/${personaId}`, { name, description, title: title || null, color: selectedColor });
+                await apiCall('POST', `/personas/${personaId}`, { name, description, title: title || null, color: selectedColor, is_teacher });
                 window.location.href = `/persona/${personaId}?back=${backUrl}`;
             }
         } catch (e) {

@@ -13,7 +13,7 @@ import sys
 from sqlalchemy import create_engine, inspect, text
 
 from config import load_settings
-from models import Base, DEFAULT_PERSONA_SYSTEM_PROMPT
+from models import Base, DEFAULT_PERSONA_SYSTEM_PROMPT, DEFAULT_TEACHER_SYSTEM_PROMPT
 
 
 def _engine(settings):
@@ -72,8 +72,10 @@ def cmd_migrate(engine):
         ("lesson_settings", "can_create_personas", "BOOLEAN NOT NULL DEFAULT 1"),
         ("lesson_settings", "persona_sort_order", "TEXT NOT NULL DEFAULT 'recency'"),
         ("lesson_settings", "personas_pinned_first", "BOOLEAN NOT NULL DEFAULT 1"),
+        ("lesson_settings", "teacher_system_prompt_template", "TEXT"),  # backfilled below
         ("messages", "citations", "TEXT"),
         ("personas", "color", "TEXT"),
+        ("personas", "is_teacher", "BOOLEAN NOT NULL DEFAULT 0"),
     ]
     drop_columns = [
         ("users", "role"),
@@ -125,6 +127,15 @@ def cmd_migrate(engine):
         conn.commit()
         if result.rowcount:
             print(f"✓ Backfilled persona_system_prompt_template on {result.rowcount} lesson_settings row(s)")
+
+        # Backfill teacher_system_prompt_template for existing lesson_settings rows
+        result = conn.execute(
+            text("UPDATE lesson_settings SET teacher_system_prompt_template = :v WHERE teacher_system_prompt_template IS NULL"),
+            {"v": DEFAULT_TEACHER_SYSTEM_PROMPT},
+        )
+        conn.commit()
+        if result.rowcount:
+            print(f"✓ Backfilled teacher_system_prompt_template on {result.rowcount} lesson_settings row(s)")
 
         # Populate group_id from the legacy group string column (one-time migration)
         user_cols = {col["name"] for col in inspector.get_columns("users")}

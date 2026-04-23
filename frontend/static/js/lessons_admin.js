@@ -1,3 +1,19 @@
+const DEFAULT_TEACHER_SYSTEM_PROMPT = `Egy iskolában tanítasz 12–14 éves diákokat. A neved {name}. Rövid leírás: "{short}".
+
+Pontosan ismered a technológiát, amit tanítasz — magabiztos, precíz szakértő vagy.
+
+Stílus: egyszerű, közvetlen, rövid. Sokszor csak konkrét instrukció kell:
+"Kattints erre", "Válaszd azt", "Írd be ezt" — felesleges magyarázat nélkül.
+Ha a diák elakad, adj egy lépést, ne az egész megoldást.
+Ha helyesen csinálja, nyugtázd röviden és lépj tovább.
+
+Csak 13 éves diák számára nem káros tartalmat írj.
+
+A tanítandó anyag részletes leírása:
+---
+{long}
+---`;
+
 const DEFAULT_SYSTEM_PROMPT = `Személyiségekkel játszunk egy iskolában kiskamaszokkal.
 A te neved {name}. Rövid személyleírás rólad: "{short}".
 Részlesebb leírásodat alul idézem.
@@ -413,8 +429,10 @@ function openLessonModal(lesson = null) {
     document.getElementById('lessonCanCreatePersonas').checked  = s.can_create_personas ?? true;
     document.getElementById('lessonCanSetModel').checked       = s.chat_can_set_model ?? false;
     document.getElementById('lessonCanSetTemperature').checked = s.chat_can_set_temperature ?? false;
-    document.getElementById('lessonSystemPrompt').value        = s.persona_system_prompt_template ?? DEFAULT_SYSTEM_PROMPT;
-    document.getElementById('lessonPersonaSortOrder').value    = s.persona_sort_order ?? 'recency';
+    document.getElementById('lessonSystemPrompt').value          = s.persona_system_prompt_template ?? DEFAULT_SYSTEM_PROMPT;
+    document.getElementById('lessonTeacherSystemPrompt').value   = s.teacher_system_prompt_template ?? DEFAULT_TEACHER_SYSTEM_PROMPT;
+    document.getElementById('teacherSystemPromptLabel').textContent = T.teacherSystemPromptLabel;
+    document.getElementById('lessonPersonaSortOrder').value      = s.persona_sort_order ?? 'recency';
     document.getElementById('lessonPersonasPinnedFirst').checked = s.personas_pinned_first ?? true;
 
     document.getElementById('lessonModalError').style.display = 'none';
@@ -425,6 +443,10 @@ function openLessonModal(lesson = null) {
 
 function closeLessonModal() {
     document.getElementById('lessonModal').style.display = 'none';
+    document.getElementById('lessonSystemPromptCollapsible').style.display = 'none';
+    document.getElementById('lessonTeacherSystemPromptCollapsible').style.display = 'none';
+    document.getElementById('lessonSystemPromptToggle').classList.remove('prompt-toggle--open');
+    document.getElementById('lessonTeacherSystemPromptToggle').classList.remove('prompt-toggle--open');
     _modalLesson = null;
 }
 
@@ -459,17 +481,28 @@ async function submitLessonModal() {
         return;
     }
 
+    const teacherPromptVal = document.getElementById('lessonTeacherSystemPrompt').value.trim() || DEFAULT_TEACHER_SYSTEM_PROMPT;
+    document.getElementById('lessonTeacherSystemPrompt').value = teacherPromptVal;
+    const strippedTeacherPrompt = knownVars.reduce((s, v) => s.replaceAll(v, ''), teacherPromptVal);
+    if (!knownVars.every(v => teacherPromptVal.includes(v)) || /[{}]/.test(strippedTeacherPrompt)) {
+        errorEl.textContent = T.errTeacherPromptVariables;
+        errorEl.style.display = 'block';
+        document.getElementById('lessonSubmitBtn').disabled = false;
+        return;
+    }
+
     const settings = {
-        chat_max_messages:              parseInt(document.getElementById('lessonMaxMessages').value, 10) || 60,
-        max_personas_per_user:          parseInt(document.getElementById('lessonMaxPersonas').value, 10) || 10,
-        ai_model:                       document.getElementById('lessonAiModel').value || 'google/gemini-2.5-flash-lite',
-        ai_temperature:                 tempVal,
-        can_create_personas:   document.getElementById('lessonCanCreatePersonas').checked,
-        chat_can_set_model:             document.getElementById('lessonCanSetModel').checked,
-        chat_can_set_temperature:       document.getElementById('lessonCanSetTemperature').checked,
-        persona_system_prompt_template: document.getElementById('lessonSystemPrompt').value.trim(),
-        persona_sort_order:             document.getElementById('lessonPersonaSortOrder').value || 'recency',
-        personas_pinned_first:          document.getElementById('lessonPersonasPinnedFirst').checked,
+        chat_max_messages:               parseInt(document.getElementById('lessonMaxMessages').value, 10) || 60,
+        max_personas_per_user:           parseInt(document.getElementById('lessonMaxPersonas').value, 10) || 10,
+        ai_model:                        document.getElementById('lessonAiModel').value || 'google/gemini-2.5-flash-lite',
+        ai_temperature:                  tempVal,
+        can_create_personas:             document.getElementById('lessonCanCreatePersonas').checked,
+        chat_can_set_model:              document.getElementById('lessonCanSetModel').checked,
+        chat_can_set_temperature:        document.getElementById('lessonCanSetTemperature').checked,
+        persona_system_prompt_template:  document.getElementById('lessonSystemPrompt').value.trim(),
+        teacher_system_prompt_template:  document.getElementById('lessonTeacherSystemPrompt').value.trim(),
+        persona_sort_order:              document.getElementById('lessonPersonaSortOrder').value || 'recency',
+        personas_pinned_first:           document.getElementById('lessonPersonasPinnedFirst').checked,
     };
 
     try {
@@ -508,6 +541,19 @@ async function init() {
 
     setupNav();
     setNavLabel('Órák kezelése');
+
+    [
+        ['lessonSystemPromptToggle',        'lessonSystemPromptCollapsible'],
+        ['lessonTeacherSystemPromptToggle',  'lessonTeacherSystemPromptCollapsible'],
+    ].forEach(([btnId, colId]) => {
+        const btn = document.getElementById(btnId);
+        const col = document.getElementById(colId);
+        btn.addEventListener('click', () => {
+            const open = col.style.display !== 'none';
+            col.style.display = open ? 'none' : '';
+            btn.classList.toggle('prompt-toggle--open', !open);
+        });
+    });
 
     document.getElementById('newLessonBtn').addEventListener('click', () => openLessonModal());
     document.getElementById('lessonCancelBtn').addEventListener('click', closeLessonModal);

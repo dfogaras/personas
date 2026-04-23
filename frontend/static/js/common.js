@@ -133,7 +133,7 @@ function personaMetaHtml(persona) {
     const createdBy = creator ? `<p class="persona-meta-created">${T.createdBy} ${creatorHtml} — ${prettyTime(persona.created_at)}</p>` : '';
     return `
         <div class="persona-meta-name">${persona.name}</div>
-        <div class="persona-meta-title">${persona.title || T.general}</div>
+        <div class="persona-meta-title">${persona.is_teacher ? '🎓 ' : ''}${persona.title || T.general}</div>
         ${createdBy}
     `;
 }

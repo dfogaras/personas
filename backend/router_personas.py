@@ -115,7 +115,10 @@ async def create_persona(
         persona_count = db.query(Persona).filter(Persona.user_id == current_user.id).count()
     if persona_count >= settings.max_personas_per_user:
         raise HTTPException(status_code=400, detail=M["too_many_personas"])
-    db_persona = Persona(**persona.model_dump(), user_id=current_user.id)
+    data = persona.model_dump()
+    if current_user.group != "admin":
+        data["is_teacher"] = False
+    db_persona = Persona(**data, user_id=current_user.id)
     db.add(db_persona)
     db.flush()
     if lesson:
@@ -164,7 +167,10 @@ async def overwrite_persona(
     settings = resolve_lesson_settings(current_user, db)
     if current_user.group != "admin" and not settings.can_create_personas:
         raise HTTPException(status_code=403, detail=M["persona_creation_disabled"])
-    for key, value in persona.model_dump().items():
+    data = persona.model_dump()
+    if current_user.group != "admin":
+        data["is_teacher"] = False
+    for key, value in data.items():
         setattr(db_persona, key, value)
     db.commit()
     db.refresh(db_persona)

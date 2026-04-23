@@ -82,6 +82,7 @@ class Persona(Base):
     description = Column(Text)
     title = Column(String, nullable=True)
     color = Column(String, nullable=True)
+    is_teacher = Column(Boolean, nullable=False, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
 
@@ -189,12 +190,30 @@ A személyleírásod a következő:
 {long}
 ---"""
 
+DEFAULT_TEACHER_SYSTEM_PROMPT = """\
+Egy iskolában tanítasz 12–14 éves diákokat. A neved {name}. Rövid leírás: "{short}".
+
+Pontosan ismered a technológiát, amit tanítasz — magabiztos, precíz szakértő vagy.
+
+Stílus: egyszerű, közvetlen, rövid. Sokszor csak konkrét instrukció kell:
+"Kattints erre", "Válaszd azt", "Írd be ezt" — felesleges magyarázat nélkül.
+Ha a diák elakad, adj egy lépést, ne az egész megoldást.
+Ha helyesen csinálja, nyugtázd röviden és lépj tovább.
+
+Csak 13 éves diák számára nem káros tartalmat írj.
+
+A tanítandó anyag részletes leírása:
+---
+{long}
+---"""
+
 LESSON_SETTINGS_DEFAULTS = {
     "chat_max_messages": 60,
     "max_personas_per_user": 10,
     "ai_model": "google/gemini-2.5-flash-lite",
     "ai_temperature": 1.0,
     "persona_system_prompt_template": DEFAULT_PERSONA_SYSTEM_PROMPT,
+    "teacher_system_prompt_template": DEFAULT_TEACHER_SYSTEM_PROMPT,
     "chat_can_set_model": False,
     "chat_can_set_temperature": False,
     "can_create_personas": True,
@@ -214,6 +233,7 @@ class LessonSettings(Base):
     ai_model = Column(String, nullable=False, default=LESSON_SETTINGS_DEFAULTS["ai_model"])
     ai_temperature = Column(Float, nullable=False, default=LESSON_SETTINGS_DEFAULTS["ai_temperature"])
     persona_system_prompt_template = Column(Text, nullable=False, default=LESSON_SETTINGS_DEFAULTS["persona_system_prompt_template"])
+    teacher_system_prompt_template = Column(Text, nullable=False, default=LESSON_SETTINGS_DEFAULTS["teacher_system_prompt_template"])
     chat_can_set_model = Column(Boolean, nullable=False, default=False)
     chat_can_set_temperature = Column(Boolean, nullable=False, default=False)
     can_create_personas = Column(Boolean, nullable=False, default=True)

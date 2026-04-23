@@ -54,6 +54,7 @@ def _settings_response(lesson: Lesson) -> LessonSettingsResponse:
         ai_model=s.ai_model,
         ai_temperature=s.ai_temperature,
         persona_system_prompt_template=s.persona_system_prompt_template,
+        teacher_system_prompt_template=s.teacher_system_prompt_template,
         chat_can_set_model=s.chat_can_set_model,
         chat_can_set_temperature=s.chat_can_set_temperature,
         can_create_personas=s.can_create_personas,
@@ -198,6 +199,7 @@ async def admin_update_lesson_settings(
     s.ai_model = body.ai_model
     s.ai_temperature = body.ai_temperature
     s.persona_system_prompt_template = body.persona_system_prompt_template
+    s.teacher_system_prompt_template = body.teacher_system_prompt_template
     s.chat_can_set_model = body.chat_can_set_model
     s.chat_can_set_temperature = body.chat_can_set_temperature
     s.can_create_personas = body.can_create_personas

@@ -374,6 +374,30 @@ button, input, select, textarea {
     margin-left: 4px;
 }
 
+
+.form-label-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 4px;
+}
+
+.form-label-row .form-label {
+    margin-bottom: 0;
+}
+
+.teacher-inline-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--gray-500);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+}
+
 .persona-like {
     display: inline-flex;
     align-items: center;

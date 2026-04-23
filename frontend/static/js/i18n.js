@@ -117,4 +117,11 @@ const T = {
     // Likes
     like:                    'Tetszik',
     unlike:                  'Tetszés visszavonása',
+
+    // Teacher persona
+    teacherPersona:              'Tanár típusú persona',
+    teacherPersonaHint:          'Az AI készségtanítási módban vezeti a diákot lépésről lépésre, ahelyett hogy rögtön megadná a választ.',
+    teacherPersonaBadge:         '🎓 Tanár',
+    teacherSystemPromptLabel:    'Tanár persona sablon',
+    errTeacherPromptVariables:   'A tanár sablonnak tartalmaznia kell: {name}, {short}, {long} — és más kapcsos zárójel nem szerepelhet benne.',
 };

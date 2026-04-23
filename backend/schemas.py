@@ -72,6 +72,7 @@ class PersonaBase(BaseModel):
     description: str = Field(min_length=1, max_length=4000)
     title: Optional[str] = Field(default=None, max_length=40)
     color: Optional[str] = Field(default=None)
+    is_teacher: bool = False
 
     @field_validator("color")
     @classmethod
@@ -200,6 +201,7 @@ class LessonSettingsUpdate(BaseModel):
     ai_model: str
     ai_temperature: float
     persona_system_prompt_template: str
+    teacher_system_prompt_template: str
     chat_can_set_model: bool = False
     chat_can_set_temperature: bool = False
     can_create_personas: bool = True
@@ -233,6 +235,7 @@ class LessonSettingsResponse(BaseModel):
     ai_model: str
     ai_temperature: float
     persona_system_prompt_template: str
+    teacher_system_prompt_template: str
     chat_can_set_model: bool = False
     chat_can_set_temperature: bool = False
     can_create_personas: bool = True

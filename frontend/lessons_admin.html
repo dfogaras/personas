@@ -51,12 +51,26 @@
                 <input id="lessonName" class="admin-input" type="text" placeholder="pl. Matematika — 6B" style="flex:1">
             </div>
 
-            <div class="modal-field">
-                <div class="modal-label-row">
-                    <label class="modal-label">Perszóna sablon</label>
-                    <div class="modal-hint">Változók: <code>{name}</code>, <code>{short}</code>, <code>{long}</code></div>
+            <div class="prompt-card">
+                <button type="button" class="prompt-toggle" id="lessonSystemPromptToggle">
+                    <span>Perszóna sablon</span>
+                    <span class="prompt-toggle-caret">▾</span>
+                </button>
+                <div class="prompt-collapsible" id="lessonSystemPromptCollapsible" style="display:none">
+                    <div class="modal-hint" style="margin-bottom:6px">Változók: <code>{name}</code>, <code>{short}</code>, <code>{long}</code></div>
+                    <textarea id="lessonSystemPrompt" class="admin-textarea" rows="12"></textarea>
                 </div>
-                <textarea id="lessonSystemPrompt" class="admin-textarea" rows="12"></textarea>
+            </div>
+
+            <div class="prompt-card">
+                <button type="button" class="prompt-toggle" id="lessonTeacherSystemPromptToggle">
+                    <span id="teacherSystemPromptLabel"></span>
+                    <span class="prompt-toggle-caret">▾</span>
+                </button>
+                <div class="prompt-collapsible" id="lessonTeacherSystemPromptCollapsible" style="display:none">
+                    <div class="modal-hint" style="margin-bottom:6px">Változók: <code>{name}</code>, <code>{short}</code>, <code>{long}</code></div>
+                    <textarea id="lessonTeacherSystemPrompt" class="admin-textarea" rows="12"></textarea>
+                </div>
             </div>
 
             <div class="modal-compact-row">
